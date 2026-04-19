@@ -34,7 +34,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static frontend files (public/ for HTML + assets, src/ for CSS + JS)
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
-app.use(express.static(path.join(__dirname, '../../frontend/src')));
 
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
