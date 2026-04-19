@@ -13,7 +13,10 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Create a seamless wrapper to prevent needing to refactor all 40KB of MySQL controllers
+// Save the original query method to avoid infinite recursion
+const originalQuery = pool.query.bind(pool);
+
+// Create a seamless wrapper
 pool.execute = async function(sql, params = []) {
   // Convert MySQL '?' to Postgres '$1', '$2', ...
   let i = 1;
@@ -29,7 +32,7 @@ pool.execute = async function(sql, params = []) {
     : pgSql;
 
   try {
-    const res = await this.query(finalSql, params);
+    const res = await originalQuery(finalSql, params);
     
     if (isInsert) {
       return [{
