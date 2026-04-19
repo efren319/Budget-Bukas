@@ -19,33 +19,38 @@ pool.execute = async function(sql, params = []) {
   let i = 1;
   const pgSql = sql.replace(/\?/g, () => `$${i++}`);
 
-  // Auto-inject RETURNING id if it's an INSERT to simulate mysql2 insertId natively
+  // Trace the mapping for Render logs
+  console.log(`📡 DB Query: ${pgSql.substring(0, 100)}...`);
+
+  // Auto-inject RETURNING id if it's an INSERT 
   const isInsert = pgSql.trim().toUpperCase().startsWith('INSERT');
   const finalSql = (isInsert && !pgSql.toUpperCase().includes('RETURNING')) 
     ? `${pgSql} RETURNING id` 
     : pgSql;
 
-  const res = await pool.query(finalSql, params);
-  
-  if (isInsert) {
-    // Mirror mysql2's insert wrapper response
-    return [{
-       insertId: res.rows && res.rows.length > 0 ? res.rows[0].id : null,
-       affectedRows: res.rowCount
-    }];
-  }
+  try {
+    const res = await this.query(finalSql, params);
+    
+    if (isInsert) {
+      return [{
+         insertId: res.rows && res.rows.length > 0 ? res.rows[0].id : null,
+         affectedRows: res.rowCount
+      }];
+    }
 
-  const isUpdate = pgSql.trim().toUpperCase().startsWith('UPDATE') || pgSql.trim().toUpperCase().startsWith('DELETE');
-  if (isUpdate) {
-    // Mirror mysql2's update wrapper response
-    return [{
-       affectedRows: res.rowCount,
-       changedRows: res.rowCount
-    }];
-  }
+    const isUpdate = pgSql.trim().toUpperCase().startsWith('UPDATE') || pgSql.trim().toUpperCase().startsWith('DELETE');
+    if (isUpdate) {
+      return [{
+         affectedRows: res.rowCount,
+         changedRows: res.rowCount
+      }];
+    }
 
-  // Pure SELECT structure for mysql2
-  return [res.rows, res.fields];
+    return [res.rows, res.fields];
+  } catch (err) {
+    console.error(`❌ DB Error on query [${finalSql}]:`, err.message);
+    throw err;
+  }
 };
 
 // Map query safely

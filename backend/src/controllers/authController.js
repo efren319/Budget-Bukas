@@ -85,7 +85,12 @@ async function register(req, res) {
     });
   } catch (error) {
     console.error('Register error:', error);
-    res.status(500).json({ success: false, message: 'Server error during registration.' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during registration.',
+      debug: error.message,
+      stack: error.stack
+    });
   }
 }
 
@@ -204,7 +209,8 @@ async function changePassword(req, res) {
 
 // Helper: Generate JWT
 function generateToken(payload) {
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+  const secret = process.env.JWT_SECRET || 'budgetbukas_secret_fallback_123';
+  return jwt.sign(payload, secret, { expiresIn: '24h' });
 }
 
 // Upload Avatar endpoint
