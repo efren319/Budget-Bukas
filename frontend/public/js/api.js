@@ -10,6 +10,9 @@ const API_BASE = window.API_URL || 'http://localhost:10000';
  */
 async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('bb_token');
+  const url = `${API_BASE}${endpoint}`;
+  
+  console.log(`🚀 API Request: ${options.method || 'GET'} ${url}`);
 
   const config = {
     headers: {

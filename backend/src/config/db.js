@@ -4,9 +4,12 @@
 // ============================================
 const { Pool } = require('pg');
 
+if (!process.env.DATABASE_URL) {
+  console.error('❌ ERROR: DATABASE_URL is not set in environment variables! Check your Render dashboard.');
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Add SSL mapping for Neon out-of-the-box compatibility
   ssl: { rejectUnauthorized: false }
 });
 

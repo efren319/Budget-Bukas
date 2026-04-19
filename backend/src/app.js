@@ -16,14 +16,7 @@ app.use(helmet({
 
 // CORS — allow env-based frontend origin in production
 const corsOptions = {
-  origin: function (origin, callback) {
-    const allowed = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500', process.env.FRONTEND_URL];
-    if (!origin || allowed.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*',
   credentials: true
 };
 app.use(cors(corsOptions));
