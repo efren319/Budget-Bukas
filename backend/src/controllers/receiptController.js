@@ -49,12 +49,16 @@ async function uploadReceipt(req, res) {
       return res.status(400).json({ success: false, message: 'No file uploaded.' });
     }
 
-    // Run OCR on uploaded image
-    const ocrResult = await parseReceipt(req.file.path);
+    let ocrResult = null;
+
+    // Run OCR on uploaded image ONLY if scan is not explicitly disabled
+    if (req.query.scan !== 'false') {
+      ocrResult = await parseReceipt(req.file.path);
+    }
 
     res.json({
       success: true,
-      message: 'Receipt scanned successfully.',
+      message: ocrResult ? 'Receipt scanned successfully.' : 'Receipt uploaded without scanning.',
       data: {
         filePath: req.file.filename,
         originalName: req.file.originalname,

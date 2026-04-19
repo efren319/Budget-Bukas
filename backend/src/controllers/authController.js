@@ -6,6 +6,29 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Avatar setup
+const AVATAR_DIR = path.join(__dirname, '../../uploads/avatars');
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(AVATAR_DIR)) fs.mkdirSync(AVATAR_DIR, { recursive: true });
+    cb(null, AVATAR_DIR);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `avatar-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only images allowed'), false);
+  }
+});
 
 // Validation rules
 const registerValidation = [
@@ -184,12 +207,56 @@ function generateToken(payload) {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
 }
 
+// Upload Avatar endpoint
+async function uploadAvatar(req, res) {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded.' });
+    const avatarUrl = req.file.filename;
+    await pool.query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, req.user.id]);
+    res.json({ success: true, message: 'Avatar updated', data: { avatar_url: avatarUrl } });
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
+// Serve Avatar endpoint
+function serveAvatar(req, res) {
+  const filePath = path.join(AVATAR_DIR, req.params.filename);
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ success: false, message: 'Not found' });
+  }
+}
+
+// Get all users for Members Panels
+async function getAllUsers(req, res) {
+  try {
+    const [users] = await pool.query(`
+      SELECT name, role, avatar_url 
+      FROM users 
+      ORDER BY 
+        CASE WHEN role = 'officer' THEN 0 ELSE 1 END,
+        name ASC
+    `);
+    res.json({ success: true, count: users.length, data: users });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ success: false, message: 'Server error retrieving members.' });
+  }
+}
+
 module.exports = {
   register,
   login,
   getProfile,
   updateProfile,
   changePassword,
+  uploadAvatar,
+  serveAvatar,
+  getAllUsers,
+  upload,
   registerValidation,
   loginValidation
 };

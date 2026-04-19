@@ -21,12 +21,13 @@ function initChatbot() {
 
   // Suggestion pills
   document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('suggestion-pill')) {
-      const query = e.target.dataset.query;
-      if (query) {
-        input.value = query;
-        sendChatMessage();
-      }
+    const pill = e.target.closest('.suggestion-pill');
+    if (!pill) return;
+    
+    const query = pill.dataset.query;
+    if (query) {
+      input.value = query;
+      sendChatMessage();
     }
   });
 }

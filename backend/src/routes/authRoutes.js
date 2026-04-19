@@ -6,6 +6,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const {
   register, login, getProfile, updateProfile, changePassword,
+  uploadAvatar, serveAvatar, getAllUsers, upload,
   registerValidation, loginValidation
 } = require('../controllers/authController');
 
@@ -17,5 +18,8 @@ router.post('/login', loginValidation, login);
 router.get('/me', auth, getProfile);
 router.put('/profile', auth, updateProfile);
 router.put('/password', auth, changePassword);
+router.post('/avatar', auth, upload.single('avatar'), uploadAvatar);
+router.get('/avatar/:filename', serveAvatar);
+router.get('/users', auth, getAllUsers);
 
 module.exports = router;

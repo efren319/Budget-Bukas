@@ -120,25 +120,23 @@ async function uploadReceiptForExpense(transactionId, file) {
   try {
     const formData = new FormData();
     formData.append('receipt', file);
-    const scanResult = await apiUpload('/receipts/upload', formData);
+    // Append autoScan flag indicating pure storage
+    const scanResult = await apiUpload('/receipts/upload?scan=false', formData);
 
     if (scanResult && scanResult.success) {
       // We need the expense_id. Fetch the transaction to get it.
       const txData = await apiGet(`/transactions/${transactionId}`);
       if (txData && txData.data) {
-        // The expense id comes from the joined query
-        // Since we just created it, we get it from the response
         await apiPost('/receipts/save', {
-          expense_id: txData.data.id, // This is the transaction id; we need the expense id
+          expense_id: txData.data.id,
           file_path: scanResult.data.filePath,
           original_name: scanResult.data.originalName,
-          extracted_text: scanResult.data.ocr.rawText
+          extracted_text: scanResult.data.ocr ? scanResult.data.ocr.rawText : ''
         });
       }
     }
   } catch (err) {
     console.error('Receipt upload error:', err);
-    // Non-critical, transaction already saved
   }
 }
 
@@ -280,6 +278,19 @@ function initReceiptUpload() {
     };
     reader.readAsDataURL(file);
 
+    const toggleOcr = document.getElementById('toggle-ocr');
+    const autoScan = toggleOcr ? toggleOcr.checked : true;
+
+    if (!autoScan) {
+      if (ocrStatus) {
+        ocrStatus.style.display = 'flex';
+        ocrStatus.innerHTML = '<i data-lucide="check-circle"></i> Receipt queued for upload (OCR skipped).';
+        ocrStatus.style.color = 'var(--text-secondary)';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+      return; // Skip OCR
+    }
+
     // OCR scan
     if (ocrStatus) {
       ocrStatus.style.display = 'flex';
@@ -296,11 +307,16 @@ function initReceiptUpload() {
         const ocr = result.data.ocr;
 
         // Auto-fill form
-        if (ocr.total) {
+        if (ocr.total && !document.getElementById('tx-amount').value) {
           document.getElementById('tx-amount').value = ocr.total;
         }
-        if (ocr.date) {
+        if (ocr.date && !document.getElementById('tx-date').value) {
           document.getElementById('tx-date').value = ocr.date;
+        }
+
+        // Auto-compute engine
+        if (ocr.items && ocr.items.length > 0) {
+          renderAutoComputeTable(ocr.items);
         }
 
         ocrStatus.innerHTML = `<i data-lucide="check-circle"></i> Scanned! ${ocr.total ? 'Amount: ₱' + ocr.total.toLocaleString() : 'Review values below.'}`;
@@ -319,13 +335,97 @@ function initReceiptUpload() {
 }
 
 // =============================================
+// AUTO COMPUTE ENGINE
+// =============================================
+function renderAutoComputeTable(items) {
+  // Find insertion point before receipt upload area
+  const receiptRow = document.querySelector('.expense-fields .receipt-upload-area').closest('.form-row');
+  
+  // Clean up existing if any
+  const existing = document.getElementById('auto-compute-wrapper');
+  if (existing) existing.remove();
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'auto-compute-wrapper';
+  wrapper.className = 'form-row expense-fields';
+  wrapper.style.animation = 'scaleIn var(--duration-normal) var(--ease-smooth)';
+
+  let tableHtml = `
+    <div class="form-group" style="width: 100%;">
+      <label>Extracted Items (Auto-Compute)</label>
+      <div style="background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-md);">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;" id="auto-compute-table">
+          <thead>
+            <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
+              <th style="padding-bottom: 8px;">Item Name</th>
+              <th style="padding-bottom: 8px;">Price (₱)</th>
+              <th style="padding-bottom: 8px; width: 60px;">Qty</th>
+              <th style="padding-bottom: 8px; text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+
+  items.forEach((item, index) => {
+    tableHtml += `
+      <tr>
+        <td style="padding: 8px 0;">${item.name}</td>
+        <td style="padding: 8px 0;"><input type="number" class="ac-price" data-idx="${index}" value="${item.price}" step="0.01" style="width: 80px; padding: 4px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);"></td>
+        <td style="padding: 8px 0;"><input type="number" class="ac-qty" data-idx="${index}" value="${item.qty}" min="1" style="width: 50px; padding: 4px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary);"></td>
+        <td style="padding: 8px 0; text-align: right;" class="ac-item-total" data-idx="${index}">${(item.price * item.qty).toFixed(2)}</td>
+      </tr>
+    `;
+  });
+
+  tableHtml += `
+          </tbody>
+          <tfoot>
+            <tr style="border-top: 1px solid var(--border-color); font-weight: 700;">
+              <td colspan="3" style="padding-top: 12px; text-align: right;">Grand Total:</td>
+              <td style="padding-top: 12px; text-align: right; color: var(--gold);" id="ac-grand-total">0.00</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  `;
+  wrapper.innerHTML = tableHtml;
+
+  // Insert before receipt row
+  receiptRow.parentNode.insertBefore(wrapper, receiptRow);
+
+  // Bind calculation events
+  const recalculate = () => {
+    let grandTotal = 0;
+    const rows = document.querySelectorAll('#auto-compute-table tbody tr');
+    rows.forEach(tr => {
+      const price = parseFloat(tr.querySelector('.ac-price').value) || 0;
+      const qty = parseInt(tr.querySelector('.ac-qty').value) || 0;
+      const total = price * qty;
+      tr.querySelector('.ac-item-total').textContent = total.toFixed(2);
+      grandTotal += total;
+    });
+    document.getElementById('ac-grand-total').textContent = grandTotal.toFixed(2);
+    // Lock standard amount field to this computed amount
+    document.getElementById('tx-amount').value = grandTotal.toFixed(2);
+  };
+
+  document.querySelectorAll('.ac-price, .ac-qty').forEach(input => {
+    input.addEventListener('input', recalculate);
+  });
+
+  recalculate();
+}
+
+
+// =============================================
 // RECORDS TABLE
 // =============================================
 function initRecords() {
   // Apply filters button
   const applyBtn = document.getElementById('btn-apply-filters');
   if (applyBtn) {
-    applyBtn.addEventListener('click', loadRecords);
+    applyBtn.addEventListener('click', () => loadRecords(1));
   }
 
   // Sortable headers

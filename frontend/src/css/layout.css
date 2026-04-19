@@ -17,31 +17,44 @@
   left: 0;
   top: 0;
   bottom: 0;
+  margin: var(--space-3xl) 0 var(--space-lg) var(--space-lg);
   width: var(--sidebar-width);
   background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: var(--space-md) var(--space-sm);
+  align-items: flex-start;
+  padding: var(--space-md) 8px;
+  overflow-x: hidden;
   z-index: 100;
-  transition: width var(--duration-normal) var(--ease-out),
-              background var(--duration-normal) var(--ease-out);
-  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
-  box-shadow: var(--shadow-md);
+  transition: width var(--duration-normal) var(--ease-smooth),
+              background var(--duration-normal) var(--ease-smooth);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.sidebar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 500px;
+  background: linear-gradient(to top, rgb(215 187 14 / 10%), #00000000);
+  filter: blur(12px);
+  pointer-events: none;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 100%;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
   margin-bottom: var(--space-xl);
   flex-shrink: 0;
-  overflow: hidden;
+  gap: var(--space-xs);
+  min-width: 200px; /* forces enough space so logo won't shrink */
 }
 
 .sidebar-logo {
@@ -66,7 +79,7 @@
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-md);
   width: 100%;
   flex: 1;
 }
@@ -74,14 +87,13 @@
 .sidebar-link {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  padding: 12px;
+  gap: 0;
+  padding: 12px 8px;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 500;
-  transition: all var(--duration-normal) var(--ease-out);
+  transition: all var(--duration-normal) var(--ease-smooth);
   position: relative;
   text-decoration: none;
   white-space: nowrap;
@@ -90,14 +102,19 @@
 
 .sidebar-link i,
 .sidebar-link svg {
-  width: 20px;
+  width: 40px;
+  min-width: 40px;
   height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
 .sidebar-link span {
-  display: none;
   opacity: 0;
+  transform: translateX(-6px);
+  transition: all 0.3s var(--ease-smooth);
 }
 
 .sidebar-link:hover {
@@ -106,9 +123,8 @@
 }
 
 .sidebar-link.active {
-  background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(92,64,51,0.1));
+  background: var(--gold-muted);
   color: var(--gold);
-  box-shadow: 0 0 16px rgba(212,175,55,0.1);
 }
 
 .sidebar-link.active::before {
@@ -117,8 +133,8 @@
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
+  width: 4px;
+  height: 24px;
   background: var(--gold);
   border-radius: 0 4px 4px 0;
 }
@@ -126,11 +142,14 @@
 .sidebar-footer {
   margin-top: auto;
   padding-top: var(--space-md);
+  display: flex;
+  width: 100%;
 }
 
 .sidebar-org-logo {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
+  margin-left: 8px; /* structurally align with nav icons */
   border-radius: var(--radius-full);
   opacity: 0.6;
   transition: opacity var(--duration-normal);
@@ -145,24 +164,11 @@
 @media (min-width: 769px) {
   .sidebar:hover {
     width: var(--sidebar-expanded);
-    align-items: flex-start;
-    padding: var(--space-md) var(--space-md);
-  }
-
-  .sidebar:hover .sidebar-link {
-    justify-content: flex-start;
   }
 
   .sidebar:hover .sidebar-link span {
-    display: inline;
     opacity: 1;
-    transition: opacity var(--duration-normal) var(--ease-out);
-  }
-
-  .sidebar:hover .sidebar-brand {
-    width: auto;
-    padding: 0 var(--space-sm);
-    gap: var(--space-sm);
+    transform: translateX(0);
   }
 }
 
@@ -179,25 +185,40 @@
 }
 
 .topbar {
-  position: sticky;
+  position: absolute;
   top: 0;
-  z-index: 50;
+  left: 0;
+  width: 100%;
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: var(--topbar-height);
-  padding: 0 var(--space-lg);
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
+  padding: 0 var(--space-xl);
+  padding-left: calc(var(--sidebar-width) + (var(--space-lg) * 2));
+  background: transparent;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: background var(--duration-normal) var(--ease-out);
+  transition: background var(--duration-normal) var(--ease-smooth),
+              padding-left var(--duration-normal) var(--ease-smooth);
 }
 
-.topbar-left {
+.topbar-left, 
+.topbar-right {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  flex: 1;
+}
+
+.topbar-right {
+  justify-content: flex-end;
+}
+
+.topbar-center {
+  display: flex;
+  justify-content: center;
+  flex: 2;
 }
 
 .sidebar-toggle {
@@ -222,8 +243,9 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-pill);
   padding: 8px 16px;
-  min-width: 280px;
-  transition: all var(--duration-normal) var(--ease-out);
+  width: 100%;
+  max-width: 400px;
+  transition: all var(--duration-normal) var(--ease-smooth);
 }
 
 .search-bar:focus-within {
@@ -245,11 +267,7 @@
 
 .search-bar input::placeholder { color: var(--text-muted); }
 
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
+/* Topbar Right elements */
 
 .theme-toggle {
   background: none;
@@ -333,10 +351,13 @@
    ============================================= */
 .content-area {
   flex: 1;
-  padding: var(--space-lg);
-  max-width: 1400px;
+  max-width: 1600px;
   width: 100%;
-  margin: 0 auto;
+  padding-top: var(--space-md);
+  margin-top: var(--topbar-height);
+  margin-bottom: var(--space-xl);
+  margin-left: calc(var(--sidebar-width) - 8px);
+  margin-right: auto;
 }
 
 .page {
@@ -372,7 +393,11 @@
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
+    margin: 0;
+    height: 100vh;
     border-radius: 0;
+    border: none;
+    border-right: 1px solid var(--border-color);
     width: var(--sidebar-expanded);
     z-index: 200;
   }

@@ -43,21 +43,21 @@
 
 /* ---- Utility animation classes ---- */
 .anim-fade-in {
-  animation: fadeIn var(--duration-normal) var(--ease-out);
+  animation: fadeIn var(--duration-normal) var(--ease-smooth);
 }
 
 .anim-fade-in-up {
-  animation: fadeInUp var(--duration-normal) var(--ease-out);
+  animation: fadeInUp var(--duration-normal) var(--ease-smooth);
 }
 
 .anim-fade-in-down {
-  animation: fadeInDown var(--duration-normal) var(--ease-out);
+  animation: fadeInDown var(--duration-normal) var(--ease-smooth);
 }
 
 /* Staggered children animation */
 .stagger-children > * {
   opacity: 0;
-  animation: fadeInUp var(--duration-normal) var(--ease-out) forwards;
+  animation: fadeInUp var(--duration-normal) var(--ease-smooth) forwards;
 }
 
 .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
@@ -69,13 +69,13 @@
 
 /* ---- Hover lift for cards ---- */
 .hover-lift {
-  transition: transform var(--duration-normal) var(--ease-out),
-              box-shadow var(--duration-normal) var(--ease-out);
+  transition: transform var(--duration-normal) var(--ease-smooth),
+              box-shadow var(--duration-normal) var(--ease-smooth);
 }
 
 .hover-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.15), 0 5px 10px rgba(0,0,0,0.3);
 }
 
 /* ---- Skeleton loader ---- */
@@ -107,7 +107,7 @@
 
 /* ---- Page transition ---- */
 .page-enter {
-  animation: fadeInUp var(--duration-normal) var(--ease-out);
+  animation: fadeInUp var(--duration-normal) var(--ease-smooth);
 }
 
 /* ---- Reduced motion ---- */

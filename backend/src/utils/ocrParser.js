@@ -107,15 +107,22 @@ function extractItems(text) {
   const lines = text.split('\n');
 
   for (const line of lines) {
-    // Match lines that have text followed by an amount
-    const match = line.match(/^(.+?)\s+[₱P$]?\s*([\d,]+\.\d{2})\s*$/);
+    // Match line formatted as "Name : Price : Quantity" or "Name Price Quantity"
+    // e.g. "Burger 150.00 2" or "Burger : 150.00 : 2"
+    let match = line.match(/^(.+?)\s*[:]?\s*[₱P$]?\s*([\d,]+\.\d{2})\s*[:]?\s*(\d+)$/);
+    if (!match) {
+      // Fallback matching without quantity
+      match = line.match(/^(.+?)\s*[₱P$]?\s*([\d,]+\.\d{2})\s*$/);
+    }
+
     if (match) {
       const name = match[1].trim();
       const amount = parseFloat(match[2].replace(/,/g, ''));
+      const qty = match[3] ? parseInt(match[3], 10) : 1;
       
       // Skip if name is a total-related keyword
       if (!/TOTAL|SUBTOTAL|TAX|DISCOUNT|CHANGE|CASH|AMOUNT|BALANCE/i.test(name)) {
-        items.push({ name, amount });
+        items.push({ name, price: amount, qty }); // price instead of amount to match Phase 3 requirement
       }
     }
   }

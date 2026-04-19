@@ -3,7 +3,7 @@
 // ============================================
 
 // API base URL — uses env-based URL in production, relative in dev
-const API_BASE = window.__API_BASE__ || '/api';
+const API_BASE = window.API_URL || 'http://localhost:10000';
 
 /**
  * Make an authenticated API request

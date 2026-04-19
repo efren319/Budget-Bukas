@@ -18,8 +18,12 @@ function initApp() {
   if (user) {
     const nameEl = document.getElementById('user-name');
     const roleEl = document.getElementById('user-role');
+    const avatarEl = document.getElementById('user-avatar');
     if (nameEl) nameEl.textContent = user.name || 'User';
     if (roleEl) roleEl.textContent = user.role || 'Member';
+    if (avatarEl && user.avatar_url) {
+      avatarEl.innerHTML = `<img src="/api/auth/avatar/${user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+    }
   }
 
   // Hide officer-only elements for members
@@ -177,8 +181,46 @@ function initSettings() {
   // Populate profile form
   const nameInput = document.getElementById('settings-name');
   const emailInput = document.getElementById('settings-email');
+  const avatarPreview = document.getElementById('settings-avatar-preview');
+  
   if (nameInput && user) nameInput.value = user.name || '';
   if (emailInput && user) emailInput.value = user.email || '';
+  if (avatarPreview && user && user.avatar_url) {
+    avatarPreview.innerHTML = `<img src="/api/auth/avatar/${user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+  }
+
+  // Avatar upload via File Input
+  const avatarInput = document.getElementById('settings-avatar-upload');
+  if (avatarInput) {
+    avatarInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      try {
+        const result = await apiUpload('/auth/avatar', formData);
+        if (result && result.success) {
+          const avatarUrl = result.data.avatar_url;
+          
+          // Update local storage
+          const updatedUser = { ...user, avatar_url: avatarUrl };
+          localStorage.setItem('bb_user', JSON.stringify(updatedUser));
+          
+          // Update DOM instances
+          const imgMarkup = `<img src="/api/auth/avatar/${avatarUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+          if (avatarPreview) avatarPreview.innerHTML = imgMarkup;
+          const topbarAvatar = document.getElementById('user-avatar');
+          if (topbarAvatar) topbarAvatar.innerHTML = imgMarkup;
+          
+          showToast('Profile photo updated successfully');
+        }
+      } catch (err) {
+        showToast(err.message || 'Failed to update avatar', 'error');
+      }
+    });
+  }
 
   // Profile form submit
   const profileForm = document.getElementById('settings-profile-form');

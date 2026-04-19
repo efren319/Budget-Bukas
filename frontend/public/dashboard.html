@@ -66,6 +66,8 @@
           <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
             <i data-lucide="menu"></i>
           </button>
+        </div>
+        <div class="topbar-center">
           <div class="search-bar">
             <i data-lucide="search"></i>
             <input type="text" placeholder="Search transactions..." id="global-search">
@@ -95,7 +97,10 @@
       <div class="content-area" id="content-area">
         <!-- ========== DASHBOARD PAGE ========== -->
         <section class="page page-dashboard active" id="page-dashboard">
-          <!-- Hero Panel -->
+          <div class="dashboard-master-layout">
+            <!-- ========== MAIN CONTENT COLUMN ========== -->
+            <div class="dashboard-main-content">
+              <!-- Hero Panel -->
           <div class="hero-panel" id="hero-panel">
             <div class="hero-bg">
               <img src="assets/images/hero-bg.png" alt="" onerror="this.parentElement.classList.add('no-img')">
@@ -170,13 +175,31 @@
                 <div class="category-list" id="category-breakdown">
                   <div class="empty-state-small">No data yet</div>
                 </div>
-              </div>
+              </div> <!-- /side-card (categories) -->
+
+            </div> <!-- /right-panel -->
+          </div> <!-- /dashboard-grid -->
+
+        </div> <!-- /dashboard-main-content -->
+
+        <!-- ========== SIDE CONTENT COLUMN ========== -->
+        <div class="dashboard-side-content">
+          <!-- Organization Members -->
+          <div class="side-card member-card">
+            <div class="side-card-header">
+              <h4>Organization Members</h4>
+            </div>
+            <div class="member-list" id="members-list">
+              <div class="empty-state-small">Loading members...</div>
             </div>
           </div>
-        </section>
+        </div> <!-- /dashboard-side-content -->
 
-        <!-- ========== ADD TRANSACTION PAGE ========== -->
-        <section class="page page-add-transaction" id="page-add-transaction">
+      </div> <!-- /dashboard-master-layout -->
+    </section> <!-- /page-dashboard -->
+
+    <!-- ========== ADD TRANSACTION PAGE ========== -->
+    <section class="page page-add-transaction" id="page-add-transaction">
           <div class="page-header">
             <h2>Add Transaction</h2>
             <p>Record a new income or expense</p>
@@ -240,7 +263,15 @@
               <!-- Receipt Upload (expense only) -->
               <div class="form-row expense-fields hidden">
                 <div class="form-group">
-                  <label>Receipt (Optional)</label>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+                    <label style="margin: 0;">Receipt (Optional)</label>
+                    <label class="toggle-switch" style="transform: scale(0.8);">
+                      <input type="checkbox" id="toggle-ocr" checked>
+                      <span class="toggle-slider"></span>
+                      <span style="margin-left: 50px; font-size:12px; color:var(--text-secondary); white-space:nowrap;">Auto OCR</span>
+                    </label>
+                  </div>
+                  
                   <div class="receipt-upload-area" id="receipt-upload-area">
                     <i data-lucide="upload-cloud"></i>
                     <p>Click or drag receipt image here</p>
@@ -349,41 +380,37 @@
         <!-- ========== CHATBOT PAGE ========== -->
         <section class="page page-chatbot" id="page-chatbot">
           <div class="chatbot-container">
-            <div class="chatbot-glow"></div>
-            <div class="chatbot-inner">
-              <div class="chatbot-header">
-                <div class="chatbot-header-icon">
-                  <i data-lucide="bot"></i>
-                  <div class="ai-pulse"></div>
-                </div>
-                <div>
-                  <h3>BudgetBukas AI</h3>
-                  <span class="chatbot-status">Online — Ask me about your finances</span>
-                </div>
+            <div class="chatbot-header">
+              <div class="chatbot-header-icon">
+                <i data-lucide="bot"></i>
+                <div class="ai-pulse"></div>
               </div>
-              <div class="chatbot-messages" id="chatbot-messages">
-                <div class="chat-message bot">
-                  <div class="chat-avatar"><i data-lucide="bot"></i></div>
-                  <div class="chat-bubble">
-                    <p>👋 Kumusta! I'm the BudgetBukas AI assistant. Ask me anything about the organization's finances!</p>
-                    <div class="chat-suggestions">
-                      <button class="suggestion-pill" data-query="Total balance">Total balance</button>
-                      <button class="suggestion-pill" data-query="Expenses this month">Expenses this month</button>
-                      <button class="suggestion-pill" data-query="Top expenses">Top expenses</button>
-                      <button class="suggestion-pill" data-query="Expenses by category">By category</button>
-                      <button class="suggestion-pill" data-query="Help">What can you do?</button>
-                    </div>
+              <div>
+                <h3>BudgetBukas AI</h3>
+                <span class="chatbot-status">Online — Ask me about your finances</span>
+              </div>
+            </div>
+            <div class="chatbot-messages" id="chatbot-messages">
+              <div class="chat-message bot">
+                <div class="chat-avatar"><i data-lucide="bot"></i></div>
+                <div class="chat-bubble">
+                  <p>👋 Kumusta! I'm the BudgetBukas AI assistant. Ask me anything about the organization's finances!</p>
+                  <div class="chat-suggestions">
+                    <button class="suggestion-pill" data-query="Total balance">Total balance</button>
+                    <button class="suggestion-pill" data-query="Expenses this month">Expenses this month</button>
+                    <button class="suggestion-pill" data-query="Top expenses">Top expenses</button>
+                    <button class="suggestion-pill" data-query="Expenses by category">By category</button>
+                    <button class="suggestion-pill" data-query="Help">What can you do?</button>
                   </div>
                 </div>
               </div>
-              <div class="chatbot-input-wrapper">
-                <div class="chatbot-input-glow"></div>
-                <div class="chatbot-input">
-                  <input type="text" id="chatbot-input" placeholder="Ask about finances... (e.g., 'Saan napunta pera?')">
-                  <button id="chatbot-send" aria-label="Send">
-                    <i data-lucide="send"></i>
-                  </button>
-                </div>
+            </div>
+            <div class="chatbot-input-wrapper">
+              <div class="chatbot-input">
+                <input type="text" id="chatbot-input" placeholder="Ask about finances... (e.g., 'Saan napunta pera?')">
+                <button id="chatbot-send" aria-label="Send">
+                  <i data-lucide="send"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -399,6 +426,15 @@
             <div class="settings-card">
               <h4><i data-lucide="user"></i> Profile</h4>
               <form id="settings-profile-form">
+                <div class="form-group" style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg);">
+                  <div class="topbar-avatar" id="settings-avatar-preview" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                    <i data-lucide="user"></i>
+                  </div>
+                  <div>
+                    <label for="settings-avatar-upload" class="btn btn-secondary btn-sm" style="cursor: pointer;">Change Photo</label>
+                    <input type="file" id="settings-avatar-upload" accept="image/jpeg,image/png,image/webp" hidden>
+                  </div>
+                </div>
                 <div class="form-group">
                   <label for="settings-name">Name</label>
                   <input type="text" id="settings-name">
@@ -445,6 +481,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Scripts -->
+  <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/app.js"></script>

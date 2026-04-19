@@ -12,34 +12,35 @@
   gap: var(--space-sm);
   padding: 10px 20px;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
   font-family: var(--font-primary);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-out);
+  transition: all var(--duration-normal) var(--ease-smooth);
   text-decoration: none;
   white-space: nowrap;
 }
 .btn svg { width: 16px; height: 16px; }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+  background: var(--gold);
   color: #0F0F0F;
 }
 .btn-primary:hover {
-  box-shadow: 0 4px 20px rgba(212,175,55,0.3);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow-strong);
+  transform: scale(1.02);
 }
 
 .btn-secondary {
   background: var(--bg-elevated);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   border: 1px solid var(--border-color);
 }
 .btn-secondary:hover {
   border-color: var(--gold);
   color: var(--gold);
+  transform: scale(1.02);
 }
 
 .btn-danger {
@@ -49,6 +50,7 @@
 }
 .btn-danger:hover {
   background: rgba(255,59,92,0.2);
+  transform: scale(1.02);
 }
 
 .btn-sm {
@@ -119,14 +121,14 @@
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   background: var(--bg-input);
   color: var(--text-primary);
   font-family: var(--font-primary);
   font-size: 0.9rem;
-  transition: all var(--duration-normal) var(--ease-out);
+  transition: all var(--duration-normal) var(--ease-smooth);
   outline: none;
   box-sizing: border-box;
 }
@@ -135,7 +137,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(212,175,55,0.08);
+  box-shadow: var(--shadow-glow);
 }
 
 .form-group input::placeholder,
@@ -562,7 +564,7 @@
   align-items: center;
   justify-content: center;
   z-index: 300;
-  animation: fadeIn var(--duration-fast);
+  animation: fadeIn var(--duration-normal) var(--ease-smooth);
 }
 
 .modal-content {
@@ -574,6 +576,8 @@
   overflow: auto;
   box-shadow: var(--shadow-lg);
   position: relative;
+  transform-origin: center;
+  animation: scaleIn var(--duration-normal) var(--ease-smooth);
 }
 
 .modal-close {

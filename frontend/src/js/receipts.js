@@ -15,9 +15,71 @@ function initReceiptsPage() {
   const overlay = document.getElementById('receipt-modal');
   if (overlay) {
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.classList.add('hidden');
+      if (e.target === overlay) {
+        overlay.classList.add('hidden');
+        resetZoom(); // Reset when closing
+      }
     });
   }
+}
+
+// Zoom / Pan State
+let currentZoom = 1;
+let panX = 0, panY = 0;
+let isDragging = false;
+let startX, startY;
+
+function resetZoom() {
+  currentZoom = 1; panX = 0; panY = 0;
+  const img = document.getElementById('receipt-modal-img');
+  if (img) {
+    img.style.transform = 'translate(0px, 0px) scale(1)';
+  }
+}
+
+function setupZoomAndPan() {
+  const img = document.getElementById('receipt-modal-img');
+  if (!img) return;
+  
+  img.style.cursor = 'grab';
+  img.style.transition = 'transform 0.1s ease-out'; // Fast response for zoom
+  
+  // Clean up old listeners (prevent duplicates)
+  img.onwheel = null; img.onmousedown = null; img.onmousemove = null; img.onmouseup = null; img.onmouseleave = null;
+
+  img.onwheel = (e) => {
+    e.preventDefault();
+    currentZoom += e.deltaY * -0.002;
+    currentZoom = Math.min(Math.max(1, currentZoom), 5); // Clamped between 1x and 5x
+    img.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+  };
+  
+  img.onmousedown = (e) => {
+    e.preventDefault();
+    isDragging = true;
+    img.style.cursor = 'grabbing';
+    img.style.transition = 'none'; // Instant pan tracking
+    startX = e.pageX - panX;
+    startY = e.pageY - panY;
+  };
+  
+  img.onmousemove = (e) => {
+    if (!isDragging) return;
+    panX = e.pageX - startX;
+    panY = e.pageY - startY;
+    img.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+  };
+  
+  const endDrag = () => { 
+    if(isDragging) {
+      isDragging = false; 
+      img.style.cursor = 'grab';
+      img.style.transition = 'transform 0.1s ease-out';
+    }
+  };
+  
+  img.onmouseup = endDrag;
+  img.onmouseleave = endDrag;
 }
 
 async function loadReceipts() {
@@ -65,8 +127,12 @@ async function viewReceipt(id) {
 
     const r = data.data;
 
+    resetZoom(); // Start fresh
     img.src = `/api/receipts/image/${r.file_path}`;
     img.onerror = () => { img.style.display = 'none'; };
+    
+    // Attach event listeners
+    img.onload = () => setupZoomAndPan();
 
     info.innerHTML = `
       <h3 style="margin-bottom:var(--space-md)">${r.category || 'Receipt'}</h3>

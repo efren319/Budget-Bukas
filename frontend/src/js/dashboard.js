@@ -7,6 +7,9 @@ let mainChart = null;
 function initDashboard() {
   // Load data on first load
   loadDashboardData();
+  
+  // Fetch members asynchronously without blocking
+  fetchMembers();
 
   // Filter pills
   const pills = document.querySelectorAll('#chart-filters .pill');
@@ -105,6 +108,52 @@ function renderCategoryBreakdown(categories) {
   }).join('');
 }
 
+async function fetchMembers() {
+  try {
+    const data = await apiGet('/auth/users');
+    if (!data || !data.success) {
+      renderMembers([]);
+      return;
+    }
+    renderMembers(data.data);
+  } catch (error) {
+    console.error('Members fetch error:', error);
+    renderMembers([]);
+  }
+}
+
+function renderMembers(members) {
+  const container = document.getElementById('members-list');
+  if (!container) return;
+
+  if (!members || members.length === 0) {
+    container.innerHTML = '<div class="empty-state-small">No members found</div>';
+    return;
+  }
+
+  container.innerHTML = members.map(member => {
+    const avatarHtml = member.avatar_url 
+      ? `<img src="/api/auth/avatar/${member.avatar_url}" alt="${member.name}">`
+      : `<i data-lucide="user"></i>`;
+      
+    const roleClass = member.role === 'officer' ? 'officer' : '';
+
+    return `
+      <div class="member-item">
+        <div class="member-avatar">
+          ${avatarHtml}
+        </div>
+        <div class="member-info">
+          <span class="member-name">${member.name}</span>
+          <span class="member-role ${roleClass}">${member.role}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
 async function loadChartData(period) {
   try {
     const data = await apiGet(`/transactions/dashboard/chart?period=${period}`);
@@ -140,8 +189,13 @@ function renderChart(chartData, period) {
 
   // Get theme
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)';
-  const textColor = isDark ? '#9A9A9A' : '#555555';
+  const gridColor = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.04)';
+  const textColor = isDark ? '#6B6B6B' : '#555555';
+
+  // Create gradient for Income
+  const gradientIncome = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientIncome.addColorStop(0, 'rgba(212, 175, 55, 0.4)');
+  gradientIncome.addColorStop(1, 'rgba(212, 175, 55, 0.0)');
 
   mainChart = new Chart(ctx, {
     type: 'line',
@@ -152,13 +206,13 @@ function renderChart(chartData, period) {
           label: 'Income',
           data: incomeData,
           borderColor: '#D4AF37',
-          backgroundColor: 'rgba(212, 175, 55, 0.08)',
-          borderWidth: 2.5,
+          backgroundColor: gradientIncome,
+          borderWidth: 3,
           tension: 0.4,
           fill: true,
           pointBackgroundColor: '#D4AF37',
-          pointBorderColor: '#D4AF37',
-          pointRadius: 3,
+          pointBorderColor: '#0F0F0F',
+          pointRadius: 4,
           pointHoverRadius: 6,
           pointHoverBackgroundColor: '#D4AF37',
           pointHoverBorderColor: '#fff',
@@ -167,16 +221,17 @@ function renderChart(chartData, period) {
         {
           label: 'Expenses',
           data: expenseData,
-          borderColor: '#7A5C4F',
-          backgroundColor: 'rgba(122, 92, 79, 0.05)',
+          borderColor: '#6B6B6B',
+          backgroundColor: 'transparent',
           borderWidth: 2,
+          borderDash: [5, 5],
           tension: 0.4,
-          fill: true,
-          pointBackgroundColor: '#7A5C4F',
-          pointBorderColor: '#7A5C4F',
+          fill: false,
+          pointBackgroundColor: '#6B6B6B',
+          pointBorderColor: '#0F0F0F',
           pointRadius: 3,
-          pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#7A5C4F',
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#6B6B6B',
           pointHoverBorderColor: '#fff',
           pointHoverBorderWidth: 2
         }
