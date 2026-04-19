@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BudgetBukas - Financial Transparency System for JPCS BatStateU Lipa">
+  <title>BudgetBukas — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-wrapper::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: floatSlow 15s ease-in-out infinite;
+    }
+    .login-wrapper::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(92,64,51,0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: floatSlow 20s ease-in-out infinite reverse;
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(30px, -20px); }
+    }
+
+    .login-container {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      width: 900px;
+      max-width: 95vw;
+      min-height: 540px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-card), 0 0 60px rgba(212,175,55,0.06);
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .login-brand {
+      flex: 1;
+      background: linear-gradient(135deg, #1a1510 0%, #0F0F0F 50%, #1a1510 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-2xl);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-brand::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(212,175,55,0.03) 50%, transparent 100%);
+    }
+
+    .login-brand .brand-logos {
+      display: flex;
+      gap: var(--space-md);
+      align-items: center;
+      margin-bottom: var(--space-xl);
+      position: relative;
+    }
+
+    .login-brand .brand-logos img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(212,175,55,0.3);
+    }
+
+    .login-brand h1 {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: var(--space-sm);
+      position: relative;
+    }
+
+    .login-brand p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      text-align: center;
+      line-height: 1.6;
+      max-width: 260px;
+    }
+
+    .login-brand .brand-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: var(--space-lg) 0;
+    }
+
+    .login-brand .brand-tagline {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      color: var(--gold-dark);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .login-form-panel {
+      flex: 1;
+      background: var(--bg-secondary);
+      padding: var(--space-2xl) var(--space-xl);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-form-panel h2 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-xs);
+    }
+
+    .login-form-panel .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: var(--space-xl);
+    }
+
+    .form-group { margin-bottom: var(--space-md); }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-family: var(--font-primary);
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
+    }
+
+    .form-group input::placeholder { color: rgba(160,160,160,0.5); }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+      background-size: 200% 100%;
+      color: #0F0F0F;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: var(--space-md);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-login:hover {
+      background-position: 100% 0;
+      box-shadow: 0 4px 20px rgba(212,175,55,0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .form-toggle {
+      text-align: center;
+      margin-top: var(--space-lg);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .form-toggle a {
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .form-toggle a:hover { color: var(--gold-light); }
+
+    .login-error {
+      background: rgba(220, 53, 69, 0.1);
+      border: 1px solid rgba(220, 53, 69, 0.3);
+      color: #ff6b7a;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      margin-bottom: var(--space-md);
+      display: none;
+    }
+
+    .login-error.show { display: block; animation: fadeIn 0.3s ease; }
+    .register-fields { display: none; }
+    .register-fields.show { display: block; animation: fadeIn 0.3s ease; }
+
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-family: var(--font-primary);
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      outline: none;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+
+    .form-group select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,175,55,0.1); }
+
+    @media (max-width: 768px) {
+      .login-container { flex-direction: column; min-height: auto; }
+      .login-brand { padding: var(--space-xl); }
+      .login-brand h1 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-container">
+      <div class="login-brand">
+        <div class="brand-logos">
+          <img src="assets/logos/bsu-logo.png" alt="BatStateU" onerror="this.style.display='none'">
+          <img src="assets/logos/jpcs-logo.png" alt="JPCS" onerror="this.style.display='none'">
+        </div>
+        <h1>BudgetBukas</h1>
+        <p>Financial Transparency System for the Junior Philippine Computer Society</p>
+        <div class="brand-divider"></div>
+        <span class="brand-tagline">BatStateU Lipa</span>
+      </div>
+
+      <div class="login-form-panel">
+        <h2 id="form-title">Welcome Back</h2>
+        <p class="subtitle" id="form-subtitle">Sign in to access the dashboard</p>
+
+        <div class="login-error" id="login-error"></div>
+
+        <form id="auth-form" autocomplete="off">
+          <div class="register-fields" id="register-fields">
+            <div class="form-group">
+              <label for="reg-name">Full Name</label>
+              <input type="text" id="reg-name" placeholder="Juan Dela Cruz">
+            </div>
+            <div class="form-group">
+              <label for="reg-role">Role</label>
+              <select id="reg-role">
+                <option value="member">Member</option>
+                <option value="officer">Officer (Treasurer/President)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" placeholder="you@batstate-u.edu.ph" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="••••••••" required minlength="6">
+          </div>
+
+          <button type="submit" class="btn-login" id="btn-submit">Sign In</button>
+        </form>
+
+        <div class="form-toggle">
+          <span id="toggle-text">Don't have an account?</span>
+          <a id="toggle-link" onclick="toggleForm()">Register</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/cursor-glow.js"></script>
+  <script>
+    let isLogin = true;
+
+    function toggleForm() {
+      isLogin = !isLogin;
+      const title = document.getElementById('form-title');
+      const subtitle = document.getElementById('form-subtitle');
+      const btn = document.getElementById('btn-submit');
+      const toggleText = document.getElementById('toggle-text');
+      const toggleLink = document.getElementById('toggle-link');
+      const regFields = document.getElementById('register-fields');
+      const errorEl = document.getElementById('login-error');
+
+      errorEl.classList.remove('show');
+
+      if (isLogin) {
+        title.textContent = 'Welcome Back';
+        subtitle.textContent = 'Sign in to access the dashboard';
+        btn.textContent = 'Sign In';
+        toggleText.textContent = "Don't have an account?";
+        toggleLink.textContent = 'Register';
+        regFields.classList.remove('show');
+      } else {
+        title.textContent = 'Create Account';
+        subtitle.textContent = 'Register to join BudgetBukas';
+        btn.textContent = 'Create Account';
+        toggleText.textContent = 'Already have an account?';
+        toggleLink.textContent = 'Sign In';
+        regFields.classList.add('show');
+      }
+    }
+
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit');
+      const errorEl = document.getElementById('login-error');
+
+      btn.disabled = true;
+      btn.textContent = isLogin ? 'Signing in...' : 'Creating account...';
+      errorEl.classList.remove('show');
+
+      try {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        let url, body;
+
+        if (isLogin) {
+          url = '/api/auth/login';
+          body = { email, password };
+        } else {
+          const name = document.getElementById('reg-name').value;
+          const role = document.getElementById('reg-role').value;
+          if (!name) throw new Error('Please enter your full name.');
+          url = '/api/auth/register';
+          body = { name, email, password, role };
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          throw new Error(data.message || data.errors?.[0]?.msg || 'Authentication failed.');
+        }
+
+        localStorage.setItem('bb_token', data.token);
+        localStorage.setItem('bb_user', JSON.stringify(data.user));
+        window.location.href = '/dashboard.html';
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = isLogin ? 'Sign In' : 'Create Account';
+      }
+    });
+
+    if (localStorage.getItem('bb_token')) {
+      window.location.href = '/dashboard.html';
+    }
+  </script>
+</body>
+</html>

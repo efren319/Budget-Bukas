@@ -1,0 +1,54 @@
+# ============================
+# BudgetBukas .gitignore
+# ============================
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Uploads & runtime
+backend/uploads/receipts/*
+!backend/uploads/receipts/.gitkeep
+
+# Logs & debug output
+logs/
+*.log
+npm-debug.log*
+
+# AI / generated debug outputs
+/history/
+/logs/
+.gemini/
+.cursor/
+*.cache
+.ai-*
+
+# OCR cache & temp files
+tesseract-cache/
+tmp/
+temp/
+*.tmp
+
+# Build
+dist/
+build/
+.vercel/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Package locks (keep only root)
+# frontend/package-lock.json

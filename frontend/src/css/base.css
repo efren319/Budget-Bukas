@@ -1,0 +1,78 @@
+/* ============================================
+   Base Styles — Reset, Typography, Global
+   ============================================ */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background var(--duration-normal) var(--ease-out),
+              color var(--duration-normal) var(--ease-out);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ---- Typography ---- */
+h1 { font-family: var(--font-display); font-weight: 800; }
+h2 { font-family: var(--font-display); font-weight: 700; }
+h3 { font-family: var(--font-display); font-weight: 600; }
+h4 { font-family: var(--font-display); font-weight: 600; }
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+  transition: color var(--duration-fast);
+}
+a:hover { color: var(--gold-light); }
+
+img { max-width: 100%; display: block; }
+
+/* Selection */
+::selection {
+  background: rgba(212, 175, 55, 0.3);
+  color: var(--text-primary);
+}
+
+/* ---- Utility ---- */
+.hidden { display: none !important; }
+.gold { color: var(--gold) !important; }
+.text-muted { color: var(--text-secondary); }
+.text-center { text-align: center; }
+
+/* Spin animation for loader icons */
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

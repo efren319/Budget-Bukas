@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/public/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "backend/src/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/src/server.js"
+    },
+    {
+      "src": "/dashboard.html",
+      "dest": "frontend/public/dashboard.html"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "frontend/src/css/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "frontend/src/js/$1"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "frontend/public/assets/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/public/$1"
+    }
+  ]
+}

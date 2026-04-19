@@ -1,0 +1,15 @@
+{
+  "name": "budgetbukas",
+  "version": "1.0.0",
+  "description": "BudgetBukas — Financial Transparency System for JPCS BatStateU Lipa",
+  "private": true,
+  "scripts": {
+    "dev": "cd backend && node src/server.js",
+    "start": "cd backend && node src/server.js",
+    "install:backend": "cd backend && npm install",
+    "setup": "npm run install:backend"
+  },
+  "keywords": ["finance", "transparency", "jpcs", "budgetbukas"],
+  "author": "JPCS BatStateU Lipa",
+  "license": "MIT"
+}

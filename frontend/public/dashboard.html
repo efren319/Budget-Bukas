@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BudgetBukas Dashboard - Financial Transparency for JPCS">
+  <title>BudgetBukas — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+  <div class="app-wrapper" id="app-wrapper">
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <img src="assets/logos/bb-logo.png" alt="BudgetBukas" class="sidebar-logo" onerror="this.style.display='none'">
+        <span class="sidebar-brand-text">BB</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active" data-page="dashboard" id="nav-dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="sidebar-link" data-page="add-transaction" id="nav-add-transaction">
+          <i data-lucide="plus-circle"></i>
+          <span>Add Transaction</span>
+        </a>
+        <a href="#" class="sidebar-link" data-page="records" id="nav-records">
+          <i data-lucide="file-text"></i>
+          <span>Records</span>
+        </a>
+        <a href="#" class="sidebar-link" data-page="receipts" id="nav-receipts">
+          <i data-lucide="receipt"></i>
+          <span>Receipts</span>
+        </a>
+        <a href="#" class="sidebar-link" data-page="chatbot" id="nav-chatbot">
+          <i data-lucide="bot"></i>
+          <span>Chatbot</span>
+        </a>
+        <a href="#" class="sidebar-link" data-page="settings" id="nav-settings">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <img src="assets/logos/jpcs-logo.png" alt="JPCS" class="sidebar-org-logo" onerror="this.style.display='none'">
+      </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <main class="main-content">
+      <!-- TOP BAR -->
+      <header class="topbar" id="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+            <i data-lucide="menu"></i>
+          </button>
+          <div class="search-bar">
+            <i data-lucide="search"></i>
+            <input type="text" placeholder="Search transactions..." id="global-search">
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+            <i data-lucide="moon" class="theme-icon-dark"></i>
+            <i data-lucide="sun" class="theme-icon-light"></i>
+          </button>
+          <div class="topbar-user">
+            <div class="topbar-user-info">
+              <span class="topbar-user-name" id="user-name">User</span>
+              <span class="topbar-user-role" id="user-role">Member</span>
+            </div>
+            <div class="topbar-avatar" id="user-avatar">
+              <i data-lucide="user"></i>
+            </div>
+            <button class="btn-logout" id="btn-logout" title="Logout">
+              <i data-lucide="log-out"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT AREA (SPA pages rendered here) -->
+      <div class="content-area" id="content-area">
+        <!-- ========== DASHBOARD PAGE ========== -->
+        <section class="page page-dashboard active" id="page-dashboard">
+          <!-- Hero Panel -->
+          <div class="hero-panel" id="hero-panel">
+            <div class="hero-bg">
+              <img src="assets/images/hero-bg.png" alt="" onerror="this.parentElement.classList.add('no-img')">
+              <div class="hero-overlay"></div>
+            </div>
+            <div class="hero-content">
+              <div class="hero-text">
+                <h1>BudgetBukas</h1>
+                <p>Financial Transparency for JPCS</p>
+              </div>
+              <div class="hero-stats">
+                <div class="stat-card stat-income">
+                  <div class="stat-icon"><i data-lucide="trending-up"></i></div>
+                  <div class="stat-info">
+                    <span class="stat-label">Total Funds</span>
+                    <span class="stat-value" id="stat-income">₱0.00</span>
+                  </div>
+                </div>
+                <div class="stat-card stat-expense">
+                  <div class="stat-icon"><i data-lucide="trending-down"></i></div>
+                  <div class="stat-info">
+                    <span class="stat-label">Total Expenses</span>
+                    <span class="stat-value" id="stat-expenses">₱0.00</span>
+                  </div>
+                </div>
+                <div class="stat-card stat-balance">
+                  <div class="stat-icon"><i data-lucide="wallet"></i></div>
+                  <div class="stat-info">
+                    <span class="stat-label">Remaining Balance</span>
+                    <span class="stat-value gold" id="stat-balance">₱0.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="filter-pills" id="chart-filters">
+            <button class="pill active" data-period="week">Week</button>
+            <button class="pill" data-period="month">Month</button>
+            <button class="pill" data-period="year">Year</button>
+          </div>
+
+          <!-- Chart + Right Panel Row -->
+          <div class="dashboard-grid">
+            <div class="chart-panel">
+              <div class="panel-header">
+                <h3>Income vs Expenses</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="main-chart"></canvas>
+              </div>
+            </div>
+
+            <div class="right-panel">
+              <!-- Recent Activity -->
+              <div class="side-card">
+                <div class="side-card-header">
+                  <h4>Recent Activity</h4>
+                  <a href="#" class="see-all" data-goto="records">See all</a>
+                </div>
+                <div class="activity-list" id="recent-activity">
+                  <div class="empty-state-small">No recent activity</div>
+                </div>
+              </div>
+
+              <!-- Category Breakdown -->
+              <div class="side-card">
+                <div class="side-card-header">
+                  <h4>Top Categories</h4>
+                </div>
+                <div class="category-list" id="category-breakdown">
+                  <div class="empty-state-small">No data yet</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== ADD TRANSACTION PAGE ========== -->
+        <section class="page page-add-transaction" id="page-add-transaction">
+          <div class="page-header">
+            <h2>Add Transaction</h2>
+            <p>Record a new income or expense</p>
+          </div>
+          <div class="form-card">
+            <form id="transaction-form" autocomplete="off">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Transaction Type</label>
+                  <div class="type-selector" id="type-selector">
+                    <button type="button" class="type-btn active" data-type="income">
+                      <i data-lucide="trending-up"></i> Income
+                    </button>
+                    <button type="button" class="type-btn" data-type="expense">
+                      <i data-lucide="trending-down"></i> Expense
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row two-col">
+                <div class="form-group">
+                  <label for="tx-amount">Amount (₱)</label>
+                  <input type="number" id="tx-amount" step="0.01" min="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                  <label for="tx-date">Date</label>
+                  <input type="date" id="tx-date" required>
+                </div>
+              </div>
+              <!-- Income Fields -->
+              <div class="form-row income-fields" id="income-fields">
+                <div class="form-group">
+                  <label for="tx-source">Source</label>
+                  <input type="text" id="tx-source" placeholder="e.g., Membership Fees, Donation">
+                </div>
+              </div>
+              <!-- Expense Fields -->
+              <div class="form-row expense-fields hidden" id="expense-fields">
+                <div class="form-group">
+                  <label for="tx-category">Category</label>
+                  <select id="tx-category">
+                    <option value="">Select category</option>
+                    <option value="Food & Beverages">Food & Beverages</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Supplies">Supplies</option>
+                    <option value="Printing">Printing</option>
+                    <option value="Events">Events</option>
+                    <option value="Equipment">Equipment</option>
+                    <option value="Venue">Venue</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row expense-fields hidden">
+                <div class="form-group">
+                  <label for="tx-description">Description</label>
+                  <textarea id="tx-description" rows="3" placeholder="Brief description of the expense..."></textarea>
+                </div>
+              </div>
+
+              <!-- Receipt Upload (expense only) -->
+              <div class="form-row expense-fields hidden">
+                <div class="form-group">
+                  <label>Receipt (Optional)</label>
+                  <div class="receipt-upload-area" id="receipt-upload-area">
+                    <i data-lucide="upload-cloud"></i>
+                    <p>Click or drag receipt image here</p>
+                    <span>JPG, PNG, WebP — Max 5MB</span>
+                    <input type="file" id="receipt-file" accept="image/jpeg,image/png,image/webp" hidden>
+                  </div>
+                  <div class="receipt-preview hidden" id="receipt-preview">
+                    <img id="receipt-preview-img" alt="Receipt preview">
+                    <button type="button" class="btn-remove-receipt" id="btn-remove-receipt">
+                      <i data-lucide="x"></i>
+                    </button>
+                    <div class="ocr-status" id="ocr-status">
+                      <i data-lucide="loader" class="spin"></i> Scanning receipt...
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="btn-reset-form">Reset</button>
+                <button type="submit" class="btn btn-primary" id="btn-save-transaction">
+                  <i data-lucide="save"></i> Save Transaction
+                </button>
+              </div>
+            </form>
+
+            <!-- Edit mode indicator -->
+            <div class="edit-mode-banner hidden" id="edit-mode-banner">
+              <i data-lucide="edit-3"></i>
+              <span>Editing transaction #<b id="edit-tx-id"></b></span>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-edit">Cancel</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== RECORDS PAGE ========== -->
+        <section class="page page-records" id="page-records">
+          <div class="page-header">
+            <h2>Transaction Records</h2>
+            <p>View and manage all financial records</p>
+          </div>
+
+          <!-- Filters Row -->
+          <div class="records-filters">
+            <div class="filter-group">
+              <select id="filter-type">
+                <option value="">All Types</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+              </select>
+              <input type="date" id="filter-start" placeholder="Start date">
+              <input type="date" id="filter-end" placeholder="End date">
+              <input type="text" id="filter-search" placeholder="Search...">
+              <button class="btn btn-secondary btn-sm" id="btn-apply-filters">
+                <i data-lucide="filter"></i> Filter
+              </button>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="table-container">
+            <table class="data-table" id="records-table">
+              <thead>
+                <tr>
+                  <th class="sortable" data-sort="date">Date <i data-lucide="arrow-up-down"></i></th>
+                  <th>Type</th>
+                  <th class="sortable" data-sort="amount">Amount <i data-lucide="arrow-up-down"></i></th>
+                  <th>Category / Source</th>
+                  <th>Description</th>
+                  <th>Added By</th>
+                  <th>Receipt</th>
+                  <th class="col-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="records-tbody">
+                <tr><td colspan="8" class="empty-state">No records found</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination" id="records-pagination"></div>
+        </section>
+
+        <!-- ========== RECEIPTS PAGE ========== -->
+        <section class="page page-receipts" id="page-receipts">
+          <div class="page-header">
+            <h2>Receipts</h2>
+            <p>View all uploaded receipt images</p>
+          </div>
+          <div class="receipts-grid" id="receipts-grid">
+            <div class="empty-state">No receipts uploaded yet</div>
+          </div>
+
+          <!-- Receipt Modal -->
+          <div class="modal-overlay hidden" id="receipt-modal">
+            <div class="modal-content receipt-modal-content">
+              <button class="modal-close" id="receipt-modal-close"><i data-lucide="x"></i></button>
+              <div class="receipt-modal-body">
+                <img id="receipt-modal-img" alt="Receipt">
+                <div class="receipt-modal-info" id="receipt-modal-info"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== CHATBOT PAGE ========== -->
+        <section class="page page-chatbot" id="page-chatbot">
+          <div class="chatbot-container">
+            <div class="chatbot-glow"></div>
+            <div class="chatbot-inner">
+              <div class="chatbot-header">
+                <div class="chatbot-header-icon">
+                  <i data-lucide="bot"></i>
+                  <div class="ai-pulse"></div>
+                </div>
+                <div>
+                  <h3>BudgetBukas AI</h3>
+                  <span class="chatbot-status">Online — Ask me about your finances</span>
+                </div>
+              </div>
+              <div class="chatbot-messages" id="chatbot-messages">
+                <div class="chat-message bot">
+                  <div class="chat-avatar"><i data-lucide="bot"></i></div>
+                  <div class="chat-bubble">
+                    <p>👋 Kumusta! I'm the BudgetBukas AI assistant. Ask me anything about the organization's finances!</p>
+                    <div class="chat-suggestions">
+                      <button class="suggestion-pill" data-query="Total balance">Total balance</button>
+                      <button class="suggestion-pill" data-query="Expenses this month">Expenses this month</button>
+                      <button class="suggestion-pill" data-query="Top expenses">Top expenses</button>
+                      <button class="suggestion-pill" data-query="Expenses by category">By category</button>
+                      <button class="suggestion-pill" data-query="Help">What can you do?</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="chatbot-input-wrapper">
+                <div class="chatbot-input-glow"></div>
+                <div class="chatbot-input">
+                  <input type="text" id="chatbot-input" placeholder="Ask about finances... (e.g., 'Saan napunta pera?')">
+                  <button id="chatbot-send" aria-label="Send">
+                    <i data-lucide="send"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== SETTINGS PAGE ========== -->
+        <section class="page page-settings" id="page-settings">
+          <div class="page-header">
+            <h2>Settings</h2>
+            <p>Manage your account and preferences</p>
+          </div>
+          <div class="settings-grid">
+            <div class="settings-card">
+              <h4><i data-lucide="user"></i> Profile</h4>
+              <form id="settings-profile-form">
+                <div class="form-group">
+                  <label for="settings-name">Name</label>
+                  <input type="text" id="settings-name">
+                </div>
+                <div class="form-group">
+                  <label for="settings-email">Email</label>
+                  <input type="email" id="settings-email">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+              </form>
+            </div>
+            <div class="settings-card">
+              <h4><i data-lucide="lock"></i> Change Password</h4>
+              <form id="settings-password-form">
+                <div class="form-group">
+                  <label for="settings-current-pw">Current Password</label>
+                  <input type="password" id="settings-current-pw">
+                </div>
+                <div class="form-group">
+                  <label for="settings-new-pw">New Password</label>
+                  <input type="password" id="settings-new-pw" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
+              </form>
+            </div>
+            <div class="settings-card">
+              <h4><i data-lucide="palette"></i> Appearance</h4>
+              <div class="theme-option">
+                <span>Dark Mode</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settings-theme-toggle" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/transactions.js"></script>
+  <script src="js/receipts.js"></script>
+  <script src="js/chatbot.js"></script>
+  <script src="js/cursor-glow.js"></script>
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>

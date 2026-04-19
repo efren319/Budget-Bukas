@@ -1,0 +1,98 @@
+/* ============================================
+   BudgetBukas Design Tokens
+   All CSS custom properties
+   ============================================ */
+
+:root {
+  /* ---- Primary Palette ---- */
+  --gold:        #D4AF37;
+  --gold-light:  #E8C547;
+  --gold-dark:   #B8960F;
+  --gold-muted:  rgba(212, 175, 55, 0.15);
+  --brown:       #5C4033;
+  --brown-light: #7A5C4F;
+  --brown-dark:  #3D2B22;
+
+  /* ---- Dark Mode (Default) ---- */
+  --bg-primary:    #0F0F0F;
+  --bg-secondary:  #161616;
+  --bg-card:       #1A1A1A;
+  --bg-elevated:   #222222;
+  --bg-input:      #1E1E1E;
+  --text-primary:  #FFFFFF;
+  --text-secondary:#9A9A9A;
+  --text-muted:    #666666;
+  --border-color:  rgba(255, 255, 255, 0.06);
+  --border-gold:   rgba(212, 175, 55, 0.2);
+
+  /* ---- Semantic Colors ---- */
+  --success:     #34C759;
+  --danger:      #FF3B5C;
+  --warning:     #FFB800;
+  --info:        #5AC8FA;
+
+  /* ---- Spacing Scale ---- */
+  --space-2xs: 2px;
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ---- Border Radius ---- */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-2xl:  32px;
+  --radius-pill: 50px;
+  --radius-full: 50%;
+
+  /* ---- Shadows ---- */
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.2);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.3);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-lg:   0 8px 40px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.12);
+  --shadow-glow-strong: 0 0 40px rgba(212, 175, 55, 0.2);
+
+  /* ---- Typography ---- */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ---- Transitions ---- */
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+
+  /* ---- Layout ---- */
+  --sidebar-width: 72px;
+  --sidebar-expanded: 220px;
+  --topbar-height: 64px;
+}
+
+/* ---- Light Mode Overrides ---- */
+[data-theme="light"] {
+  --bg-primary:    #F5F3EE;
+  --bg-secondary:  #FFFFFF;
+  --bg-card:       #FFFFFF;
+  --bg-elevated:   #FAFAF8;
+  --bg-input:      #F0EDE6;
+  --text-primary:  #1A1A1A;
+  --text-secondary:#555555;
+  --text-muted:    #999999;
+  --border-color:  rgba(0, 0, 0, 0.08);
+  --border-gold:   rgba(212, 175, 55, 0.25);
+  --shadow-sm:     0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md:     0 4px 16px rgba(0,0,0,0.08);
+  --shadow-card:   0 4px 24px rgba(0,0,0,0.08);
+  --shadow-lg:     0 8px 40px rgba(0,0,0,0.1);
+  --shadow-glow:   0 0 20px rgba(212, 175, 55, 0.06);
+  --shadow-glow-strong: none;
+}

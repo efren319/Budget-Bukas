@@ -1,0 +1,9 @@
+{
+  "name": "budgetbukas-frontend",
+  "version": "1.0.0",
+  "description": "BudgetBukas Frontend — Static SPA",
+  "private": true,
+  "scripts": {
+    "preview": "npx serve public -l 5000"
+  }
+}
