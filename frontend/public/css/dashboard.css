@@ -218,11 +218,58 @@
 
 /* ---- Chart Panel ---- */
 .chart-panel {
-  background: var(--bg-card);
+  position: relative;
+  z-index: 1;
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   padding: var(--space-lg);
   box-shadow: var(--shadow-sm);
+  overflow: hidden; /* Clips the rotating border element */
+}
+
+/* Animated Gradient Border Pseudo-element */
+.chart-panel::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent, 
+    var(--gold) 10%, 
+    transparent 30%, 
+    transparent 50%, 
+    var(--gold-dark) 70%, 
+    transparent 80%, 
+    var(--gold) 100%
+  );
+  animation: rotate-border 6s linear infinite;
+  animation-play-state: paused;
+  z-index: -2;
+  opacity: 0;
+  transition: opacity var(--duration-normal);
+}
+
+.chart-panel:hover::before {
+  animation-play-state: running;
+  opacity: 1;
+}
+
+/* Inner Background Mask to create the "1px" border effect */
+.chart-panel::after {
+  content: '';
+  position: absolute;
+  inset: 1px; /* The thickness of the border */
+  background: var(--bg-secondary);
+  border-radius: calc(var(--radius-xl) - 1px);
+  z-index: -1;
+}
+
+@keyframes rotate-border {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .panel-header {
@@ -250,7 +297,7 @@
 }
 
 .side-card {
-  background: var(--bg-card);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   padding: var(--space-lg);
