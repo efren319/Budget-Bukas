@@ -20,7 +20,7 @@
     width: '320px',
     height: '320px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(212,175,55,0.07) 0%, rgba(212,175,55,0.02) 40%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(208, 127, 44, 0.07) 0%, rgba(212, 146, 55, 0.02) 40%, transparent 70%)',
     pointerEvents: 'none',
     zIndex: '9999',
     transform: 'translate(-50%, -50%)',

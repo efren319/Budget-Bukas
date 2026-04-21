@@ -104,8 +104,10 @@ async function login(req, res) {
 
     const { email, password } = req.body;
 
-    // Find user
+    console.time('login-query');
     const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    console.timeEnd('login-query');
+
     if (users.length === 0) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
@@ -113,7 +115,9 @@ async function login(req, res) {
     const user = users[0];
 
     // Verify password
+    console.time('login-bcrypt');
     const isMatch = await bcrypt.compare(password, user.password);
+    console.timeEnd('login-bcrypt');
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
@@ -140,7 +144,12 @@ async function login(req, res) {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ success: false, message: 'Server error during login.' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during login.',
+      debug: error.message,
+      stack: error.stack
+    });
   }
 }
 

@@ -5,25 +5,25 @@
 
 :root {
   /* ---- Primary Palette ---- */
-  --gold:        #D4AF37;
-  --gold-light:  #E8C547;
-  --gold-dark:   #B8960F;
-  --gold-muted:  rgba(212, 175, 55, 0.15);
+  --gold: #d3ac77;
+  --gold-light: #f2dab2;
+  --gold-dark: #d28447;
+  --gold-muted: rgb(212 142 55 / 15%);
 
   /* ---- Gradients ---- */
-  --grad-gold:   linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+  --grad-gold: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
 
   /* ---- Dark Mode (Default) ---- */
-  --bg-primary:    #0F0F0F;
-  --bg-secondary:  #181818;
-  --bg-card:       #1A1A1A;
-  --bg-elevated:   #222222;
-  --bg-input:      #121212;
-  --text-primary:  #FFFFFF;
-  --text-secondary:#9A9A9A;
-  --text-muted:    #6B6B6B;
+  --bg-primary: #13111d;
+  --bg-secondary: #282538;
+  --bg-card: #161b2e;
+  --bg-elevated: #222222;
+  --bg-input: #121212;
+  --text-primary: #f8f3fa;
+  --text-secondary: #777487;
+  --text-muted: #3e3c48;
   --border-color:  rgba(255, 255, 255, 0.08);
-  --border-gold:   rgba(212, 175, 55, 0.2);
+  --border-gold:   rgba(212, 144, 55, 0.2);
 
   /* ---- Semantic Colors ---- */
   --success:     #34C759;
@@ -56,8 +56,8 @@
   --shadow-md:   0 8px 24px rgba(0,0,0,0.4);
   --shadow-card: 0 12px 32px rgba(0,0,0,0.5);
   --shadow-lg:   0 16px 48px rgba(0,0,0,0.6);
-  --shadow-glow: 0 0 16px rgba(212, 175, 55, 0.1);
-  --shadow-glow-strong: 0 0 32px rgba(212, 175, 55, 0.2);
+  --shadow-glow: 0 0 16px rgba(212, 139, 55, 0.1);
+  --shadow-glow-strong: 0 0 32px rgba(212, 144, 55, 0.2);
 
   /* ---- Typography ---- */
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -89,11 +89,11 @@
   --text-secondary:#555555;
   --text-muted:    #999999;
   --border-color:  rgba(0, 0, 0, 0.08);
-  --border-gold:   rgba(212, 175, 55, 0.25);
+  --border-gold:   rgba(212, 131, 55, 0.25);
   --shadow-sm:     0 2px 8px rgba(0,0,0,0.06);
   --shadow-md:     0 4px 16px rgba(0,0,0,0.08);
   --shadow-card:   0 4px 24px rgba(0,0,0,0.08);
   --shadow-lg:     0 8px 40px rgba(0,0,0,0.1);
-  --shadow-glow:   0 0 20px rgba(212, 175, 55, 0.06);
+  --shadow-glow:   0 0 20px rgba(212, 139, 55, 0.06);
   --shadow-glow-strong: none;
 }

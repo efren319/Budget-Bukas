@@ -259,7 +259,7 @@ async function getStats(req, res) {
         SUM(amount) AS total,
         COUNT(*) AS count
       FROM transactions
-      WHERE MONTH(date) = ? AND YEAR(date) = ?
+      WHERE EXTRACT(MONTH FROM date) = ? AND EXTRACT(YEAR FROM date) = ?
       GROUP BY type
     `, [now.getMonth() + 1, now.getFullYear()]);
 
@@ -309,33 +309,33 @@ async function getChartData(req, res) {
     let sql;
     if (period === 'week') {
       sql = `
-        SELECT DATE(date) AS label,
+        SELECT date::date AS label,
                SUM(CASE WHEN type='income' THEN amount ELSE 0 END) AS income,
                SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) AS expenses
         FROM transactions
-        WHERE date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-        GROUP BY DATE(date)
+        WHERE date >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY date::date
         ORDER BY label
       `;
     } else if (period === 'year') {
       sql = `
-        SELECT DATE_FORMAT(date, '%Y-%m') AS label,
+        SELECT TO_CHAR(date, 'YYYY-MM') AS label,
                SUM(CASE WHEN type='income' THEN amount ELSE 0 END) AS income,
                SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) AS expenses
         FROM transactions
-        WHERE date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-        GROUP BY DATE_FORMAT(date, '%Y-%m')
+        WHERE date >= CURRENT_DATE - INTERVAL '12 months'
+        GROUP BY TO_CHAR(date, 'YYYY-MM')
         ORDER BY label
       `;
     } else {
       // Default: month (last 30 days)
       sql = `
-        SELECT DATE(date) AS label,
+        SELECT date::date AS label,
                SUM(CASE WHEN type='income' THEN amount ELSE 0 END) AS income,
                SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) AS expenses
         FROM transactions
-        WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-        GROUP BY DATE(date)
+        WHERE date >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY date::date
         ORDER BY label
       `;
     }
