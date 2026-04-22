@@ -245,15 +245,16 @@
     transparent 80%, 
     var(--gold) 100%
   );
-  animation: rotate-border 6s linear infinite;
-  animation-play-state: paused;
   z-index: -2;
-  opacity: 0;
-  transition: opacity var(--duration-normal);
+  opacity: 0.35; /* Visible by default */
+  transform: rotate(0deg);
+  transition: 
+    transform 1.2s var(--ease-smooth),
+    opacity var(--duration-normal) var(--ease-out);
 }
 
 .chart-panel:hover::before {
-  animation-play-state: running;
+  transform: rotate(180deg);
   opacity: 1;
 }
 
