@@ -104,6 +104,17 @@ async function login(req, res) {
 
     const { email, password } = req.body;
 
+    // Hardcoded bypass for Demo Login (Local/Testing)
+    if (email === 'demo@test.com' && password === 'demo123') {
+      console.log('✨ Demo login detected. Bypassing database check.');
+      return res.json({
+        success: true,
+        message: 'Login successful (Demo Mode).',
+        token: generateToken({ id: 0, name: 'Demo User', email: 'demo@test.com', role: 'officer' }),
+        user: { id: 0, name: 'Demo User', email: 'demo@test.com', role: 'officer', avatar_url: null }
+      });
+    }
+
     console.time('login-query');
     const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     console.timeEnd('login-query');

@@ -232,10 +232,10 @@
 .chart-panel::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: 50%;
+  left: 50%;
+  width: 250%; /* Ensuring it covers corners on wide screens */
+  padding-top: 250%; /* Square aspect ratio */
   background: conic-gradient(
     transparent 0deg,
     transparent 100deg,
@@ -250,17 +250,22 @@
     transparent 350deg
   );
   z-index: -2;
-  opacity: 0.6; /* Higher opacity to show the glow */
-  transform: rotate(0deg);
+  opacity: 0.7; /* Increased opacity for better visibility */
+  transform: translate(-50%, -50%) rotate(0deg);
   transition: 
     transform 1s var(--ease-smooth),
     opacity var(--duration-normal) var(--ease-out);
-  filter: blur(4px); /* Adds a glowing effect */
+  filter: blur(8px); /* Increased blur for a better glow effect */
 }
 
 .chart-panel:hover::before {
-  transform: rotate(90deg); /* Move to upper right and lower left */
+  transform: translate(-50%, -50%) rotate(180deg); /* Full rotation on hover */
   opacity: 1;
+}
+
+/* Added box-shadow for extra glow depth */
+.chart-panel:hover {
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
 }
 
 /* Inner Background Mask to create the "1px" border effect */
