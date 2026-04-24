@@ -1,7 +1,7 @@
 {
-  "name": "budgetbukas-frontend",
+  "name": "pondosync-frontend",
   "version": "1.0.0",
-  "description": "BudgetBukas Frontend — Static SPA",
+  "description": "PondoSync Frontend — Static SPA",
   "private": true,
   "scripts": {
     "preview": "npx serve public -l 5000"

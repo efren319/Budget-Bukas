@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="BudgetBukas - Financial Transparency System for JPCS BatStateU Lipa">
-  <title>BudgetBukas — Login</title>
+  <meta name="description" content="PondoSync - Financial Transparency System for JPCS BatStateU Lipa">
+  <title>PondoSync — Login</title>
   <link rel="icon" type="image/png" href="assets/logos/web-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/animations.css">
@@ -169,6 +170,12 @@
       letter-spacing: 0.5px;
     }
 
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
     .form-group input {
       width: 100%;
       padding: 12px 16px;
@@ -189,6 +196,37 @@
     }
 
     .form-group input::placeholder { color: rgba(160,160,160,0.5); }
+
+    /* Password Toggle */
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .password-toggle:hover { color: var(--gold); }
+    .password-toggle svg { width: 18px; height: 18px; }
+
+    /* Suggestion Ghost */
+    .suggestion-ghost {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: rgba(255, 255, 255, 0.15);
+      font-family: var(--font-primary);
+      font-size: 0.95rem;
+      white-space: pre;
+      z-index: 1;
+    }
 
     .btn-login {
       width: 100%;
@@ -281,7 +319,7 @@
           <img src="assets/logos/bsu-logo.png" alt="BatStateU" onerror="this.style.display='none'">
           <img src="assets/logos/jpcs-logo.png" alt="JPCS" onerror="this.style.display='none'">
         </div>
-        <h1>BudgetBukas</h1>
+        <h1>PondoSync</h1>
         <p>Financial Transparency System for the Junior Philippine Computer Society</p>
         <div class="brand-divider"></div>
         <span class="brand-tagline">BatStateU Lipa</span>
@@ -293,7 +331,7 @@
 
         <div class="login-error" id="login-error"></div>
 
-        <form id="auth-form" autocomplete="off">
+        <form id="auth-form" autocomplete="off" novalidate>
           <div class="register-fields" id="register-fields">
             <div class="form-group">
               <label for="reg-name">Full Name</label>
@@ -310,11 +348,19 @@
 
           <div class="form-group">
             <label for="email">Email Address</label>
-            <input type="email" id="email" placeholder="sr-code@g.batstate-u.edu.ph" required>
+            <div class="input-wrapper">
+              <span id="email-suggestion" class="suggestion-ghost"></span>
+              <input type="email" id="email" placeholder="sr-code@g.batstate-u.edu.ph" required>
+            </div>
           </div>
           <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" placeholder="••••••••" required minlength="6">
+            <div class="input-wrapper">
+              <input type="password" id="password" placeholder="••••••••" required minlength="6">
+              <button type="button" class="password-toggle" id="password-toggle" title="Toggle visibility">
+                <i data-lucide="eye"></i>
+              </button>
+            </div>
           </div>
 
           <button type="submit" class="btn-login" id="btn-submit">Sign In</button>
@@ -331,7 +377,59 @@
   <script src="js/config.js"></script>
   <script src="js/cursor-glow.js"></script>
   <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
     let isLogin = true;
+
+    // Password Toggle Logic
+    const passwordInput = document.getElementById('password');
+    const passwordToggle = document.getElementById('password-toggle');
+    passwordToggle.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      passwordToggle.innerHTML = isPassword ? '<i data-lucide="eye-off"></i>' : '<i data-lucide="eye"></i>';
+      lucide.createIcons();
+    });
+
+    // Email Suggestion Logic
+    const emailInput = document.getElementById('email');
+    const emailSuggestion = document.getElementById('email-suggestion');
+    const suffix = '@g.batstate-u.edu.ph';
+
+    emailInput.addEventListener('input', () => {
+      const val = emailInput.value;
+      // Pattern: XX-XXXXX (e.g., 21-12345)
+      const srCodeRegex = /^\d{2}-\d{5}$/;
+      
+      if (srCodeRegex.test(val)) {
+        emailSuggestion.textContent = val + suffix;
+      } else if (val.includes(suffix.split('@')[1]) || (val.includes('@') && val.length > 8)) {
+        // If they start typing the suffix or have an @
+        if (suffix.startsWith(val.substring(val.indexOf('@')))) {
+           emailSuggestion.textContent = val.substring(0, val.indexOf('@')) + suffix;
+        } else {
+           emailSuggestion.textContent = '';
+        }
+      } else {
+        emailSuggestion.textContent = '';
+      }
+      
+      // Clear suggestion if they type exactly the whole thing or more
+      if (val === emailSuggestion.textContent) {
+        emailSuggestion.textContent = '';
+      }
+    });
+
+    // Email Autocomplete on Tab/Enter
+    emailInput.addEventListener('keydown', (e) => {
+      if ((e.key === 'Tab' || e.key === 'Enter') && emailSuggestion.textContent) {
+        e.preventDefault();
+        emailInput.value = emailSuggestion.textContent;
+        emailSuggestion.textContent = '';
+        passwordInput.focus();
+      }
+    });
 
     function toggleForm() {
       isLogin = !isLogin;
@@ -354,7 +452,7 @@
         regFields.classList.remove('show');
       } else {
         title.textContent = 'Create Account';
-        subtitle.textContent = 'Register to join BudgetBukas';
+        subtitle.textContent = 'Register to join PondoSync';
         btn.textContent = 'Create Account';
         toggleText.textContent = 'Already have an account?';
         toggleLink.textContent = 'Sign In';

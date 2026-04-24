@@ -1,7 +1,7 @@
 {
-  "name": "budgetbukas-backend",
+  "name": "pondosync-backend",
   "version": "1.0.0",
-  "description": "BudgetBukas Backend API — Financial Transparency System for JPCS",
+  "description": "PondoSync Backend API — Financial Transparency System for JPCS",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -11,7 +11,7 @@
     "finance",
     "transparency",
     "jpcs",
-    "budgetbukas",
+    "pondosync",
     "api"
   ],
   "author": "JPCS BatStateU Lipa",

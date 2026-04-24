@@ -1,7 +1,7 @@
 {
-  "name": "budgetbukas",
+  "name": "pondosync",
   "version": "1.0.0",
-  "description": "BudgetBukas — Financial Transparency System for JPCS BatStateU Lipa",
+  "description": "PondoSync — Financial Transparency System for JPCS BatStateU Lipa",
   "private": true,
   "scripts": {
     "dev": "cd backend && node src/server.js",
@@ -9,7 +9,7 @@
     "install:backend": "cd backend && npm install",
     "setup": "npm run install:backend"
   },
-  "keywords": ["finance", "transparency", "jpcs", "budgetbukas"],
+  "keywords": ["finance", "transparency", "jpcs", "pondosync"],
   "author": "JPCS BatStateU Lipa",
   "license": "MIT"
 }

@@ -12,7 +12,7 @@ app.listen(PORT, () => {
   console.log(`
   ╔══════════════════════════════════════════╗
   ║                                          ║
-  ║   💰  BudgetBukas Server Running        ║
+  ║   💰  PondoSync Server Running          ║
   ║                                          ║
   ║   Local:  http://localhost:${PORT}          ║
   ║   Mode:   ${process.env.NODE_ENV || 'development'}                   ║

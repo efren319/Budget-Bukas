@@ -229,7 +229,7 @@ async function changePassword(req, res) {
 
 // Helper: Generate JWT
 function generateToken(payload) {
-  const secret = process.env.JWT_SECRET || 'budgetbukas_secret_fallback_123';
+  const secret = process.env.JWT_SECRET || 'pondosync_secret_fallback_123';
   return jwt.sign(payload, secret, { expiresIn: '24h' });
 }
 

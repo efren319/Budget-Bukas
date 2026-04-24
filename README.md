@@ -1,10 +1,10 @@
-# 💰 BudgetBukas
+# 💰 PondoSync
 
 **Financial Transparency System for JPCS — BatStateU Lipa**
 
 > "Saan napupunta ang pera ng org?"
 
-BudgetBukas is a production-quality web-based financial transparency system built for the Junior Philippine Computer Society (JPCS) at Batangas State University – Lipa Campus. It enables officers to manage organizational finances while providing members with transparent, read-only access to all financial data.
+PondoSync is a production-quality web-based financial transparency system built for the Junior Philippine Computer Society (JPCS) at Batangas State University – Lipa Campus. It enables officers to manage organizational finances while providing members with transparent, read-only access to all financial data.
 
 ---
 
@@ -53,8 +53,8 @@ project-root/
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/YOUR_USERNAME/budgetbukas.git
-cd budgetbukas
+git clone https://github.com/YOUR_USERNAME/pondosync.git
+cd pondosync
 npm run install:backend
 ```
 
@@ -69,7 +69,7 @@ Edit `.env` at project root:
 DB_HOST=localhost
 DB_USER=root
 DB_PASS=your_password
-DB_NAME=budgetbukas
+DB_NAME=pondosync
 JWT_SECRET=change_this_to_a_random_string
 ```
 

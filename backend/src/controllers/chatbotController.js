@@ -368,7 +368,7 @@ async function totalExpenses() {
 }
 
 function showHelp() {
-  const response = `🤖 **BudgetBukas AI Assistant**\n\nHere are things you can ask me:\n\n` +
+  const response = `🤖 **PondoSync AI Assistant**\n\nHere are things you can ask me:\n\n` +
     `💰 **"Total balance"** — Check remaining funds\n` +
     `📊 **"Expenses this month"** — Current month spending\n` +
     `📋 **"Expenses by category"** — Category breakdown\n` +

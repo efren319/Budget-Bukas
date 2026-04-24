@@ -1,5 +1,5 @@
 -- ============================================
--- BudgetBukas Database Schema (PostgreSQL / Neon)
+-- PondoSync Database Schema (PostgreSQL / Neon)
 -- Financial Transparency System for JPCS
 -- ============================================
 

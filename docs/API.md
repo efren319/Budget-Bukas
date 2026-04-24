@@ -1,4 +1,4 @@
-# BudgetBukas API Reference
+# PondoSync API Reference
 
 ## Base URL
 ```

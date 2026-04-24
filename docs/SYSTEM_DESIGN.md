@@ -1,8 +1,8 @@
-# BudgetBukas — System Design Document
+# PondoSync — System Design Document
 
 ## 1. Overview
 
-BudgetBukas is a financial transparency system for the JPCS organization at BatStateU Lipa. It solves the problem: *"Saan napupunta ang pera ng org?"*
+PondoSync is a financial transparency system for the JPCS organization at BatStateU Lipa. It solves the problem: *"Saan napupunta ang pera ng org?"*
 
 ### Users
 - **Officers** (Treasurer/President): Full CRUD access to transactions, receipts, and reports
