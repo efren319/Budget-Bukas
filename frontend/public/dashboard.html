@@ -48,10 +48,6 @@
           <i data-lucide="bot"></i>
           <span>Chatbot</span>
         </a>
-        <a href="#" class="sidebar-link" data-page="settings" id="nav-settings">
-          <i data-lucide="settings"></i>
-          <span>Settings</span>
-        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -75,6 +71,22 @@
           </div>
         </div>
         <div class="topbar-right">
+          <div class="notification-wrapper" id="notification-wrapper">
+            <button class="topbar-action-btn notification-btn" id="notification-btn" aria-label="Notifications">
+              <i data-lucide="bell"></i>
+              <span class="notification-badge" id="notification-badge">3</span>
+            </button>
+            <div class="notification-panel hidden" id="notification-panel">
+              <div class="notification-panel-header">
+                <h4>Notifications</h4>
+                <button class="notification-clear-btn" id="notification-clear-btn">Clear all</button>
+              </div>
+              <div class="notification-list" id="notification-list">
+                <!-- Notifications rendered by JS -->
+              </div>
+            </div>
+          </div>
+
           <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
             <i data-lucide="moon" class="theme-icon-dark"></i>
             <i data-lucide="sun" class="theme-icon-light"></i>
@@ -84,7 +96,7 @@
               <span class="topbar-user-name" id="user-name">User</span>
               <span class="topbar-user-role" id="user-role">Member</span>
             </div>
-            <div class="topbar-avatar" id="user-avatar">
+            <div class="topbar-avatar" id="user-avatar" role="button" tabindex="0" title="Settings" aria-label="Open settings">
               <i data-lucide="user"></i>
             </div>
             <button class="btn-logout" id="btn-logout" title="Logout">
@@ -101,18 +113,9 @@
           <div class="dashboard-master-layout">
             <!-- ========== MAIN CONTENT COLUMN ========== -->
             <div class="dashboard-main-content">
-              <!-- Hero Panel -->
-          <div class="hero-panel" id="hero-panel">
-            <div class="hero-bg">
-              <img src="assets/images/hero-bg.png" alt="" onerror="this.parentElement.classList.add('no-img')">
-              <div class="hero-overlay"></div>
-            </div>
-            <div class="hero-content">
-              <div class="hero-text">
-                <h1>PondoSync</h1>
-                <p>Financial Transparency for JPCS</p>
-              </div>
-              <div class="hero-stats">
+
+              <!-- Stats Row (separated from hero) -->
+              <div class="stats-row">
                 <div class="stat-card stat-income">
                   <div class="stat-icon"><i data-lucide="trending-up"></i></div>
                   <div class="stat-info">
@@ -135,8 +138,20 @@
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+
+              <!-- Hero Banner (visual only) -->
+              <div class="hero-panel" id="hero-panel">
+                <div class="hero-bg">
+                  <img src="assets/images/hero-bg.png" alt="" onerror="this.parentElement.classList.add('no-img')">
+                  <div class="hero-overlay"></div>
+                </div>
+                <div class="hero-content">
+                  <div class="hero-text">
+                    <h1>PondoSync</h1>
+                    <p>Financial Transparency for JPCS</p>
+                  </div>
+                </div>
+              </div>
 
           <!-- Filter Pills -->
           <div class="filter-pills" id="chart-filters">
@@ -461,16 +476,7 @@
                 <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
               </form>
             </div>
-            <div class="settings-card">
-              <h4><i data-lucide="palette"></i> Appearance</h4>
-              <div class="theme-option">
-                <span>Dark Mode</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="settings-theme-toggle" checked>
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
+
           </div>
         </section>
 

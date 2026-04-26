@@ -35,7 +35,10 @@ function initApp() {
   // Initialize modules
   initTheme();
   initNavigation();
-  initSidebar();
+  initMobileSidebar();
+  initTopbarScroll();
+  initNotifications();
+  initAvatarSettings();
   initLogout();
   initGlobalSearch();
   initDashboard();
@@ -112,26 +115,207 @@ function navigateTo(page) {
 }
 
 // =============================================
-// SIDEBAR
+// MOBILE SIDEBAR (Drawer only — no push)
 // =============================================
-function initSidebar() {
+function initMobileSidebar() {
   const toggle = document.getElementById('sidebar-toggle');
   const sidebar = document.getElementById('sidebar');
 
-  if (toggle && sidebar) {
-    toggle.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-    });
+  if (!toggle || !sidebar) return;
 
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', (e) => {
-      if (window.innerWidth <= 768) {
-        if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
-          sidebar.classList.remove('open');
-        }
+  // Mobile toggle — slide drawer
+  toggle.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+  });
+
+  // Close sidebar when clicking outside on mobile
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768) {
+      if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+        sidebar.classList.remove('open');
       }
+    }
+  });
+}
+
+
+// =============================================
+// STICKY TOPBAR WITH SCROLL EFFECT
+// =============================================
+function initTopbarScroll() {
+  const topbar = document.getElementById('topbar');
+  if (!topbar) return;
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 20) {
+      topbar.classList.add('topbar-scrolled');
+    } else {
+      topbar.classList.remove('topbar-scrolled');
+    }
+  }, { passive: true });
+}
+
+// =============================================
+// AVATAR → SETTINGS NAVIGATION
+// =============================================
+function initAvatarSettings() {
+  const avatar = document.getElementById('user-avatar');
+  if (!avatar) return;
+
+  avatar.addEventListener('click', () => {
+    navigateTo('settings');
+  });
+
+  // Also handle keyboard (Enter/Space for accessibility)
+  avatar.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      navigateTo('settings');
+    }
+  });
+}
+
+// =============================================
+// NOTIFICATION SYSTEM
+// =============================================
+function initNotifications() {
+  const btn = document.getElementById('notification-btn');
+  const panel = document.getElementById('notification-panel');
+  const badge = document.getElementById('notification-badge');
+  const clearBtn = document.getElementById('notification-clear-btn');
+  const listEl = document.getElementById('notification-list');
+
+  if (!btn || !panel || !listEl) return;
+
+  // Simulated notifications
+  let notifications = [
+    {
+      id: 1,
+      type: 'tx',
+      icon: 'trending-up',
+      title: 'New Income Recorded',
+      desc: 'Membership fee of ₱150.00 was added by Admin.',
+      time: '2 minutes ago',
+      unread: true
+    },
+    {
+      id: 2,
+      type: 'member',
+      icon: 'user-plus',
+      title: 'New Member Registered',
+      desc: 'Juan Dela Cruz joined the organization.',
+      time: '15 minutes ago',
+      unread: true
+    },
+    {
+      id: 3,
+      type: 'system',
+      icon: 'shield-check',
+      title: 'System Update',
+      desc: 'PondoSync v1.2 is now live with enhanced security.',
+      time: '1 hour ago',
+      unread: true
+    },
+    {
+      id: 4,
+      type: 'announce',
+      icon: 'megaphone',
+      title: 'Announcement',
+      desc: 'General Assembly scheduled for May 5, 2026.',
+      time: '3 hours ago',
+      unread: false
+    },
+    {
+      id: 5,
+      type: 'tx',
+      icon: 'trending-down',
+      title: 'Expense Logged',
+      desc: 'Printing costs ₱850.00 were recorded for the event.',
+      time: '5 hours ago',
+      unread: false
+    }
+  ];
+
+  function renderNotifications() {
+    const unreadCount = notifications.filter(n => n.unread).length;
+
+    // Update badge
+    if (badge) {
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    // Render list
+    if (notifications.length === 0) {
+      listEl.innerHTML = `
+        <div class="notification-empty">
+          <i data-lucide="bell-off"></i>
+          <p>No notifications</p>
+          <span>You're all caught up!</span>
+        </div>
+      `;
+    } else {
+      listEl.innerHTML = notifications.map(n => `
+        <div class="notification-item" data-id="${n.id}">
+          <div class="notification-item-icon ${n.type}">
+            <i data-lucide="${n.icon}"></i>
+          </div>
+          <div class="notification-item-content">
+            <div class="notification-item-title">${n.title}</div>
+            <div class="notification-item-desc">${n.desc}</div>
+            <div class="notification-item-time">${n.time}</div>
+          </div>
+          ${n.unread ? '<div class="notification-unread-dot"></div>' : ''}
+        </div>
+      `).join('');
+    }
+
+    // Refresh icons inside panel
+    if (typeof lucide !== 'undefined') {
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+  }
+
+  // Toggle panel
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = panel.classList.contains('hidden');
+
+    if (isHidden) {
+      panel.classList.remove('hidden');
+      // Mark all as read when opening
+      notifications.forEach(n => n.unread = false);
+      renderNotifications();
+      // Bell ring
+      btn.classList.add('ring');
+      setTimeout(() => btn.classList.remove('ring'), 600);
+    } else {
+      panel.classList.add('hidden');
+    }
+  });
+
+  // Close panel when clicking outside
+  const wrapper = document.getElementById('notification-wrapper');
+  document.addEventListener('click', (e) => {
+    if (wrapper && !wrapper.contains(e.target)) {
+      panel.classList.add('hidden');
+    }
+  });
+
+  // Clear all
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      notifications = [];
+      renderNotifications();
     });
   }
+
+  // Initial render
+  renderNotifications();
 }
 
 // =============================================

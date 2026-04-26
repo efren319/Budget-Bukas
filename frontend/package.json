@@ -5,5 +5,8 @@
   "private": true,
   "scripts": {
     "preview": "npx serve public -l 5000"
+  },
+  "dependencies": {
+    "pondosync": "file:.."
   }
 }
