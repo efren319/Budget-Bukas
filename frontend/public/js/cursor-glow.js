@@ -70,8 +70,8 @@
       if (this.life <= 0) return;
 
       const alpha = this.life * 0.08; // Even lower opacity for text readability
-      // Brighter golden light colors
-      const goldColor = theme === 'light' ? '212, 175, 55' : '255, 223, 118';
+      // Richer golden light colors
+      const goldColor = theme === 'light' ? '184, 134, 11' : '212, 175, 55';
 
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
@@ -111,11 +111,11 @@
 
     // Add a central soft glow at cursor (smaller radius)
     if (isMoving) {
-      const centralAlpha = theme === 'light' ? 0.03 : 0.04;
-      const glowRadius = 120; // Reduced from 150
+      const centralAlpha = theme === 'light' ? 0.04 : 0.05;
+      const glowRadius = 130; 
       const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, glowRadius);
-      gradient.addColorStop(0, `rgba(255, 223, 118, ${centralAlpha})`);
-      gradient.addColorStop(1, 'rgba(255, 223, 118, 0)');
+      gradient.addColorStop(0, `rgba(212, 175, 55, ${centralAlpha})`);
+      gradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
       ctx.fillStyle = gradient;
       ctx.fillRect(mouseX - glowRadius, mouseY - glowRadius, glowRadius * 2, glowRadius * 2);
     }

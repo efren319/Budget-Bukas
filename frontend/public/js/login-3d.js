@@ -1,255 +1,281 @@
 /**
- * PondoSync Login — 3D Background Logos
- * HDRI environment, soft studio lighting, dual models.
+ * PondoSync Login — 3D Background Logo
+ * Cinematic rendering with strong bloom glow, soft shadows,
+ * reflective ground plane, and cursor-driven rotation.
  */
 
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer }  from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }      from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
 
 (function () {
   'use strict';
 
+  /* ---------- bail on small screens ---------- */
   const MQ_MIN = 900;
   if (window.innerWidth < MQ_MIN) return;
 
-  const BSU_MODEL_PATH = 'assets/3d models/BSU logo.glb';
-  const JPCS_MODEL_PATH = 'assets/3d models/JPCS logo.glb';
-  const HDRI_PATH = 'assets/3d models/studio.hdr';
+  /* ========================================================
+     CONFIGURATION
+     ======================================================== */
+  const MODELS = [
+    {
+      path: 'assets/3d models/JPCS logo.glb',
+      xOffset: -4.8, // Further left
+      scale: 3.8    // Bigger
+    },
+    {
+      path: 'assets/3d models/BSU logo.glb',
+      xOffset: 4.8,  // Further right
+      scale: 4.2    // Bigger
+    }
+  ];
+  
+  const MAX_ROT_DEG    = 12;
+  const MAX_ROT        = THREE.MathUtils.degToRad(MAX_ROT_DEG);
+  const LERP_FACTOR    = 0.06;
+  const MODEL_Y_OFFSET = 0;
 
-  const MAX_ROT_DEG = 12;
-  const MAX_ROT = THREE.MathUtils.degToRad(MAX_ROT_DEG);
-  const LERP_FACTOR = 0.06;
-  const MODEL_SCALE = 2.6; // Increased scale for larger logos
-
+  /* ========================================================
+     CANVAS + RENDERER
+     ======================================================== */
   const canvas = document.getElementById('login-3d-canvas');
   if (!canvas) return;
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
-    alpha: true,
+    alpha: true, // Will be overridden by composer, but we use mix-blend-mode in CSS
     antialias: true,
-    powerPreference: 'high-performance',
-    premultipliedAlpha: true
+    powerPreference: 'high-performance'
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.7; 
+  renderer.toneMappingExposure = 0.6;           // cinematic darkness
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0x000000, 0);
+  
+  // Set clear color to pure black, we will use mix-blend-mode: screen in CSS to make it transparent
+  renderer.setClearColor(0x000000, 1);
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 0, 7); // slightly further back to see both
+  /* ========================================================
+     SCENE + CAMERA
+     ======================================================== */
+  const scene  = new THREE.Scene();
+  // Adjust camera to see wider field for both logos
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  camera.position.set(0, 0, 8); // Moved back slightly to fit larger logos
 
-  /* --- HDRI Environment --- */
-  new RGBELoader().load(HDRI_PATH, (texture) => {
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    scene.environment = texture;
-  });
+  /* ========================================================
+     DARK ENVIRONMENT MAP
+     Provides subtle reflections without brightening the scene.
+     ======================================================== */
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
 
-  /* --- Lighting (Cinematic Studio) --- */
-  scene.add(new THREE.AmbientLight(0xffffff, 0.02)); // Extremely low ambient
+  // Procedural dark environment — a dim warm-tinted sphere
+  const envScene = new THREE.Scene();
+  envScene.add(new THREE.Mesh(
+    new THREE.SphereGeometry(5, 32, 16),
+    new THREE.MeshBasicMaterial({
+      color: 0x0c0a10,
+      side: THREE.BackSide
+    })
+  ));
+  // Add a tiny warm light inside to create a subtle gradient
+  const envLight = new THREE.PointLight(0xdaa555, 0.3, 10);
+  envLight.position.set(2, 2, 0);
+  envScene.add(envLight);
 
-  const keyLight = new THREE.SpotLight(0xfff5e6, 3.5, 40, Math.PI / 4, 0.5, 1.2);
-  keyLight.position.set(5, 5, 5);
-  keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(1024, 1024);
-  keyLight.shadow.bias = -0.0005;
-  keyLight.shadow.radius = 8;
-  scene.add(keyLight);
+  const envMap = pmrem.fromScene(envScene, 0, 0.1, 100).texture;
+  scene.environment = envMap;
+  pmrem.dispose();
 
-  const fillLight = new THREE.DirectionalLight(0xe6f0ff, 0.1); // Weak fill light
-  fillLight.position.set(-5, 0, 5);
+  /* ========================================================
+     LIGHTING — balanced cinematic
+     Reduced intensity, even spread, no harsh contrast.
+     ======================================================== */
+
+  /* --- Ambient: dim warm fill --- */
+  scene.add(new THREE.AmbientLight(0x1e1822, 0.6));
+
+  /* --- Key lights: softer angled spot, warm gold --- */
+  const keyLightRight = new THREE.SpotLight(
+    0xdaa555, 2.0, 30, Math.PI / 3, 0.8, 1.8
+  );
+  keyLightRight.position.set(6, 4, 5);
+  keyLightRight.target.position.set(4.8, 0, 0);
+  keyLightRight.castShadow = true;
+  keyLightRight.shadow.mapSize.set(1024, 1024);
+  keyLightRight.shadow.bias = -0.0004;
+  keyLightRight.shadow.radius = 6;
+  scene.add(keyLightRight);
+  scene.add(keyLightRight.target);
+
+  const keyLightLeft = new THREE.SpotLight(
+    0xdaa555, 2.0, 30, Math.PI / 3, 0.8, 1.8
+  );
+  keyLightLeft.position.set(-6, 4, 5);
+  keyLightLeft.target.position.set(-4.8, 0, 0);
+  keyLightLeft.castShadow = true;
+  keyLightLeft.shadow.mapSize.set(1024, 1024);
+  keyLightLeft.shadow.bias = -0.0004;
+  keyLightLeft.shadow.radius = 6;
+  scene.add(keyLightLeft);
+  scene.add(keyLightLeft.target);
+
+  /* --- Fill light: gentle opposite side --- */
+  const fillLight = new THREE.DirectionalLight(0x8a7a6a, 0.4);
+  fillLight.position.set(0, 2, 4);
   scene.add(fillLight);
 
-  const rimLight = new THREE.PointLight(0xffffff, 3.0, 20, 2); // Strong rim light for edge definition
-  rimLight.position.set(0, 3, -5);
-  scene.add(rimLight);
+  /* --- Rim lights: subtle gold edge --- */
+  const rimTop = new THREE.PointLight(0xd4af37, 0.8, 20, 2);
+  rimTop.position.set(0, 3, -4);
+  scene.add(rimTop);
 
-  /* --- Shadow/Reflection Plane --- */
-  const groundGroup = new THREE.Group();
-  groundGroup.position.y = -1.6;
-
+  /* ========================================================
+     SHADOW-CATCHING GROUND PLANE
+     Gives the model a grounded, physically-placed feel.
+     ======================================================== */
   const shadowPlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(20, 10),
+    new THREE.PlaneGeometry(16, 8),
     new THREE.ShadowMaterial({ opacity: 0.25, color: 0x000000 })
   );
   shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = -1.7;
   shadowPlane.receiveShadow = true;
-  groundGroup.add(shadowPlane);
-  scene.add(groundGroup);
+  scene.add(shadowPlane);
 
-  /* --- Compositor --- */
+  /* ========================================================
+     REFLECTIVE FLOOR (very subtle)
+     Low-opacity mirror plane under the model for grounding.
+     ======================================================== */
+  const reflectionPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(16, 8),
+    new THREE.MeshStandardMaterial({
+      color: 0x0c0a10,
+      metalness: 0.95,
+      roughness: 0.6,
+      transparent: true,
+      opacity: 0.12,
+      envMap: envMap,
+      envMapIntensity: 0.4
+    })
+  );
+  reflectionPlane.rotation.x = -Math.PI / 2;
+  reflectionPlane.position.y = -1.69;            // just above shadow plane
+  reflectionPlane.receiveShadow = true;
+  scene.add(reflectionPlane);
+
+  /* ========================================================
+     POST-PROCESSING — Bloom (emission glow)
+     ======================================================== */
   const container = canvas.parentElement;
-  const rtParams = {
-    minFilter: THREE.LinearFilter,
-    magFilter: THREE.LinearFilter,
-    format: THREE.RGBAFormat,
-    type: THREE.HalfFloatType
-  };
-  const renderTarget = new THREE.WebGLRenderTarget(container.clientWidth, container.clientHeight, rtParams);
-  const composer = new EffectComposer(renderer, renderTarget);
+
+  const composer = new EffectComposer(renderer);
   composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const renderPass = new RenderPass(scene, camera);
-  renderPass.clearColor = new THREE.Color(0x000000);
-  renderPass.clearAlpha = 0;
   composer.addPass(renderPass);
 
+  // Bloom: Lowered strength so it doesn't wash out the models
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(container.clientWidth, container.clientHeight),
-    1.5,     // strength - increased for intense glowing reflections
-    0.5,     // radius
-    0.6      // threshold - lowered so metallic reflections catch the bloom easily
+    0.45,     // strength — reduced significantly to prevent wash-out
+    1.1,      // radius — increased spread for a bigger, softer glow
+    0.65      // threshold — only emissive/bright areas bloom
   );
-
-  bloomPass.compositeMaterial.blending = THREE.CustomBlending;
-  bloomPass.compositeMaterial.blendEquation = THREE.AddEquation;
-  bloomPass.compositeMaterial.blendSrc = THREE.OneFactor;
-  bloomPass.compositeMaterial.blendDst = THREE.OneFactor;
-  bloomPass.compositeMaterial.blendEquationAlpha = THREE.AddEquation;
-  bloomPass.compositeMaterial.blendSrcAlpha = THREE.ZeroFactor;
-  bloomPass.compositeMaterial.blendDstAlpha = THREE.OneFactor;
   composer.addPass(bloomPass);
 
-  composer.addPass(new OutputPass());
+  // OutputPass handles color space conversion after bloom
+  const outputPass = new OutputPass();
+  composer.addPass(outputPass);
 
-  /* --- Noisy Blue Glow Shader --- */
-  const glowUniforms = {
-    time: { value: 0 }
-  };
-
-  const glowMaterial = new THREE.ShaderMaterial({
-    uniforms: glowUniforms,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.CustomBlending,
-    blendEquation: THREE.AddEquation,
-    blendSrc: THREE.OneFactor,
-    blendDst: THREE.OneFactor,
-    blendEquationAlpha: THREE.AddEquation,
-    blendSrcAlpha: THREE.ZeroFactor,
-    blendDstAlpha: THREE.OneFactor,
-    vertexShader: `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec2 vUv;
-      uniform float time;
-
-      float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-      float noise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
-                   mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
-      }
-      float fbm(vec2 p) {
-        float f = 0.0;
-        f += 0.5000 * noise(p); p = p * 2.02;
-        f += 0.2500 * noise(p); p = p * 2.03;
-        f += 0.1250 * noise(p); p = p * 2.01;
-        f += 0.0625 * noise(p);
-        return f;
-      }
-
-      void main() {
-        // Use noise to perturb the distance calculation for a non-perfect circle
-        float n_shape = fbm(vUv * 1.5 + time * 0.1);
-        float dist = distance(vUv + (n_shape - 0.5) * 0.15, vec2(0.5));
-        
-        float radial = smoothstep(0.45, 0.0, dist); // Revert to larger radius
-        
-        float n = fbm(vUv * 4.5 - time * 0.1); // Scattered but balanced
-        
-        // Lower overall intensity as requested
-        float intensity = radial * (0.1 + 0.9 * n) * 1.1; 
-        
-        // Deep gold to glowing bright gold noise
-        vec3 color = mix(vec3(0.5, 0.25, 0.05), vec3(0.85, 0.65, 0.3), n);
-        
-        gl_FragColor = vec4(color * intensity, intensity);
-      }
-    `
-  });
-  const glowGeometry = new THREE.PlaneGeometry(10, 10);
-
-  /* --- Load Models --- */
-  const models = [];
+  /* ========================================================
+     LOAD MODELS
+     ======================================================== */
+  const loadedModels = [];
   const loader = new GLTFLoader();
 
-  function processModel(model, posX, rotY) {
-    const box = new THREE.Box3().setFromObject(model);
-    const center = box.getCenter(new THREE.Vector3());
-    model.position.sub(center);
+  MODELS.forEach((config) => {
+    loader.load(
+      config.path,
+      (gltf) => {
+        const model = gltf.scene;
 
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    model.scale.setScalar(MODEL_SCALE / maxDim);
-    model.rotation.y = rotY;
+        /* centre pivot */
+        const box    = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
 
-    model.traverse((child) => {
-      if (!child.isMesh) return;
-      child.castShadow = true;
-      child.receiveShadow = true;
+        /* wrap in a container for easier positioning */
+        const wrapper = new THREE.Group();
+        wrapper.add(model);
 
-      const mat = child.material;
-      if (!mat) return;
+        /* scale to desired size */
+        const size   = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        wrapper.scale.setScalar(config.scale / maxDim);
 
-      mat.metalness = 1.0;
-      mat.roughness = 0.15;
-      mat.envMapIntensity = 0.8; // High reflection to catch the bloom
+        wrapper.position.x = config.xOffset;
+        wrapper.position.y = MODEL_Y_OFFSET;
 
-      if (mat.emissive && mat.emissiveIntensity !== undefined) {
-        mat.emissiveIntensity = Math.max(mat.emissiveIntensity, 0.5);
-      }
-      mat.needsUpdate = true;
-    });
+        /* enhance materials for cinematic response */
+        model.traverse((child) => {
+          if (!child.isMesh) return;
 
-    const wrapper = new THREE.Group();
-    wrapper.add(model);
+          child.castShadow = true;
+          child.receiveShadow = true;
 
-    // Add blue glow behind the model
-    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-    glow.position.z = -1.5; // push behind the model
-    wrapper.add(glow);
+          const mat = child.material;
+          if (!mat) return;
 
-    wrapper.position.x = posX;
-    scene.add(wrapper);
-    models.push(wrapper);
-  }
+          /* subtle metallic + reflection boost */
+          if (mat.metalness !== undefined) {
+            mat.metalness = Math.min(mat.metalness + 0.1, 0.9);
+          }
+          if (mat.roughness !== undefined) {
+            mat.roughness = Math.max(mat.roughness - 0.05, 0.25);
+          }
 
-  loader.load(JPCS_MODEL_PATH, (gltf) => {
-    // Left side, slightly tilted right, pushed further out
-    processModel(gltf.scene, -3.3, Math.PI / 8);
+          /* environment reflection — boosted for bigger specular highlights */
+          mat.envMap = envMap;
+          mat.envMapIntensity = 0.65;
+
+          /* Subtle emission boost for bloom to catch */
+          if (mat.emissive && mat.emissiveIntensity !== undefined) {
+            mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 1.2, 0.5);
+          }
+
+          mat.needsUpdate = true;
+        });
+
+        scene.add(wrapper);
+        loadedModels.push(wrapper);
+      },
+      undefined,
+      (err) => console.warn(`[login-3d] Model load error (${config.path}):`, err)
+    );
   });
 
-  loader.load(BSU_MODEL_PATH, (gltf) => {
-    // Right side, slightly tilted left, pushed further out
-    processModel(gltf.scene, 3.3, -Math.PI / 8);
-  });
-
-  /* --- Cursor Tracking --- */
-  const cursor = { x: 0, y: 0 };
+  /* ========================================================
+     CURSOR TRACKING
+     ======================================================== */
+  const cursor  = { x: 0, y: 0 };
   const current = { x: 0, y: 0 };
 
   window.addEventListener('mousemove', (e) => {
-    cursor.x = (e.clientX / window.innerWidth) * 2 - 1;
+    cursor.x = (e.clientX / window.innerWidth)  * 2 - 1;
     cursor.y = (e.clientY / window.innerHeight) * 2 - 1;
   });
 
+  /* ========================================================
+     RESIZE HANDLER
+     ======================================================== */
   function resize() {
     const w = container.clientWidth;
     const h = container.clientHeight;
@@ -257,6 +283,14 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     composer.setSize(w, h);
     bloomPass.resolution.set(w, h);
     camera.aspect = w / h;
+    
+    // Adjust camera position based on aspect ratio to keep both logos in view
+    if (camera.aspect < 1.5) {
+      camera.position.z = 10; // Move back on narrower screens
+    } else {
+      camera.position.z = 8;
+    }
+    
     camera.updateProjectionMatrix();
   }
 
@@ -270,19 +304,25 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     resize();
   });
 
+  /* ========================================================
+     RENDER LOOP — uses composer (bloom pipeline)
+     ======================================================== */
   function animate() {
     requestAnimationFrame(animate);
-
-    glowUniforms.time.value = performance.now() * 0.001;
 
     current.x += (cursor.x - current.x) * LERP_FACTOR;
     current.y += (cursor.y - current.y) * LERP_FACTOR;
 
-    models.forEach((m) => {
-      m.rotation.y = THREE.MathUtils.clamp(current.x * MAX_ROT, -MAX_ROT, MAX_ROT);
-      m.rotation.x = THREE.MathUtils.clamp(current.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
+    loadedModels.forEach(model => {
+      model.rotation.y = THREE.MathUtils.clamp(
+        current.x * MAX_ROT, -MAX_ROT, MAX_ROT
+      );
+      model.rotation.x = THREE.MathUtils.clamp(
+        current.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7
+      );
     });
 
+    // Render through bloom composer
     composer.render();
   }
 

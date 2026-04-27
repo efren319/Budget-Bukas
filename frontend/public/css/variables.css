@@ -14,9 +14,9 @@
   --grad-gold: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
 
   /* ---- Dark Mode (Default) ---- */
-  --bg-primary: #13111d;
-  --bg-secondary: #282538;
-  --bg-card: #161b2e;
+  --bg-primary: #080604;
+  --bg-secondary: #1e140f;
+  --bg-card: #2e1d16;
   --bg-elevated: #222222;
   --bg-input: #121212;
   --text-primary: #f8f3fa;
@@ -77,12 +77,65 @@
   --sidebar-expanded: 220px;
   --topbar-height: 64px;
 
-  /* ---- Glassmorphism Variables ---- */
-  --glass-1: rgba(19, 17, 29, 0.65); /* Deep dark glass */
-  --glass-2: rgba(255, 255, 255, 0.03); /* Frosty light glass */
-  --glass-3: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(19, 17, 29, 0.4) 100%); /* Gold-tinted luxury glass */
-  --glass-blur-clean: blur(12px) saturate(180%);
-  --glass-blur-heavy: blur(24px) saturate(200%);
+  /* ═══════════════════════════════════════════════
+     GLASSMORPHISM SYSTEM — Default (Neutral)
+     Usage:  background: var(--glass-bg);
+             backdrop-filter: var(--glass-blur);
+             border: var(--glass-border);
+             box-shadow: var(--glass-shadow);
+     ═══════════════════════════════════════════════ */
+  --glass-bg:
+    linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.01) 100%),
+    radial-gradient(ellipse at 20% 15%, rgba(255,255,255,0.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 85%, rgba(100,120,255,0.04) 0%, transparent 50%),
+    rgba(20, 20, 40, 0.45);
+  --glass-blur: blur(24px) saturate(1.6) brightness(1.05);
+  --glass-border: 1px solid rgba(255,255,255,0.12);
+  --glass-border-top: 1px solid rgba(255,255,255,0.25);
+  --glass-border-left: 1px solid rgba(255,255,255,0.18);
+  --glass-shadow:
+    0 8px 32px rgba(0,0,0,0.35),
+    0 2px 8px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 -1px 0 rgba(0,0,0,0.1),
+    inset 1px 0 0 rgba(255,255,255,0.05),
+    0 0 0 0.5px rgba(255,255,255,0.08);
+  --glass-highlight:
+    linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 40%, transparent 100%);
+  --glass-noise:
+    repeating-conic-gradient(rgba(255,255,255,0.01) 0% 25%, transparent 0% 50%) 0 0 / 3px 3px,
+    radial-gradient(ellipse at 30% 70%, rgba(255,255,255,0.03) 0%, transparent 70%),
+    radial-gradient(ellipse at 70% 30%, rgba(180,200,255,0.02) 0%, transparent 60%);
+  --glass-noise-opacity: 0.7;
+
+  /* ═══════════════════════════════════════════════
+     GLASSMORPHISM SYSTEM — Gold (Dark UI)
+     Usage:  background: var(--glass-gold-bg);
+             backdrop-filter: var(--glass-gold-blur);
+             border: var(--glass-gold-border);
+             box-shadow: var(--glass-gold-shadow);
+     ═══════════════════════════════════════════════ */
+  --glass-bg: linear-gradient(135deg, rgb(0 0 0 / 12%) 0%,
+   rgb(0 0 0 / 4%) 40%, rgba(255, 255, 255, 0.01) 100%), 
+   radial-gradient(ellipse at 20% 15%, rgb(0 0 0 / 27%) 0%, 
+   transparent 55%), radial-gradient(ellipse at 80% 85%,
+    rgb(49 28 24 / 4%) 0%, transparent 50%), rgb(55 40 31 / 45%);
+  --glass-gold-blur: blur(16px) saturate(1.4) brightness(0.52);
+  --glass-gold-border: 1px solid rgba(212,175,55,0.15);
+  --glass-gold-border-top: 1px solid rgba(255,215,80,0.3);
+  --glass-gold-border-left: 1px solid rgba(212,175,55,0.2);
+  --glass-gold-bg: linear-gradient(135deg, rgb(31 13 8 / 14%) 0%, 
+  rgb(27 16 4 / 6%) 40%, rgb(53 23 8 / 2%) 100%), 
+  radial-gradient(ellipse at 25% 15%, rgb(61 36 18 / 18%) 0%, 
+  #00000000 55%), radial-gradient(ellipse at 75% 85%,
+   rgb(51 36 29 / 14%) 0%, #00000021 50%), rgb(37 26 19 / 27%);
+  --glass-gold-highlight:
+    linear-gradient(180deg, rgba(255,215,80,0.1) 0%, rgba(212,175,55,0.03) 35%, transparent 100%);
+  --glass-gold-noise:
+    repeating-conic-gradient(rgba(212,175,55,0.012) 0% 25%, transparent 0% 50%) 0 0 / 3px 3px,
+    radial-gradient(ellipse at 35% 25%, rgba(255,215,80,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 65% 75%, rgba(180,140,40,0.03) 0%, transparent 55%);
+  --glass-gold-noise-opacity: 0.6;
 }
 
 /* ---- Light Mode Overrides ---- */
