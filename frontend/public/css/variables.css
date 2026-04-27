@@ -76,6 +76,13 @@
   --sidebar-width: 72px;
   --sidebar-expanded: 220px;
   --topbar-height: 64px;
+
+  /* ---- Glassmorphism Variables ---- */
+  --glass-1: rgba(19, 17, 29, 0.65); /* Deep dark glass */
+  --glass-2: rgba(255, 255, 255, 0.03); /* Frosty light glass */
+  --glass-3: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(19, 17, 29, 0.4) 100%); /* Gold-tinted luxury glass */
+  --glass-blur-clean: blur(12px) saturate(180%);
+  --glass-blur-heavy: blur(24px) saturate(200%);
 }
 
 /* ---- Light Mode Overrides ---- */
