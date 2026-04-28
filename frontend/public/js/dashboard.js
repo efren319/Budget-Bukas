@@ -187,10 +187,9 @@ function renderChart(chartData, period) {
   const incomeData = chartData.map(d => parseFloat(d.income) || 0);
   const expenseData = chartData.map(d => parseFloat(d.expenses) || 0);
 
-  // Get theme
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const gridColor = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.04)';
-  const textColor = isDark ? '#6B6B6B' : '#555555';
+  // Dark mode defaults
+  const gridColor = 'rgba(255,255,255,0.02)';
+  const textColor = '#6B6B6B';
 
   // Create gradient for Income
   const gradientIncome = ctx.createLinearGradient(0, 0, 0, 300);
@@ -258,10 +257,10 @@ function renderChart(chartData, period) {
           }
         },
         tooltip: {
-          backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF',
-          titleColor: isDark ? '#FFFFFF' : '#1A1A1A',
-          bodyColor: isDark ? '#9A9A9A' : '#555555',
-          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          backgroundColor: '#1A1A1A',
+          titleColor: '#FFFFFF',
+          bodyColor: '#9A9A9A',
+          borderColor: 'rgba(255,255,255,0.1)',
           borderWidth: 1,
           cornerRadius: 12,
           padding: 12,

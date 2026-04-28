@@ -28,10 +28,6 @@
   let particles = [];
   let mouseX = 0;
   let mouseY = 0;
-  let lastMouseX = 0;
-  let lastMouseY = 0;
-  let isMoving = false;
-  let theme = document.documentElement.getAttribute('data-theme') || 'dark';
 
   // Resize handler
   function resize() {
@@ -69,9 +65,8 @@
     draw() {
       if (this.life <= 0) return;
 
-      const alpha = this.life * 0.08; // Even lower opacity for text readability
-      // Richer golden light colors
-      const goldColor = theme === 'light' ? '184, 134, 11' : '212, 175, 55';
+      const alpha = this.life * 0.08;
+      const goldColor = '212, 175, 55'; // Permanent Dark Mode Gold
 
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);

@@ -190,23 +190,8 @@
   font-size: 0.9rem;
 }
 
-/* Light mode hero adjustments */
-[data-theme="light"] .hero-overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(245,243,238,0.3) 0%,
-    rgba(245,243,238,0.6) 40%,
-    rgba(245,243,238,0.95) 100%
-  );
-}
 
-[data-theme="light"] .hero-text h1 {
-  -webkit-text-fill-color: var(--gold-dark);
-}
 
-[data-theme="light"] .hero-text p {
-  color: var(--text-secondary);
-}
 
 /* =============================================
    DASHBOARD GRID (Chart + Right Panel)
@@ -228,62 +213,23 @@ canvas {
 .chart-panel {
   position: relative;
   z-index: 1;
-  background: var(--bg-secondary);
+  background: var(--glass-gold-bg);
+  backdrop-filter: var(--glass-gold-blur);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   padding: var(--space-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
   min-width: 0;
-}
-
-/* Animated Gradient Border Pseudo-element */
-.chart-panel::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 250%;
-  padding-top: 250%;
-  background: conic-gradient(
-    transparent 0deg,
-    transparent 100deg,
-    var(--gold-dark) 120deg,
-    var(--gold) 135deg,
-    var(--gold-light) 150deg,
-    transparent 170deg,
-    transparent 280deg,
-    var(--gold-dark) 300deg,
-    var(--gold) 315deg,
-    var(--gold-light) 330deg,
-    transparent 350deg
-  );
-  z-index: -2;
-  opacity: 0.7;
-  transform: translate(-50%, -50%) rotate(0deg);
-  transition:
-    transform 1s var(--ease-smooth),
-    opacity var(--duration-normal) var(--ease-out);
-  filter: blur(8px);
-}
-
-.chart-panel:hover::before {
-  transform: translate(-50%, -50%) rotate(180deg);
-  opacity: 1;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .chart-panel:hover {
-  box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
-}
-
-/* Inner Background Mask to create the "1px" border effect */
-.chart-panel::after {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  background: var(--bg-secondary);
-  border-radius: calc(var(--radius-xl) - 1px);
-  z-index: -1;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .panel-header {
@@ -317,12 +263,22 @@ canvas {
 }
 
 .side-card {
-  background: var(--bg-secondary);
+  background: var(--glass-gold-bg);
+  backdrop-filter: var(--glass-gold-blur);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   padding: var(--space-lg);
   box-shadow: var(--shadow-sm);
   min-width: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.side-card:hover {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .side-card-header {
@@ -849,4 +805,24 @@ canvas {
   .side-card {
     min-width: 0;
   }
+}
+
+/* =============================================
+   3D BACKGROUND CONTAINER
+   ============================================= */
+.dashboard-3d-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0; /* Behind content (1), above body bg */
+  pointer-events: none;
+  opacity: 1;
+  mix-blend-mode: screen;
+}
+#dashboard-3d-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
 }

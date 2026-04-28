@@ -33,7 +33,6 @@ function initApp() {
   }
 
   // Initialize modules
-  initTheme();
   initNavigation();
   initMobileSidebar();
   initTopbarScroll();
@@ -90,6 +89,12 @@ function navigateTo(page) {
     targetPage.classList.add('active');
     targetPage.classList.add('page-enter');
     setTimeout(() => targetPage.classList.remove('page-enter'), 300);
+  }
+
+  // Update breadcrumb
+  const breadcrumbEl = document.getElementById('breadcrumb-current');
+  if (breadcrumbEl) {
+    breadcrumbEl.textContent = page.charAt(0).toUpperCase() + page.slice(1).replace('-', ' ');
   }
 
   // Close mobile sidebar

@@ -7,13 +7,19 @@
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: transparent; /* Changed from var(--bg-primary) */
   position: relative;
   z-index: 1;
   overflow: visible; /* NOT hidden */
 }
 
-/* Background Glow */
+body {
+  background: var(--bg-primary);
+  margin: 0;
+  padding: 0;
+}
+
+/* Background Glow — Premium Gold Blur */
 body::before {
   content: '';
   position: fixed;
@@ -22,10 +28,13 @@ body::before {
   pointer-events: none;
 
   background:
-    radial-gradient(circle at 50% 50%, rgba(212,175,55,0.25), transparent 60%),
-    radial-gradient(circle at 40% 60%, rgba(212,175,55,0.18), transparent 70%);
+    radial-gradient(circle at 80% 20%, rgba(212, 131, 55, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(184, 103, 11, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(31, 24, 16, 1) 0%, transparent 100%),
+    radial-gradient(ellipse at 50% 0%, rgba(212, 144, 55, 0.08) 0%, transparent 70%);
 
-  animation: goldMove 10s ease-in-out infinite alternate;
+  filter: blur(40px);
+  animation: goldMove 15s ease-in-out infinite alternate;
 }
 
 @keyframes goldMove {
@@ -48,9 +57,8 @@ body::after {
   background-image: url('https://grainy-gradients.vercel.app/noise.svg');
 }
 
-[data-theme="light"] .app-wrapper::before {
-  opacity: 0.3;
-}
+
+
 
 /* =============================================
    SIDEBAR (Hover-Only Overlay)
@@ -62,7 +70,8 @@ body::after {
   width: 72px;
   flex: 0 0 72px; /* FIXED base width */
   transition: flex-basis 0.3s ease;
-  background: var(--bg-secondary);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
   border-right: 1px solid rgba(255,255,255,0.05);
   margin: var(--radius-sm);
   border-radius: var(--radius-md);
@@ -85,7 +94,7 @@ body::after {
   left: 0;
   width: 100%;
   height: 500px;
-  background: linear-gradient(to top, rgb(215 187 14 / 10%), #00000000);
+  background: linear-gradient(to top, rgb(117 67 20 / 10%), #00000000);
   filter: blur(12px);
   pointer-events: none;
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
@@ -118,24 +127,52 @@ body::after {
 }
 
 .sidebar-logo {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
-  object-fit: cover;
-  box-shadow: var(--shadow-card), 0 0 30px rgb(203 114 37 / 22%);
+  object-fit: contain;
 }
 
-.sidebar-brand-text {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1rem;
-  color: #0F0F0F;
-  display: none;
+.sidebar-logo-text {
+  margin-left: 5px;
+  height: 20px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all var(--duration-normal) var(--ease-out);
+  pointer-events: none;
 }
 
-.sidebar-logo + .sidebar-brand-text { display: none; }
-.sidebar-logo[style*="display: none"] ~ .sidebar-brand-text,
-.sidebar-logo:not([src]) ~ .sidebar-brand-text { display: block; }
+.sidebar:hover .sidebar-logo-text {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-left: var(--space-md);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.breadcrumb-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--gold);
+}
+
+.breadcrumb-sep {
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: 600;
+}
 
 /* ---- Sidebar Nav ---- */
 .sidebar-nav {
@@ -263,11 +300,8 @@ body::after {
   border: 1px solid rgba(212, 175, 55, 0.15);
 }
 
-[data-theme="light"] .topbar.topbar-scrolled {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.06);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-}
+
+
 
 .topbar-left,
 .topbar-right {
@@ -373,31 +407,8 @@ body::after {
 
 .topbar-action-btn svg { width: 16px; height: 16px; }
 
-/* Theme Toggle */
-.theme-toggle {
-  background: none;
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  cursor: pointer;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
-.theme-toggle:hover {
-  border-color: var(--gold);
-  color: var(--gold);
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.12);
-}
 
-.theme-toggle svg { width: 16px; height: 16px; }
-
-[data-theme="dark"] .theme-icon-light { display: none; }
-[data-theme="light"] .theme-icon-dark { display: none; }
 
 /* ---- Notification Wrapper (positions the dropdown) ---- */
 .notification-wrapper {
@@ -465,7 +476,6 @@ body::after {
   right: 0;
   width: 360px;
   max-height: 440px;
-  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg), 0 0 20px rgba(212, 175, 55, 0.06);
@@ -494,6 +504,8 @@ body::after {
 .notification-panel-header {
   display: flex;
   align-items: center;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
   justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--border-color);
@@ -525,6 +537,8 @@ body::after {
 
 .notification-list {
   flex: 1;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-gold-blur);
   overflow-y: auto;
   padding: var(--space-sm);
 }
