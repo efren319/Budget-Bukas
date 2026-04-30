@@ -411,40 +411,61 @@
           </div>
         </section>
 
-        <!-- ========== CHATBOT PAGE ========== -->
+        <!-- ========== CHATBOT PAGE (ChatGPT-Style) ========== -->
         <section class="page page-chatbot" id="page-chatbot">
-          <div class="chatbot-container">
-            <div class="chatbot-header">
-              <div class="chatbot-header-icon">
-                <i data-lucide="bot"></i>
-                <div class="ai-pulse"></div>
+          <div class="ai-chat-wrapper" id="ai-chat-wrapper">
+
+            <!-- EMPTY STATE (shown before first message) -->
+            <div class="ai-empty-state" id="ai-empty-state">
+              <div class="ai-empty-icon">
+                <i data-lucide="sparkles"></i>
               </div>
-              <div>
-                <h3>PondoSync AI</h3>
-                <span class="chatbot-status">Online — Ask me about your finances</span>
-              </div>
-            </div>
-            <div class="chatbot-messages" id="chatbot-messages">
-              <div class="chat-message bot">
-                <div class="chat-avatar"><i data-lucide="bot"></i></div>
-                <div class="chat-bubble">
-                  <p>👋 Kumusta! I'm the PondoSync AI assistant. Ask me anything about the organization's finances!</p>
-                  <div class="chat-suggestions">
-                    <button class="suggestion-pill" data-query="Total balance">Total balance</button>
-                    <button class="suggestion-pill" data-query="Expenses this month">Expenses this month</button>
-                    <button class="suggestion-pill" data-query="Top expenses">Top expenses</button>
-                    <button class="suggestion-pill" data-query="Expenses by category">By category</button>
-                    <button class="suggestion-pill" data-query="Help">What can you do?</button>
-                  </div>
+              <h2 class="ai-empty-title">What would you like to know about finances today?</h2>
+              <p class="ai-empty-desc">Your intelligent finance assistant — powered by PondoSync data</p>
+
+              <div class="ai-empty-input-area">
+                <div class="ai-input-box" id="ai-input-empty">
+                  <input type="text" id="ai-input-field-empty" placeholder="Ask anything about your finances...">
+                  <button id="ai-send-empty" aria-label="Send">
+                    <i data-lucide="arrow-up"></i>
+                  </button>
                 </div>
               </div>
-            </div>
-            <div class="chatbot-input-wrapper">
-              <div class="chatbot-input">
-                <input type="text" id="chatbot-input" placeholder="Ask about finances... (e.g., 'Saan napunta pera?')">
-                <button id="chatbot-send" aria-label="Send">
-                  <i data-lucide="send"></i>
+
+              <div class="ai-suggestion-grid" id="ai-suggestion-grid">
+                <button class="ai-suggest-chip" data-query="Show recent expenses">
+                  <i data-lucide="trending-down"></i> Show recent expenses
                 </button>
+                <button class="ai-suggest-chip" data-query="Total balance">
+                  <i data-lucide="wallet"></i> Monthly budget summary
+                </button>
+                <button class="ai-suggest-chip" data-query="Expenses by category">
+                  <i data-lucide="pie-chart"></i> Where is money being spent?
+                </button>
+                <button class="ai-suggest-chip" data-query="Income sources">
+                  <i data-lucide="bar-chart-3"></i> Income vs expenses
+                </button>
+                <button class="ai-suggest-chip" data-query="Top expenses">
+                  <i data-lucide="list-ordered"></i> Category breakdown
+                </button>
+                <button class="ai-suggest-chip" data-query="Latest transactions">
+                  <i data-lucide="clock"></i> Latest transactions
+                </button>
+              </div>
+            </div>
+
+            <!-- ACTIVE CHAT (shown after first message) -->
+            <div class="ai-chat-active hidden" id="ai-chat-active">
+              <div class="ai-messages-scroll" id="ai-messages-scroll">
+                <!-- Messages rendered by JS -->
+              </div>
+              <div class="ai-chat-footer">
+                <div class="ai-input-box" id="ai-input-active">
+                  <input type="text" id="ai-input-field-active" placeholder="Ask a follow-up question...">
+                  <button id="ai-send-active" aria-label="Send">
+                    <i data-lucide="arrow-up"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -500,6 +521,29 @@
 
       </div>
     </main>
+  </div>
+
+  <!-- ========== FLOATING CHAT WIDGET ========== -->
+  <div class="chat-fab" id="chat-fab" title="Open Chat">
+    <i data-lucide="message-circle"></i>
+  </div>
+
+  <div class="chat-widget hidden" id="chat-widget">
+    <div class="chat-widget-header">
+      <div class="chat-widget-title">
+        <i data-lucide="sparkles"></i>
+        <span>PondoSync AI</span>
+      </div>
+      <div class="chat-widget-actions">
+        <button id="chat-widget-expand" title="Open full chat"><i data-lucide="maximize-2"></i></button>
+        <button id="chat-widget-close" title="Close"><i data-lucide="x"></i></button>
+      </div>
+    </div>
+    <div class="chat-widget-messages" id="chat-widget-messages"></div>
+    <div class="chat-widget-input">
+      <input type="text" id="chat-widget-input-field" placeholder="Quick question...">
+      <button id="chat-widget-send" aria-label="Send"><i data-lucide="arrow-up"></i></button>
+    </div>
   </div>
 
   <!-- Toast Notification -->

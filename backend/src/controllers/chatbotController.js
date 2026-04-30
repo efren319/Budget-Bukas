@@ -106,11 +106,39 @@ async function handleQuery(req, res) {
       return res.json({ success: true, data: result });
     }
 
-    // No match — suggest available commands
+    // ---- Domain Control: check if possibly finance-related ----
+    const financeKeywords = ['money', 'pera', 'budget', 'cost', 'price', 'paid',
+      'spend', 'spent', 'earn', 'income', 'expense', 'salary', 'fee', 'fund',
+      'loss', 'profit', 'dues', 'payment', 'bayad', 'gastos', 'kita', 'utang',
+      'how much', 'magkano', 'total', 'remaining', 'report', 'summary'];
+
+    const maybeFinance = financeKeywords.some(kw => lowerMsg.includes(kw));
+
+    if (maybeFinance) {
+      // Attempt intent understanding
+      return res.json({
+        success: true,
+        data: {
+          response: `I think you're asking about finances, but I need more clarity. Could you try rephrasing?\n\nHere are some things I can help with:`,
+          type: 'suggestions',
+          suggestions: [
+            'Total balance',
+            'Expenses this month',
+            'Expenses by category',
+            'Top expenses',
+            'Latest transactions',
+            'Income sources',
+            'Monthly report'
+          ]
+        }
+      });
+    }
+
+    // Off-topic: redirect to finance domain
     return res.json({
       success: true,
       data: {
-        response: `I'm not sure I understand "${message}". Here are some things you can ask me:`,
+        response: `That seems outside the scope of financial tracking. I'm designed to help you with budgeting, expenses, income, and financial reports.\n\nTry asking something like:`,
         type: 'suggestions',
         suggestions: [
           'Total balance',
@@ -118,7 +146,6 @@ async function handleQuery(req, res) {
           'Expenses by category',
           'Top expenses',
           'Latest transactions',
-          'Income sources',
           'Monthly report'
         ]
       }
