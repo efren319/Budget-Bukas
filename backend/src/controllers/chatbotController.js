@@ -4,65 +4,65 @@
 // ============================================
 const pool = require('../config/db');
 
-// Pattern definitions: keyword arrays → SQL query builder
+// Pattern definitions: Regex arrays -> SQL query builder
 const patterns = [
   {
-    keywords: ['total balance', 'remaining funds', 'magkano natira', 'how much left', 'total remaining', 'balance', 'natira'],
+    regex: [/total balance/i, /remaining/i, /magkano/i, /how much.*left/i, /balance/i, /natira/i, /budget/i, /current money/i, /how much money/i],
     handler: getBalance,
     description: 'Check total balance and remaining funds'
   },
   {
-    keywords: ['expenses this month', 'ginastos this month', 'spending this month', 'gastos ngayong buwan'],
+    regex: [/expenses.*month/i, /ginastos.*month/i, /spending.*month/i, /gastos.*buwan/i, /spent.*month/i],
     handler: expensesThisMonth,
     description: 'View expenses for the current month'
   },
   {
-    keywords: ['income this month', 'kita this month', 'earnings this month'],
+    regex: [/income.*month/i, /kita.*month/i, /earnings.*month/i, /earned.*month/i],
     handler: incomeThisMonth,
     description: 'View income for the current month'
   },
   {
-    keywords: ['expenses by category', 'saan napunta pera', 'category breakdown', 'breakdown', 'saan napunta', 'by category'],
+    regex: [/category/i, /saan napunta/i, /breakdown/i, /where.*spent/i],
     handler: expensesByCategory,
     description: 'View expense breakdown by category'
   },
   {
-    keywords: ['top expenses', 'biggest expenses', 'largest expenses', 'pinakamalaking gastos'],
+    regex: [/top expenses/i, /biggest/i, /largest/i, /pinakamalaki/i, /most expensive/i],
     handler: topExpenses,
     description: 'See the top 5 largest expenses'
   },
   {
-    keywords: ['latest transactions', 'recent transactions', 'latest', 'recent activity', 'pinakabago'],
+    regex: [/latest/i, /recent/i, /pinakabago/i, /last transaction/i, /just spent/i],
     handler: latestTransactions,
     description: 'View the most recent transactions'
   },
   {
-    keywords: ['who spent the most', 'sino gumastos', 'top spender', 'most spending'],
+    regex: [/who spent/i, /sino gumastos/i, /top spender/i, /most spending/i, /gumastos/i],
     handler: topSpenders,
     description: 'See who spent the most'
   },
   {
-    keywords: ['monthly report', 'report for', 'buwan report'],
+    regex: [/monthly report/i, /report/i, /summary for/i],
     handler: monthlyReport,
     description: 'Generate a monthly financial report'
   },
   {
-    keywords: ['income sources', 'where income', 'saan galing pera', 'sources of income'],
+    regex: [/income source/i, /where.*income/i, /saan galing/i, /source/i],
     handler: incomeSources,
     description: 'View all income sources'
   },
   {
-    keywords: ['total income', 'kabuuang kita', 'all income'],
+    regex: [/total income/i, /kabuuang kita/i, /all income/i, /how much.*earned/i],
     handler: totalIncome,
     description: 'View total income'
   },
   {
-    keywords: ['total expenses', 'kabuuang gastos', 'all expenses'],
+    regex: [/total expense/i, /kabuuang gastos/i, /all expense/i, /how much.*spent/i],
     handler: totalExpenses,
     description: 'View total expenses'
   },
   {
-    keywords: ['help', 'what can you do', 'commands', 'tulong'],
+    regex: [/help/i, /what can you do/i, /commands/i, /tulong/i, /how.*use/i, /features/i],
     handler: showHelp,
     description: 'Show available commands'
   }
@@ -85,20 +85,17 @@ async function handleQuery(req, res) {
 
     const lowerMsg = message.toLowerCase().trim();
 
-    // Find matching pattern
+    // Find matching pattern using Regex
     let matchedPattern = null;
-    let bestScore = 0;
 
     for (const pattern of patterns) {
-      for (const keyword of pattern.keywords) {
-        if (lowerMsg.includes(keyword)) {
-          const score = keyword.length; // Longer matches are more specific
-          if (score > bestScore) {
-            bestScore = score;
-            matchedPattern = pattern;
-          }
+      for (const rx of pattern.regex) {
+        if (rx.test(lowerMsg)) {
+          matchedPattern = pattern;
+          break;
         }
       }
+      if (matchedPattern) break;
     }
 
     if (matchedPattern) {
@@ -119,16 +116,14 @@ async function handleQuery(req, res) {
       return res.json({
         success: true,
         data: {
-          response: `I think you're asking about finances, but I need more clarity. Could you try rephrasing?\n\nHere are some things I can help with:`,
+          response: `I think you're asking about finances, but I couldn't understand the specific request. Could you try rephrasing?\n\nFor example, try asking:`,
           type: 'suggestions',
           suggestions: [
-            'Total balance',
-            'Expenses this month',
-            'Expenses by category',
-            'Top expenses',
-            'Latest transactions',
-            'Income sources',
-            'Monthly report'
+            'How much is our budget right now?',
+            'What are the expenses this month?',
+            'Show me the category breakdown',
+            'Who spent the most money?',
+            'What are our latest transactions?'
           ]
         }
       });
@@ -138,15 +133,14 @@ async function handleQuery(req, res) {
     return res.json({
       success: true,
       data: {
-        response: `That seems outside the scope of financial tracking. I'm designed to help you with budgeting, expenses, income, and financial reports.\n\nTry asking something like:`,
+        response: `I'm an AI assistant focused exclusively on financial tracking for PondoSync. I can help you with budgeting, expenses, income, and financial reports.\n\nTry asking something like:`,
         type: 'suggestions',
         suggestions: [
-          'Total balance',
-          'Expenses this month',
-          'Expenses by category',
-          'Top expenses',
-          'Latest transactions',
-          'Monthly report'
+          'What is the total balance?',
+          'Show expenses for this month',
+          'Expense category breakdown',
+          'What are the top expenses?',
+          'Show latest transactions'
         ]
       }
     });
@@ -162,7 +156,7 @@ async function handleQuery(req, res) {
 
 async function getBalance() {
   const [rows] = await pool.query('SELECT * FROM total_balance');
-  const data = rows[0];
+  const data = rows[0] || { total_income: 0, total_expenses: 0, remaining_balance: 0 };
   return {
     response: `Here's the current financial summary:\n\n💰 **Total Income:** ₱${formatNum(data.total_income)}\n📉 **Total Expenses:** ₱${formatNum(data.total_expenses)}\n✨ **Remaining Balance:** ₱${formatNum(data.remaining_balance)}`,
     type: 'balance',
@@ -378,19 +372,19 @@ async function incomeSources() {
 
 async function totalIncome() {
   const [rows] = await pool.query('SELECT * FROM total_balance');
+  const data = rows[0] || { total_income: 0 };
   return {
-    response: `💰 **Total Income:** ₱${formatNum(rows[0].total_income)}`,
+    response: `💰 **Total Income:** ₱${formatNum(data.total_income)}`,
     type: 'text',
-    rawData: rows[0]
+    rawData: data
   };
 }
 
-async function totalExpenses() {
-  const [rows] = await pool.query('SELECT * FROM total_balance');
+  const data = rows[0] || { total_expenses: 0 };
   return {
-    response: `📉 **Total Expenses:** ₱${formatNum(rows[0].total_expenses)}`,
+    response: `📉 **Total Expenses:** ₱${formatNum(data.total_expenses)}`,
     type: 'text',
-    rawData: rows[0]
+    rawData: data
   };
 }
 
