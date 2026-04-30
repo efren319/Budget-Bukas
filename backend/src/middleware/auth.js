@@ -19,7 +19,8 @@ function authMiddleware(req, res, next) {
 
   try {
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || 'pondosync_secret_fallback_123';
+    const decoded = jwt.verify(token, secret);
     
     // Attach user info to request
     req.user = {
