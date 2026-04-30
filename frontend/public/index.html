@@ -517,13 +517,13 @@
         let url, body;
 
         if (isLogin) {
-          url = `${window.API_URL || 'http://localhost:10000'}/api/auth/login`;
+          url = `${window.API_URL || 'http://localhost:10000'}/auth/login`;
           body = { email, password };
         } else {
           const name = document.getElementById('reg-name').value;
           const role = document.getElementById('reg-role').value;
           if (!name) throw new Error('Please enter your full name.');
-          url = `${window.API_URL || 'http://localhost:10000'}/api/auth/register`;
+          url = `${window.API_URL || 'http://localhost:10000'}/auth/register`;
           body = { name, email, password, role };
         }
 
