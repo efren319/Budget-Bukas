@@ -77,6 +77,12 @@ function initNavigation() {
 }
 
 function navigateTo(page) {
+  const targetPage = document.getElementById(`page-${page}`);
+  if (!targetPage) return;
+
+  // Prevent flicker/re-navigation if already active
+  if (targetPage.classList.contains('active')) return;
+
   // Update sidebar active state
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   const activeLink = document.querySelector(`[data-page="${page}"]`);
@@ -84,12 +90,10 @@ function navigateTo(page) {
 
   // Show target page, hide others
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const targetPage = document.getElementById(`page-${page}`);
-  if (targetPage) {
-    targetPage.classList.add('active');
-    targetPage.classList.add('page-enter');
-    setTimeout(() => targetPage.classList.remove('page-enter'), 300);
-  }
+  
+  targetPage.classList.add('active');
+  targetPage.classList.add('page-enter');
+  setTimeout(() => targetPage.classList.remove('page-enter'), 300);
 
   // Update breadcrumb
   const breadcrumbEl = document.getElementById('breadcrumb-current');
@@ -98,7 +102,10 @@ function navigateTo(page) {
   }
 
   // Close mobile sidebar
-  document.getElementById('sidebar')?.classList.remove('open');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar?.classList.remove('active');
+  overlay?.classList.remove('active');
 
   // Trigger page-specific data loading
   switch (page) {
@@ -106,7 +113,7 @@ function navigateTo(page) {
       loadDashboardData();
       break;
     case 'records':
-      loadRecords();
+      loadTransactions();
       break;
     case 'receipts':
       loadReceipts();
@@ -118,6 +125,39 @@ function navigateTo(page) {
     setTimeout(() => lucide.createIcons(), 100);
   }
 }
+
+// =============================================
+// LOADING SCREEN MANAGER
+// =============================================
+let d3dLoaded = false;
+let dataLoaded = false;
+
+function checkLoadingFinished() {
+  if (d3dLoaded && dataLoaded) {
+    setTimeout(() => {
+      const overlay = document.getElementById('dashboard-loading-overlay');
+      if (overlay) overlay.classList.add('hidden');
+    }, 400);
+  }
+}
+
+window.addEventListener('dashboard-3d-loaded', () => {
+  d3dLoaded = true;
+  checkLoadingFinished();
+});
+
+window.addEventListener('dashboard-data-loaded', () => {
+  dataLoaded = true;
+  checkLoadingFinished();
+});
+
+// Safety fallback
+setTimeout(() => {
+  d3dLoaded = true;
+  dataLoaded = true;
+  checkLoadingFinished();
+}, 8000);
+
 
 // =============================================
 // MOBILE SIDEBAR (Drawer only — no push)

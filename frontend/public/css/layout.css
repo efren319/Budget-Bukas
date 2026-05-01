@@ -728,7 +728,6 @@ body::after {
   min-width: 0;
   width: 100%;
   padding-top: var(--space-md);
-  padding-bottom: var(--space-xl);
   padding-right: var(--space-xl);
   padding-left: var(--space-md);
   overflow-x: hidden;

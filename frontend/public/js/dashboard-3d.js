@@ -16,7 +16,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
   /* ---------- bail on small screens ---------- */
   const MQ_MIN = 900;
-  if (window.innerWidth < MQ_MIN) return;
+  if (window.innerWidth < MQ_MIN) {
+    window.dispatchEvent(new Event('dashboard-3d-loaded'));
+    return;
+  }
 
   /* ========================================================
      CONFIGURATION
@@ -37,7 +40,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
      CANVAS + RENDERER
      ======================================================== */
   const canvas = document.getElementById('dashboard-3d-canvas');
-  if (!canvas) return;
+  if (!canvas) {
+    window.dispatchEvent(new Event('dashboard-3d-loaded'));
+    return;
+  }
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -166,9 +172,13 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
       });
 
       scene.add(modelWrapper);
+      window.dispatchEvent(new Event('dashboard-3d-loaded'));
     },
     undefined,
-    (err) => console.warn(`[dashboard-3d] Model load error:`, err)
+    (err) => {
+      console.warn(`[dashboard-3d] Model load error:`, err);
+      window.dispatchEvent(new Event('dashboard-3d-loaded'));
+    }
   );
 
   /* ========================================================
@@ -176,6 +186,12 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
      ======================================================== */
   const cursor = { x: 0, y: 0 };
   const current = { x: 0, y: 0 };
+  let introStarted = false;
+  let introProgress = 0;
+
+  window.addEventListener('dashboard-3d-loaded', () => {
+    setTimeout(() => { introStarted = true; }, 500);
+  });
 
   window.addEventListener('mousemove', (e) => {
     cursor.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -203,18 +219,26 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
      ======================================================== */
   function animate() {
     requestAnimationFrame(animate);
-
     current.x += (cursor.x - current.x) * LERP_FACTOR;
     current.y += (cursor.y - current.y) * LERP_FACTOR;
-
     if (modelWrapper) {
-      // Smooth oscillation between -45 and +45 degrees (PI/4)
+      const targetRotY = (current.x * MAX_ROT);
+      const targetRotX = THREE.MathUtils.clamp(current.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
+
+      // Smooth oscillation for life
       const oscillation = Math.sin(Date.now() * 0.0006) * (Math.PI / 12);
 
-      modelWrapper.rotation.y = (current.x * MAX_ROT) + oscillation;
-      modelWrapper.rotation.x = THREE.MathUtils.clamp(current.y * MAX_ROT * 0.1, -MAX_ROT * 0.1, MAX_ROT * 0.1);
+      if (!introStarted) {
+        modelWrapper.rotation.x = Math.PI / 5; // ~35deg tilt
+        modelWrapper.rotation.y = targetRotY + oscillation;
+      } else {
+        if (introProgress < 1) introProgress += 0.01; 
+        const eased = 1 - Math.pow(1 - introProgress, 4);
+        const startX = Math.PI / 5;
+        modelWrapper.rotation.x = startX + (targetRotX - startX) * eased;
+        modelWrapper.rotation.y = targetRotY + oscillation;
+      }
     }
-
     composer.render();
   }
 

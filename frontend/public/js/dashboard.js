@@ -55,8 +55,13 @@ async function loadDashboardData() {
 
     // Load chart
     loadChartData('week');
+    
+    // Signal that dashboard data is ready
+    window.dispatchEvent(new Event('dashboard-data-loaded'));
   } catch (error) {
     console.error('Dashboard load error:', error);
+    // Signal anyway to prevent infinite loading
+    window.dispatchEvent(new Event('dashboard-data-loaded'));
   }
 }
 

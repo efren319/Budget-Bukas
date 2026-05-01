@@ -346,9 +346,77 @@
     @media (max-width: 900px) {
       .login-3d-container { display: none; }
     }
+
+    /* ---------- Loading Overlay ---------- */
+    .login-loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg-primary); 
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+    }
+
+    .login-loading-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-xl);
+      animation: pulseLoading 2s infinite ease-in-out;
+    }
+
+    .loading-spinner {
+      width: 45px;
+      height: 45px;
+      border: 2px solid rgba(212, 175, 55, 0.1);
+      border-top: 2px solid var(--gold);
+      border-radius: 50%;
+      animation: spinLoading 1s linear infinite;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    }
+
+    .loading-text {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    @keyframes spinLoading {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes pulseLoading {
+      0%, 100% { opacity: 0.85; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body>
+  <!-- Loading Screen Overlay -->
+  <div class="login-loading-overlay" id="login-loading-overlay">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Initializing Secure Environment</div>
+    </div>
+  </div>
+
   <div class="login-wrapper">
     <!-- 3D Background Logo -->
     <div class="login-3d-container" id="login-3d-container">
@@ -554,6 +622,19 @@
     if (localStorage.getItem('bb_token')) {
       window.location.href = '/dashboard.html';
     }
+
+    // Hide Loading Screen once 3D models load (or fallback after 8s)
+    function hideLoadingScreen() {
+      const overlay = document.getElementById('login-loading-overlay');
+      if (overlay && !overlay.classList.contains('hidden')) {
+        overlay.classList.add('hidden');
+      }
+    }
+    window.addEventListener('3d-models-loaded', () => {
+      setTimeout(hideLoadingScreen, 300); // Tiny delay for smooth transition
+    });
+    setTimeout(hideLoadingScreen, 8000); // Safety fallback
+
   </script>
 
   <!-- 3D Background Logo Script -->

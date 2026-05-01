@@ -16,7 +16,10 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
 
   /* ---------- bail on small screens ---------- */
   const MQ_MIN = 900;
-  if (window.innerWidth < MQ_MIN) return;
+  if (window.innerWidth < MQ_MIN) {
+     window.dispatchEvent(new Event('3d-models-loaded'));
+     return;
+  }
 
   /* ========================================================
      CONFIGURATION
@@ -43,7 +46,10 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
      CANVAS + RENDERER
      ======================================================== */
   const canvas = document.getElementById('login-3d-canvas');
-  if (!canvas) return;
+  if (!canvas) {
+     window.dispatchEvent(new Event('3d-models-loaded'));
+     return;
+  }
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -200,6 +206,14 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
      ======================================================== */
   const loadedModels = [];
   const loader = new GLTFLoader();
+  
+  let loadedCount = 0;
+  const checkFinished = () => {
+    loadedCount++;
+    if (loadedCount === MODELS.length) {
+      window.dispatchEvent(new Event('3d-models-loaded'));
+    }
+  };
 
   MODELS.forEach((config) => {
     loader.load(
@@ -256,9 +270,13 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
 
         scene.add(wrapper);
         loadedModels.push(wrapper);
+        checkFinished();
       },
       undefined,
-      (err) => console.warn(`[login-3d] Model load error (${config.path}):`, err)
+      (err) => {
+        console.warn(`[login-3d] Model load error (${config.path}):`, err);
+        checkFinished();
+      }
     );
   });
 
@@ -267,6 +285,13 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
      ======================================================== */
   const cursor  = { x: 0, y: 0 };
   const current = { x: 0, y: 0 };
+  let introStarted = false;
+  let introProgress = 0;
+
+  window.addEventListener('3d-models-loaded', () => {
+    // Start the cinematic intro animation
+    setTimeout(() => { introStarted = true; }, 400);
+  });
 
   window.addEventListener('mousemove', (e) => {
     cursor.x = (e.clientX / window.innerWidth)  * 2 - 1;
@@ -314,12 +339,23 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
     current.y += (cursor.y - current.y) * LERP_FACTOR;
 
     loadedModels.forEach(model => {
-      model.rotation.y = THREE.MathUtils.clamp(
-        current.x * MAX_ROT, -MAX_ROT, MAX_ROT
-      );
-      model.rotation.x = THREE.MathUtils.clamp(
-        current.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7
-      );
+      const targetRotY = THREE.MathUtils.clamp(current.x * MAX_ROT, -MAX_ROT, MAX_ROT);
+      const targetRotX = THREE.MathUtils.clamp(current.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
+
+      if (!introStarted) {
+        // Initial cinematic pose: looking down
+        model.rotation.x = Math.PI / 4; 
+        model.rotation.y = targetRotY;
+      } else {
+        // Smoothly animate from 45deg down to active rotation
+        if (introProgress < 1) introProgress += 0.012; // Adjusted speed for luxury feel
+        
+        const eased = 1 - Math.pow(1 - introProgress, 4); // Quartic ease-out
+        const startX = Math.PI / 4;
+        
+        model.rotation.x = startX + (targetRotX - startX) * eased;
+        model.rotation.y = targetRotY;
+      }
     });
 
     // Render through bloom composer
