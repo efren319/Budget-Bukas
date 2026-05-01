@@ -63,9 +63,39 @@ pool.query = pool.execute;
 pool.getConnection = async () => {
   const client = await pool.connect();
   
-  // Bind abstraction to client
-  client.execute = async (sql, params) => pool.execute.call(client, sql, params);
+  // Save the original client.query to avoid infinite recursion
+  const originalClientQuery = client.query.bind(client);
+
+  // Bind abstraction to client so queries run on this specific connection
+  client.execute = async (sql, params = []) => {
+    let i = 1;
+    const pgSql = sql.replace(/\?/g, () => `$${i++}`);
+    const isInsert = pgSql.trim().toUpperCase().startsWith('INSERT');
+    const finalSql = (isInsert && !pgSql.toUpperCase().includes('RETURNING')) 
+      ? `${pgSql} RETURNING id` 
+      : pgSql;
+
+    try {
+      const res = await originalClientQuery(finalSql, params);
+      if (isInsert) {
+        return [{ insertId: res.rows && res.rows.length > 0 ? res.rows[0].id : null, affectedRows: res.rowCount }];
+      }
+      const isUpdate = pgSql.trim().toUpperCase().startsWith('UPDATE') || pgSql.trim().toUpperCase().startsWith('DELETE');
+      if (isUpdate) {
+        return [{ affectedRows: res.rowCount, changedRows: res.rowCount }];
+      }
+      return [res.rows, res.fields];
+    } catch (err) {
+      console.error(`❌ DB Client Error [${finalSql}]:`, err.message);
+      throw err;
+    }
+  };
   client.query = client.execute;
+  
+  // Emulate mysql2 transaction methods
+  client.beginTransaction = async () => await originalClientQuery('BEGIN');
+  client.commit = async () => await originalClientQuery('COMMIT');
+  client.rollback = async () => await originalClientQuery('ROLLBACK');
   
   // Standardize release mapping
   const release = client.release;
