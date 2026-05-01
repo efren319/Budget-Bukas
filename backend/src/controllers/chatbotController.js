@@ -93,19 +93,19 @@ ${txRows.length ? txRows.map(t => `- [${new Date(t.date).toLocaleDateString('en-
       if (validHistory.length > 0) {
         // Use chat session if we have history
         const chat = ai.chats.create({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-2.0-flash',
           config: {
             systemInstruction: systemInstruction,
             temperature: 0.7, // Slightly higher for more natural, varied responses
           },
           history: validHistory
         });
-        const result = await chat.sendMessage(message);
+        const result = await chat.sendMessage({ message });
         aiResponseText = result.text;
       } else {
         // Direct content generation if no history
         const result = await ai.models.generateContent({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-2.0-flash',
           contents: message,
           config: { 
             systemInstruction: systemInstruction,
