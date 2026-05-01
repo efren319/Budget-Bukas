@@ -292,10 +292,22 @@
   // ==========================================================
   //  API COMMUNICATION
   // ==========================================================
+  let chatHistory = [];
+
   async function sendToAPI(message) {
     try {
-      const data = await apiPost('/chatbot/query', { message });
+      // Keep only last 10 messages for context
+      if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
+
+      const data = await apiPost('/chatbot/query', { 
+        message,
+        history: chatHistory
+      });
+
       if (data && data.success) {
+        // Add to history
+        chatHistory.push({ role: 'user', parts: [{ text: message }] });
+        chatHistory.push({ role: 'model', parts: [{ text: data.data.response }] });
         return data.data;
       }
       return null;
