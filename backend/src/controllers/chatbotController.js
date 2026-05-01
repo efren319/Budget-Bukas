@@ -84,7 +84,7 @@ Answer the user's question accurately using ONLY this data. If they ask about so
     // 3. Call Gemini API
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       contents: message,
       config: {
         systemInstruction: systemInstruction,
