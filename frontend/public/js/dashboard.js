@@ -164,7 +164,7 @@ function renderCategoryPieChart(categories) {
         labels: ['No Data'],
         datasets: [{
           data: [1],
-          backgroundColor: ['rgba(212, 175, 55, 0.1)'],
+          backgroundColor: ['rgba(211, 172, 119, 0.1)'],
           borderWidth: 0
         }]
       },
@@ -183,11 +183,11 @@ function renderCategoryPieChart(categories) {
   
   // Theme colors derived from CSS variables (Gold & Brown Dark Tones)
   const bgColors = [
-    'rgba(212, 175, 55, 1)',   // Solid Gold
-    'rgba(212, 175, 55, 0.7)', // Faded Gold
-    'rgba(212, 175, 55, 0.4)', // Dim Gold
-    'rgba(212, 175, 55, 0.2)', // Light Gold Trace
-    'rgba(168, 137, 36, 1)'    // Darker Gold
+    'rgba(211, 172, 119, 1)',   // Solid Gold
+    'rgba(211, 172, 119, 0.7)', // Faded Gold
+    'rgba(211, 172, 119, 0.4)', // Dim Gold
+    'rgba(211, 172, 119, 0.2)', // Light Gold Trace
+    'rgba(210, 132, 71, 1)'    // Darker Gold (#d28447)
   ];
 
   pieChart = new Chart(ctx, {
@@ -220,8 +220,8 @@ function renderCategoryPieChart(categories) {
         tooltip: {
           backgroundColor: '#1E1E1E',
           titleColor: '#E0E0E0',
-          bodyColor: '#D4AF37',
-          borderColor: 'rgba(212,175,55,0.2)',
+          bodyColor: '#d3ac77',
+          borderColor: 'rgba(211, 172, 119, 0.2)',
           borderWidth: 1,
           padding: 10,
           displayColors: false,
@@ -321,8 +321,8 @@ function renderChart(chartData, period) {
 
   // Create gradient for Income
   const gradientIncome = ctx.createLinearGradient(0, 0, 0, 300);
-  gradientIncome.addColorStop(0, 'rgba(212, 175, 55, 0.4)');
-  gradientIncome.addColorStop(1, 'rgba(212, 175, 55, 0.0)');
+  gradientIncome.addColorStop(0, 'rgba(211, 172, 119, 0.4)');
+  gradientIncome.addColorStop(1, 'rgba(211, 172, 119, 0.0)');
 
   mainChart = new Chart(ctx, {
     type: 'line',
@@ -332,16 +332,16 @@ function renderChart(chartData, period) {
         {
           label: 'Income',
           data: incomeData,
-          borderColor: '#D4AF37',
+          borderColor: '#d3ac77',
           backgroundColor: gradientIncome,
           borderWidth: 3,
           tension: 0.4,
           fill: true,
-          pointBackgroundColor: '#D4AF37',
+          pointBackgroundColor: '#d3ac77',
           pointBorderColor: '#0F0F0F',
           pointRadius: 4,
           pointHoverRadius: 6,
-          pointHoverBackgroundColor: '#D4AF37',
+          pointHoverBackgroundColor: '#d3ac77',
           pointHoverBorderColor: '#fff',
           pointHoverBorderWidth: 2
         },
