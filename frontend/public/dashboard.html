@@ -227,10 +227,29 @@
               <div class="empty-state-small">Loading members...</div>
             </div>
           </div>
+
+          <!-- Category Pie Chart -->
+          <div class="side-card pie-chart-card">
+            <div class="side-card-header">
+              <h4>Expenses Distribution</h4>
+            </div>
+            <div class="pie-chart-container" style="position: relative; height: 200px; padding: var(--space-md);">
+              <canvas id="category-pie-chart"></canvas>
+            </div>
+          </div>
         </div> <!-- /dashboard-side-content -->
 
       </div> <!-- /dashboard-master-layout -->
     </section> <!-- /page-dashboard -->
+
+    <!-- ========== LIVE UPDATE NOTIFICATION ========== -->
+    <div id="live-update-toast" class="update-toast hidden">
+      <div class="toast-content">
+        <i data-lucide="refresh-cw"></i>
+        <span>New updates available</span>
+      </div>
+      <button class="toast-btn" onclick="location.reload()">Reload</button>
+    </div>
 
     <!-- ========== ADD TRANSACTION PAGE ========== -->
     <section class="page page-add-transaction" id="page-add-transaction">

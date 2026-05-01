@@ -3,6 +3,9 @@
 // ============================================
 
 let mainChart = null;
+let pieChart = null;
+let currentDashboardDataStr = null;
+let pollingInterval = null;
 
 function initDashboard() {
   // Load data on first load
@@ -20,12 +23,19 @@ function initDashboard() {
       loadChartData(pill.dataset.period);
     });
   });
+
+  // Start Live Update Polling (every 15 seconds)
+  if (pollingInterval) clearInterval(pollingInterval);
+  pollingInterval = setInterval(pollForUpdates, 15000);
 }
 
 async function loadDashboardData() {
   try {
     const data = await apiGet('/transactions/dashboard/stats');
     if (!data || !data.success) return;
+
+    // Save initial state for polling comparison
+    currentDashboardDataStr = JSON.stringify(data.data);
 
     const { balance, monthly, recent, categories } = data.data;
 
@@ -40,10 +50,32 @@ async function loadDashboardData() {
     // Render category breakdown
     renderCategoryBreakdown(categories);
 
+    // Render pie chart
+    renderCategoryPieChart(categories);
+
     // Load chart
     loadChartData('week');
   } catch (error) {
     console.error('Dashboard load error:', error);
+  }
+}
+
+async function pollForUpdates() {
+  try {
+    const data = await apiGet('/transactions/dashboard/stats');
+    if (!data || !data.success) return;
+    
+    const newDataStr = JSON.stringify(data.data);
+    
+    // Compare stringified data to detect changes (budget, counts, etc.)
+    if (currentDashboardDataStr && currentDashboardDataStr !== newDataStr) {
+      const toast = document.getElementById('live-update-toast');
+      if (toast && toast.classList.contains('hidden')) {
+        toast.classList.remove('hidden');
+      }
+    }
+  } catch (err) {
+    // Ignore polling errors to prevent console spam
   }
 }
 
@@ -56,7 +88,8 @@ function renderRecentActivity(items) {
     return;
   }
 
-  container.innerHTML = items.map(item => {
+  // LIMIT TO LATEST 2 RECORDS
+  container.innerHTML = items.slice(0, 2).map(item => {
     const isIncome = item.type === 'income';
     const icon = isIncome ? 'trending-up' : 'trending-down';
     const detail = isIncome ? (item.source || 'Income') : (item.category || 'Expense');
@@ -90,7 +123,8 @@ function renderCategoryBreakdown(categories) {
 
   const maxTotal = Math.max(...categories.map(c => parseFloat(c.total)));
 
-  container.innerHTML = categories.map(cat => {
+  // LIMIT TO TOP 2 CATEGORIES
+  container.innerHTML = categories.slice(0, 2).map(cat => {
     const pct = (parseFloat(cat.total) / maxTotal * 100).toFixed(0);
     return `
       <div class="category-item">
@@ -106,6 +140,95 @@ function renderCategoryBreakdown(categories) {
       </div>
     `;
   }).join('');
+}
+
+function renderCategoryPieChart(categories) {
+  const canvas = document.getElementById('category-pie-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  if (pieChart) {
+    pieChart.destroy();
+  }
+
+  if (!categories || categories.length === 0) {
+    // Render empty state chart
+    pieChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['No Data'],
+        datasets: [{
+          data: [1],
+          backgroundColor: ['rgba(212, 175, 55, 0.1)'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '75%',
+        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+      }
+    });
+    return;
+  }
+
+  const labels = categories.map(c => c.category);
+  const data = categories.map(c => parseFloat(c.total));
+  
+  // Theme colors derived from CSS variables (Gold & Brown Dark Tones)
+  const bgColors = [
+    'rgba(212, 175, 55, 1)',   // Solid Gold
+    'rgba(212, 175, 55, 0.7)', // Faded Gold
+    'rgba(212, 175, 55, 0.4)', // Dim Gold
+    'rgba(212, 175, 55, 0.2)', // Light Gold Trace
+    'rgba(168, 137, 36, 1)'    // Darker Gold
+  ];
+
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: bgColors.slice(0, data.length),
+        borderWidth: 1,
+        borderColor: '#111' // Matches dark theme background
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%', // smooth and modern
+      plugins: {
+        legend: {
+          display: true,
+          position: 'right',
+          labels: {
+            color: '#A0A0A0', // --text-secondary approx
+            font: { family: "'Inter', sans-serif", size: 11 },
+            boxWidth: 10,
+            usePointStyle: true,
+            padding: 15
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1E1E1E',
+          titleColor: '#E0E0E0',
+          bodyColor: '#D4AF37',
+          borderColor: 'rgba(212,175,55,0.2)',
+          borderWidth: 1,
+          padding: 10,
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+              return ' ₱' + context.parsed.toLocaleString('en-PH', { minimumFractionDigits: 2 });
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 async function fetchMembers() {
