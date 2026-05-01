@@ -100,7 +100,7 @@ ${txRows.length ? txRows.map(t => `- [${new Date(t.date).toLocaleDateString('en-
           },
           history: validHistory
         });
-        const result = await chat.sendMessage({ message });
+        const result = await chat.sendMessage(message);
         aiResponseText = result.text;
       } else {
         // Direct content generation if no history
@@ -136,10 +136,11 @@ ${txRows.length ? txRows.map(t => `- [${new Date(t.date).toLocaleDateString('en-
       console.error('❌ Gemini API Error:', apiErr.message);
       
       // Explicit error handling so the user knows exactly why the AI failed
-      let errorMsg = '⚠️ The AI encountered an unexpected error. Please try again.';
-      if (apiErr.message.includes('429') || apiErr.message.includes('quota')) {
+      let errorMsg = `⚠️ **Unexpected AI Error:** ${apiErr.message}`;
+      
+      if (apiErr.message && (apiErr.message.includes('429') || apiErr.message.includes('quota'))) {
         errorMsg = `⚠️ **AI Quota Exceeded**\nThe Gemini API free tier limit has been reached or is unavailable for this API key. Please check your Google Cloud Billing or try again later.`;
-      } else if (apiErr.message.includes('API key not valid')) {
+      } else if (apiErr.message && apiErr.message.includes('API key not valid')) {
         errorMsg = `⚠️ **Invalid API Key**\nThe provided Gemini API key is incorrect or revoked.`;
       }
       
