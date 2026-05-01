@@ -24,17 +24,6 @@ async function handleQuery(req, res) {
 
     const lowerMsg = message.toLowerCase().trim();
 
-    // 1. Check if Gemini API key exists
-    if (!GoogleGenAI || !process.env.GEMINI_API_KEY) {
-      return res.json({
-        success: true,
-        data: {
-          response: `⚠️ **AI System Offline**\nThe AI assistant requires a valid Gemini API Key to function. Please configure \`GEMINI_API_KEY\` in the server environment variables.`,
-          type: 'text'
-        }
-      });
-    }
-
     // 2. Fetch Real-Time Context Data from Database
     const [balRows] = await pool.query('SELECT * FROM total_balance');
     const bal = balRows[0] || { total_income: 0, total_expenses: 0, remaining_balance: 0 };
@@ -80,44 +69,46 @@ ${txRows.length ? txRows.map(t => `- [${new Date(t.date).toLocaleDateString('en-
 ------------------------
 `;
 
-    // 4. Initialize AI and handle context
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    
-    // Map history to Google GenAI format (requires 'user' and 'model' roles)
-    // We filter out any malformed history items just to be safe.
-    const validHistory = Array.isArray(history) ? history.filter(h => h.role && h.parts && h.parts.length > 0) : [];
+    // 4. Map frontend Gemini-style history to OpenAI-style history for Pollinations
+    const mappedHistory = [];
+    if (Array.isArray(history)) {
+      for (const h of history) {
+        if (h.role && h.parts && h.parts.length > 0) {
+          mappedHistory.push({
+            role: h.role === 'model' ? 'assistant' : 'user',
+            content: h.parts[0].text
+          });
+        }
+      }
+    }
 
-    let aiResponseText = "";
+    const messages = [
+      { role: 'system', content: systemInstruction },
+      ...mappedHistory,
+      { role: 'user', content: message }
+    ];
 
+    // 5. Call Pollinations.ai (FREE, NO API KEY REQUIRED)
     try {
-      if (validHistory.length > 0) {
-        // Use chat session if we have history
-        const chat = ai.chats.create({
-          model: 'gemini-2.0-flash',
-          config: {
-            systemInstruction: systemInstruction,
-            temperature: 0.7, // Slightly higher for more natural, varied responses
-          },
-          history: validHistory
-        });
-        const result = await chat.sendMessage({ message });
-        aiResponseText = result.text;
-      } else {
-        // Direct content generation if no history
-        const result = await ai.models.generateContent({
-          model: 'gemini-2.0-flash',
-          contents: message,
-          config: { 
-            systemInstruction: systemInstruction,
-            temperature: 0.7 
-          }
-        });
-        aiResponseText = result.text;
+      const fetch = (await import('node-fetch')).default || global.fetch;
+      const apiResponse = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages,
+          seed: Math.floor(Math.random() * 1000000) // ensure varied responses
+        })
+      });
+
+      if (!apiResponse.ok) {
+        throw new Error(`API returned ${apiResponse.status} ${apiResponse.statusText}`);
       }
 
-      console.log('✅ Gemini responded successfully.');
+      const aiResponseText = await apiResponse.text();
+
+      console.log('✅ Free AI responded successfully.');
       
-      // Determine frontend UI type for follow-up suggestions roughly based on the output
+      // Determine frontend UI type for follow-up suggestions
       let responseType = 'text';
       const outputLower = aiResponseText.toLowerCase();
       if (outputLower.includes('balance') || outputLower.includes('total')) responseType = 'balance';
@@ -133,20 +124,13 @@ ${txRows.length ? txRows.map(t => `- [${new Date(t.date).toLocaleDateString('en-
       });
 
     } catch (apiErr) {
-      console.error('❌ Gemini API Error:', apiErr.message);
-      
-      // Explicit error handling so the user knows exactly why the AI failed
-      let errorMsg = `⚠️ **Unexpected AI Error:** ${apiErr.message}`;
-      
-      if (apiErr.message && (apiErr.message.includes('429') || apiErr.message.includes('quota'))) {
-        errorMsg = `⚠️ **AI Quota Exceeded**\nThe Gemini API free tier limit has been reached or is unavailable for this API key. Please check your Google Cloud Billing or try again later.`;
-      } else if (apiErr.message && apiErr.message.includes('API key not valid')) {
-        errorMsg = `⚠️ **Invalid API Key**\nThe provided Gemini API key is incorrect or revoked.`;
-      }
-      
+      console.error('❌ Free AI Error:', apiErr.message);
       return res.json({
         success: true,
-        data: { response: errorMsg, type: 'text' }
+        data: { 
+          response: `⚠️ **AI Service Error:** ${apiErr.message}\nThe free AI API might be temporarily overloaded. Please try again in a moment.`, 
+          type: 'text' 
+        }
       });
     }
 
