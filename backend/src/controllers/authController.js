@@ -30,69 +30,12 @@ const upload = multer({
   }
 });
 
-// Validation rules
-const registerValidation = [
-  body('name').trim().notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').optional().isIn(['officer', 'member']).withMessage('Invalid role')
-];
+
 
 const loginValidation = [
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').notEmpty().withMessage('Password is required')
 ];
-
-// Register new user
-async function register(req, res) {
-  try {
-    // Check validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
-    }
-
-    const { name, email, password, role } = req.body;
-
-    // Check if email already exists
-    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
-    if (existing.length > 0) {
-      return res.status(409).json({ success: false, message: 'Email already registered.' });
-    }
-
-    // Hash password (12 rounds)
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Insert user
-    const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      [name, email, hashedPassword, role || 'member']
-    );
-
-    // Generate token
-    const token = generateToken({ 
-      id: result.insertId, 
-      name, 
-      email, 
-      role: role || 'member' 
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Registration successful.',
-      token,
-      user: { id: result.insertId, name, email, role: role || 'member' }
-    });
-  } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error during registration.',
-      debug: error.message,
-      stack: error.stack
-    });
-  }
-}
 
 // Login user
 async function login(req, res) {
@@ -110,8 +53,16 @@ async function login(req, res) {
       return res.json({
         success: true,
         message: 'Login successful (Demo Mode).',
-        token: generateToken({ id: 0, name: 'Demo User', email: 'demo@test.com', role: 'officer' }),
-        user: { id: 0, name: 'Demo User', email: 'demo@test.com', role: 'officer', avatar_url: null }
+        token: generateToken({ id: 0, name: 'Demo Admin', email: 'demo@test.com', role: 'admin' }),
+        user: { 
+          id: 0, 
+          name: 'Demo Admin', 
+          email: 'demo@test.com', 
+          role: 'admin', 
+          position: 'System Administrator',
+          must_change_password: false,
+          avatar_url: null 
+        }
       });
     }
 
@@ -124,6 +75,11 @@ async function login(req, res) {
     }
 
     const user = users[0];
+
+    // Check if active
+    if (!user.is_active) {
+      return res.status(403).json({ success: false, message: 'Account is deactivated. Contact administrator.' });
+    }
 
     // Verify password
     console.time('login-bcrypt');
@@ -150,6 +106,8 @@ async function login(req, res) {
         name: user.name, 
         email: user.email, 
         role: user.role,
+        position: user.position,
+        must_change_password: user.must_change_password,
         avatar_url: user.avatar_url 
       }
     });
@@ -164,11 +122,36 @@ async function login(req, res) {
   }
 }
 
+// Force change password (for first login)
+async function forceChangePassword(req, res) {
+  try {
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    
+    // Update password and must_change_password flag
+    await pool.query(
+      'UPDATE users SET password = ?, must_change_password = FALSE WHERE id = ?', 
+      [hashedPassword, req.user.id]
+    );
+
+    res.json({ success: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Force change password error:', error);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+}
+
 // Get current user profile
 async function getProfile(req, res) {
   try {
     const [users] = await pool.query(
-      'SELECT id, name, email, role, avatar_url, created_at FROM users WHERE id = ?',
+      'SELECT id, name, email, role, position, avatar_url, must_change_password, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
 
@@ -227,6 +210,31 @@ async function changePassword(req, res) {
   }
 }
 
+// Force change password (for first login)
+async function forceChangePassword(req, res) {
+  try {
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    
+    // Update password and must_change_password flag
+    await pool.query(
+      'UPDATE users SET password = ?, must_change_password = FALSE WHERE id = ?', 
+      [hashedPassword, req.user.id]
+    );
+
+    res.json({ success: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Force change password error:', error);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+}
+
 // Helper: Generate JWT
 function generateToken(payload) {
   const secret = process.env.JWT_SECRET || 'pondosync_secret_fallback_123';
@@ -259,13 +267,23 @@ function serveAvatar(req, res) {
 // Get all users for Members Panels
 async function getAllUsers(req, res) {
   try {
-    const [users] = await pool.query(`
-      SELECT name, role, avatar_url 
+    let query = `
+      SELECT id, name, email, role, position, avatar_url, is_active, must_change_password, created_at 
       FROM users 
+      WHERE email NOT LIKE '%_deleted_%'
+    `;
+    
+    if (req.user.role !== 'admin') {
+      query += ` AND is_active = TRUE `;
+    }
+    
+    query += `
       ORDER BY 
-        CASE WHEN role = 'officer' THEN 0 ELSE 1 END,
+        CASE WHEN role = 'admin' THEN 0 ELSE 1 END,
         name ASC
-    `);
+    `;
+
+    const [users] = await pool.query(query);
     res.json({ success: true, count: users.length, data: users });
   } catch (error) {
     console.error('Get all users error:', error);
@@ -274,15 +292,14 @@ async function getAllUsers(req, res) {
 }
 
 module.exports = {
-  register,
   login,
   getProfile,
   updateProfile,
   changePassword,
+  forceChangePassword,
   uploadAvatar,
   serveAvatar,
   getAllUsers,
   upload,
-  registerValidation,
   loginValidation
 };

@@ -102,11 +102,6 @@
     0 0 0 0.5px rgba(255,255,255,0.08);
   --glass-highlight:
     linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 40%, transparent 100%);
-  --glass-noise:
-    repeating-conic-gradient(rgba(255,255,255,0.01) 0% 25%, transparent 0% 50%) 0 0 / 3px 3px,
-    radial-gradient(ellipse at 30% 70%, rgba(255,255,255,0.03) 0%, transparent 70%),
-    radial-gradient(ellipse at 70% 30%, rgba(180,200,255,0.02) 0%, transparent 60%);
-  --glass-noise-opacity: 0.7;
 
   /* ═══════════════════════════════════════════════
      GLASSMORPHISM SYSTEM — Gold (Dark UI)
@@ -131,9 +126,4 @@
    rgb(51 36 29 / 14%) 0%, #00000021 50%), rgb(37 26 19 / 27%);
   --glass-gold-highlight:
     linear-gradient(180deg, rgba(255,215,80,0.1) 0%, rgba(212,175,55,0.03) 35%, transparent 100%);
-  --glass-gold-noise:
-    repeating-conic-gradient(rgba(212,175,55,0.012) 0% 25%, transparent 0% 50%) 0 0 / 3px 3px,
-    radial-gradient(ellipse at 35% 25%, rgba(255,215,80,0.05) 0%, transparent 50%),
-    radial-gradient(ellipse at 65% 75%, rgba(180,140,40,0.03) 0%, transparent 55%);
-  --glass-gold-noise-opacity: 0.6;
 }

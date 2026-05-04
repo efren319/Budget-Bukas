@@ -21,8 +21,9 @@ router.get('/categories', auth, getCategories);
 // Transaction CRUD
 router.get('/', auth, getAll);
 router.get('/:id', auth, getOne);
-router.post('/', auth, requireRole('officer'), transactionValidation, create);
-router.put('/:id', auth, requireRole('officer'), transactionValidation, update);
-router.delete('/:id', auth, requireRole('officer'), remove);
+// Admin-only write operations
+router.post('/', auth, requireRole('admin'), transactionValidation, create);
+router.put('/:id', auth, requireRole('admin'), transactionValidation, update);
+router.delete('/:id', auth, requireRole('admin'), remove);
 
 module.exports = router;

@@ -471,7 +471,7 @@ async function loadRecords(page = 1, sort = 'date', order = 'desc') {
       tbody.innerHTML = records.map(r => {
         const detail = r.type === 'income' ? (r.source || '—') : (r.category || '—');
         const desc = r.description || '—';
-        const officerActions = isOfficer() ? `
+        const officerActions = isAdmin() ? `
           <div class="action-buttons">
             <button class="btn-icon" onclick="editTransaction(${r.id})" title="Edit">
               <i data-lucide="edit-2"></i>

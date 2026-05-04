@@ -9,9 +9,9 @@ const {
   upload, uploadReceipt, saveReceipt, getAll, getOne, serveImage
 } = require('../controllers/receiptController');
 
-// Upload and scan (officers only)
-router.post('/upload', auth, requireRole('officer'), upload.single('receipt'), uploadReceipt);
-router.post('/save', auth, requireRole('officer'), saveReceipt);
+// Upload and scan (admins only)
+router.post('/upload', auth, requireRole('admin'), upload.single('receipt'), uploadReceipt);
+router.post('/save', auth, requireRole('admin'), saveReceipt);
 
 // View receipts (any authenticated user)
 router.get('/', auth, getAll);

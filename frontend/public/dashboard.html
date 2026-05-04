@@ -118,10 +118,6 @@
           <i data-lucide="layout-dashboard"></i>
           <span>Dashboard</span>
         </a>
-        <a href="#" class="sidebar-link" data-page="add-transaction" id="nav-add-transaction">
-          <i data-lucide="plus-circle"></i>
-          <span>Add Transaction</span>
-        </a>
         <a href="#" class="sidebar-link" data-page="records" id="nav-records">
           <i data-lucide="file-text"></i>
           <span>Records</span>
@@ -133,6 +129,18 @@
         <a href="#" class="sidebar-link" data-page="chatbot" id="nav-chatbot">
           <i data-lucide="bot"></i>
           <span>Chatbot</span>
+        </a>
+
+        <!-- Admin Only Section -->
+        <div class="sidebar-divider admin-only" style="display: none;"></div>
+        
+        <a href="#" class="sidebar-link admin-only" data-page="add-transaction" id="nav-add-transaction" style="display: none;">
+          <i data-lucide="plus-circle"></i>
+          <span>Add Transaction</span>
+        </a>
+        <a href="#" class="sidebar-link admin-only" data-page="admin" id="nav-admin" style="display: none;">
+          <i data-lucide="users"></i>
+          <span>Admin Panel</span>
         </a>
       </nav>
 
@@ -560,6 +568,47 @@
           </div>
         </section>
 
+      <!-- ==================== PAGE: ADMIN PANEL ==================== -->
+      <section class="page page-admin" id="page-admin">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md);">
+          <div>
+            <h2>User Management</h2>
+            <p class="subtitle">Manage system users, roles, and access.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: var(--space-md);">
+            <label style="display: flex; align-items: center; gap: var(--space-sm); font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); cursor: pointer;">
+              <span class="theme-toggle">
+                <input type="checkbox" id="toggle-inactive-users" onchange="renderAdminUsers()">
+                <span class="theme-toggle-slider"></span>
+              </span>
+              Show Inactive
+            </label>
+            <button class="btn btn-primary" id="btn-add-member" onclick="openAddMemberModal()">
+              <i data-lucide="user-plus"></i> Add New User
+            </button>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="table-responsive">
+            <table class="data-table" id="admin-users-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Position</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-tbody">
+                <tr><td colspan="6" class="text-center">Loading users...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section> <!-- /page-admin -->
 
 
       </div>
@@ -648,6 +697,124 @@
     </div>
   </div>
 
+  <!-- ==================== MODALS ==================== -->
+  
+  <!-- Add/Edit User Modal -->
+  <div class="modal-overlay" id="admin-user-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="admin-modal-title">Add New User</h3>
+        <button class="modal-close" onclick="closeAdminUserModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="admin-user-form">
+          <input type="hidden" id="admin-user-id">
+          <div class="form-group">
+            <label for="admin-user-name">Full Name</label>
+            <input type="text" id="admin-user-name" required placeholder="Juan Dela Cruz">
+          </div>
+          <div class="form-group">
+            <label for="admin-user-email">Email Address</label>
+            <input type="email" id="admin-user-email" required placeholder="juan@g.batstate-u.edu.ph">
+          </div>
+          <div class="form-group">
+            <label for="admin-user-position">Position</label>
+            <select id="admin-user-position" required>
+              <option value="" disabled selected>Select Position</option>
+              <option value="Governor">Governor</option>
+              <option value="President">President</option>
+              <option value="Vice President for Internal Affairs">Vice President for Internal Affairs</option>
+              <option value="Vice President for External Affairs">Vice President for External Affairs</option>
+              <option value="General Secretary">General Secretary</option>
+              <option value="Deputy Secretary">Deputy Secretary</option>
+              <option value="Auditor">Auditor</option>
+              <option value="Treasurer">Treasurer</option>
+              <option value="Business Manager">Business Manager</option>
+              <option value="4th Year Representative">4th Year Representative</option>
+              <option value="3rd Year Representative">3rd Year Representative</option>
+              <option value="2nd Year Representative">2nd Year Representative</option>
+              <option value="1st Year Representative">1st Year Representative</option>
+              <option value="Creatives and Branding Head">Creatives and Branding Head</option>
+              <option value="Creatives and Branding Member">Creatives and Branding Member</option>
+              <option value="Media Committee Head">Media Committee Head</option>
+              <option value="Media Committee Member">Media Committee Member</option>
+              <option value="DRRM Committee Head">DRRM Committee Head</option>
+              <option value="DRRM Committee Member">DRRM Committee Member</option>
+              <option value="Technical Head Committee">Technical Head Committee</option>
+              <option value="Technical Committee Member">Technical Committee Member</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="admin-user-role">Role</label>
+            <select id="admin-user-role" required>
+              <option value="viewer">Viewer (Read Only)</option>
+              <option value="admin">Admin (Full Access)</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-outline" onclick="closeAdminUserModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btn-save-user">Save User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Display Modal (For newly created users / resets) -->
+  <div class="modal-overlay" id="admin-password-modal">
+    <div class="modal" style="border-top: 4px solid var(--success);">
+      <div class="modal-header">
+        <h3>Generated Password</h3>
+        <button class="modal-close" onclick="closeAdminPasswordModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="subtitle">Please copy and securely share this password with the user. It will not be shown again.</p>
+        <div class="generated-password-box" style="margin: 20px 0; padding: 15px; background: var(--bg-input); border: 1px solid var(--success); border-radius: var(--radius-md); font-family: monospace; font-size: 1.5rem; color: var(--success); letter-spacing: 2px; user-select: all;">
+          <strong id="generated-password-display"></strong>
+        </div>
+        <button class="btn btn-primary w-100" onclick="closeAdminPasswordModal()">I have copied the password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- First Login: Force Password Change Modal -->
+  <div class="modal-overlay" id="force-password-modal" style="z-index: 9999;">
+    <div class="modal" style="border-top: 4px solid var(--danger);">
+      <div class="modal-header">
+        <h3>Welcome to PondoSync!</h3>
+      </div>
+      <div class="modal-body">
+        <p class="subtitle" style="margin-bottom: 20px; color: var(--text-primary);">For security reasons, you must change your randomly generated password before accessing the dashboard.</p>
+        <form id="force-password-form">
+          <div class="form-group">
+            <label for="force-new-pw">New Password</label>
+            <input type="password" id="force-new-pw" required minlength="6" placeholder="Enter new password">
+          </div>
+          <div class="form-group">
+            <label for="force-confirm-pw">Confirm Password</label>
+            <input type="password" id="force-confirm-pw" required minlength="6" placeholder="Confirm new password">
+          </div>
+          <button type="submit" class="btn btn-primary w-100 mt-3" id="btn-force-password" style="background: var(--danger);">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Confirmation Modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center; padding: var(--space-xl);">
+      <div style="background: rgba(255, 184, 0, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-lg);">
+        <i data-lucide="alert-triangle" style="color: var(--warning); width: 30px; height: 30px;"></i>
+      </div>
+      <h3 id="confirm-title" style="margin-bottom: var(--space-sm);">Are you sure?</h3>
+      <p id="confirm-message" style="color: var(--text-secondary); margin-bottom: var(--space-xl); line-height: 1.5;">This action cannot be undone.</p>
+      <div style="display: flex; gap: var(--space-md);">
+        <button class="btn btn-outline w-100" id="confirm-cancel-btn">Cancel</button>
+        <button class="btn btn-primary w-100" id="confirm-proceed-btn" style="background: var(--gold);">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div class="toast-container" id="toast-container"></div>
 
@@ -661,6 +828,7 @@
   <script src="js/receipts.js"></script>
   <script src="js/chatbot.js"></script>
   <script src="js/cursor-glow.js"></script>
+  <script src="js/admin.js"></script>
   <!-- 3D Dashboard Background Script -->
   <script type="module" src="js/dashboard-3d.js"></script>
   <script>

@@ -3,7 +3,7 @@
 // ============================================
 
 // API base URL — uses env-based URL in production, relative in dev
-const API_BASE = window.API_URL || 'http://localhost:10000';
+const API_BASE = window.API_URL || 'http://localhost:10000/api';
 
 /**
  * Make an authenticated API request
@@ -84,6 +84,16 @@ function apiPut(endpoint, body) {
 }
 
 /**
+ * PATCH request with JSON body
+ */
+function apiPatch(endpoint, body) {
+  return apiRequest(endpoint, {
+    method: 'PATCH',
+    body: JSON.stringify(body)
+  });
+}
+
+/**
  * DELETE request
  */
 function apiDelete(endpoint) {
@@ -159,9 +169,9 @@ function getCurrentUser() {
 }
 
 /**
- * Check if current user is an officer
+ * Check if current user is an admin
  */
-function isOfficer() {
+function isAdmin() {
   const user = getCurrentUser();
-  return user && user.role === 'officer';
+  return user && user.role === 'admin';
 }

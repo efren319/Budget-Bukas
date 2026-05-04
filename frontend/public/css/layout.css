@@ -46,16 +46,7 @@ body::before {
   }
 }
 
-/* REQUIRED noise overlay */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.08;
-  background-image: url('https://grainy-gradients.vercel.app/noise.svg');
-}
+
 
 
 
@@ -175,6 +166,14 @@ body::after {
 }
 
 /* ---- Sidebar Nav ---- */
+.sidebar-divider {
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  margin: var(--space-md) auto;
+  flex-shrink: 0;
+}
+
 .sidebar-nav {
   display: flex;
   flex-direction: column;

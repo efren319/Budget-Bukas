@@ -8,11 +8,17 @@
 -- ============================================
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
+  name VARCHAR(150) NOT NULL,
   email VARCHAR(150) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  role VARCHAR(20) NOT NULL DEFAULT 'member' CHECK (role IN ('officer', 'member')),
+  role VARCHAR(20) NOT NULL DEFAULT 'viewer' CHECK (role IN ('admin', 'viewer')),
+  position VARCHAR(100) DEFAULT NULL,
   avatar_url VARCHAR(500) DEFAULT NULL,
+  must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  student_id VARCHAR(20) DEFAULT NULL,
+  year_level INT DEFAULT NULL,
+  section VARCHAR(20) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

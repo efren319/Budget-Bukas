@@ -2,19 +2,30 @@
 // App.js — SPA Router + Initialization
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // Auth guard
   if (!localStorage.getItem('bb_token')) {
     window.location.href = '/';
     return;
   }
 
-  initApp();
+  await initApp();
 });
 
-function initApp() {
-  // Set user info in topbar
-  const user = getCurrentUser();
+async function initApp() {
+  let user = getCurrentUser();
+  
+  // Refresh user data from server to ensure flags like must_change_password are up to date
+  try {
+    const res = await apiGet('/auth/me');
+    if (res && res.success) {
+      user = res.user;
+      localStorage.setItem('bb_user', JSON.stringify(user));
+    }
+  } catch (err) {
+    console.error('Failed to refresh user profile:', err);
+  }
+
   if (user) {
     const nameEl = document.getElementById('user-name');
     const roleEl = document.getElementById('user-role');
@@ -26,11 +37,17 @@ function initApp() {
     }
   }
 
-  // Hide officer-only elements for members
-  if (!isOfficer()) {
-    const addTxLink = document.getElementById('nav-add-transaction');
-    if (addTxLink) addTxLink.style.display = 'none';
+  // Check if force password change is required
+  if (user && user.must_change_password) {
+    document.getElementById('force-password-modal').classList.add('active');
+    initForcePassword();
   }
+
+  // Handle admin-only elements visibility
+  const adminElements = document.querySelectorAll('.admin-only');
+  adminElements.forEach(el => {
+    el.style.display = isAdmin() ? 'flex' : 'none';
+  });
 
   // Initialize modules
   initNavigation();
@@ -46,6 +63,7 @@ function initApp() {
   initReceiptsPage();
   initChatbot();
   initSettings();
+  if (typeof initAdmin === 'function') initAdmin();
 
   // Refresh Lucide icons
   if (typeof lucide !== 'undefined') {
@@ -524,3 +542,46 @@ function initSettings() {
     });
   }
 }
+
+// =============================================
+// FORCE PASSWORD CHANGE (FIRST LOGIN)
+// =============================================
+function initForcePassword() {
+  const form = document.getElementById('force-password-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPw = document.getElementById('force-new-pw').value;
+    const confirmPw = document.getElementById('force-confirm-pw').value;
+
+    if (newPw !== confirmPw) {
+      showToast('Passwords do not match', 'error');
+      return;
+    }
+
+    try {
+      const btn = document.getElementById('btn-force-password');
+      btn.disabled = true;
+      btn.textContent = 'Updating...';
+
+      const res = await apiPut('/auth/force-change-password', { newPassword: newPw });
+      if (res && res.success) {
+        showToast('Password updated! Welcome to PondoSync.');
+        document.getElementById('force-password-modal').classList.remove('active');
+        
+        // Update local user object
+        const user = getCurrentUser();
+        if (user) {
+          user.must_change_password = false;
+          localStorage.setItem('bb_user', JSON.stringify(user));
+        }
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to update password', 'error');
+      document.getElementById('btn-force-password').disabled = false;
+      document.getElementById('btn-force-password').textContent = 'Update Password';
+    }
+  });
+}
+

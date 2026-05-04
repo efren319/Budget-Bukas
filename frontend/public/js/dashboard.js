@@ -264,7 +264,7 @@ function renderMembers(members) {
       ? `<img src="/api/auth/avatar/${member.avatar_url}" alt="${member.name}">`
       : `<i data-lucide="user"></i>`;
       
-    const roleClass = member.role === 'officer' ? 'officer' : '';
+    const roleClass = member.role === 'admin' ? 'badge-primary' : 'badge-secondary';
 
     return `
       <div class="member-item">
@@ -272,8 +272,11 @@ function renderMembers(members) {
           ${avatarHtml}
         </div>
         <div class="member-info">
-          <span class="member-name">${member.name}</span>
-          <span class="member-role ${roleClass}">${member.role}</span>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span class="member-name">${member.name}</span>
+            <span class="badge ${roleClass}" style="font-size: 0.6rem; padding: 2px 6px;">${member.role}</span>
+          </div>
+          <span class="member-role" style="color: var(--text-secondary); font-size: 0.75rem;">${member.position || '—'}</span>
         </div>
       </div>
     `;

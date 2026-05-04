@@ -573,13 +573,22 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 300;
-  animation: fadeIn var(--duration-normal) var(--ease-smooth);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all var(--duration-normal) var(--ease-smooth);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
 }
 
 .modal-content {
@@ -873,3 +882,90 @@
     flex-direction: column;
   }
 }
+
+/* =============================================
+   ADMIN PANEL STYLES
+   ============================================= */
+.page-admin .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.page-admin .page-header h2 {
+  font-size: 1.5rem;
+  margin: 0 0 var(--space-xs) 0;
+  color: var(--gold);
+}
+
+.page-admin .page-header .subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Custom Theme Toggle Switch */
+.theme-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.theme-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  transition: .3s;
+  border-radius: var(--radius-full);
+}
+
+.theme-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--text-muted);
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.theme-toggle input:checked + .theme-toggle-slider {
+  background-color: var(--gold-dark);
+  border-color: var(--gold);
+}
+
+.theme-toggle input:checked + .theme-toggle-slider:before {
+  transform: translateX(16px);
+  background-color: #fff;
+}
+
+.badge-primary { background: rgba(212, 175, 55, 0.15); color: var(--gold); border: 1px solid rgba(212, 175, 55, 0.3); }
+.badge-secondary { background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border-color); }
+.badge-success { background: rgba(52, 199, 89, 0.15); color: var(--success); border: 1px solid rgba(52, 199, 89, 0.3); }
+.badge-danger { background: rgba(255, 59, 92, 0.15); color: var(--danger); border: 1px solid rgba(255, 59, 92, 0.3); }
+.badge-warning { background: rgba(255, 184, 0, 0.15); color: var(--warning); border: 1px solid rgba(255, 184, 0, 0.3); }
+
+/* Remove old settings panel display style since we updated it in layout/dashboard */
