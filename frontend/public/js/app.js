@@ -207,15 +207,41 @@ function initAvatarSettings() {
   const avatar = document.getElementById('user-avatar');
   if (!avatar) return;
 
-  avatar.addEventListener('click', () => {
-    navigateTo('settings');
-  });
+  const settingsPanel = document.getElementById('settings-panel');
+  const closeBtn = document.getElementById('settings-close-btn');
 
-  // Also handle keyboard (Enter/Space for accessibility)
+  function openSettings(e) {
+    if (e) e.stopPropagation();
+    // Add bounce to avatar
+    avatar.classList.add('btn-clicked');
+    setTimeout(() => avatar.classList.remove('btn-clicked'), 150);
+    
+    if (settingsPanel) settingsPanel.classList.remove('panel-hidden');
+  }
+
+  function closeSettings() {
+    if (settingsPanel && !settingsPanel.classList.contains('panel-hidden')) {
+      settingsPanel.classList.add('panel-hidden');
+    }
+  }
+
+  avatar.addEventListener('click', openSettings);
+
   avatar.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      navigateTo('settings');
+      openSettings(e);
+    }
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeSettings);
+  }
+
+  // Click outside to close
+  document.addEventListener('click', (e) => {
+    if (settingsPanel && !settingsPanel.contains(e.target) && !avatar.contains(e.target)) {
+      closeSettings();
     }
   });
 }
@@ -328,10 +354,15 @@ function initNotifications() {
   // Toggle panel
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const isHidden = panel.classList.contains('hidden');
+    
+    // Add bounce effect to the notification button
+    btn.classList.add('btn-clicked');
+    setTimeout(() => btn.classList.remove('btn-clicked'), 150);
+
+    const isHidden = panel.classList.contains('panel-hidden');
 
     if (isHidden) {
-      panel.classList.remove('hidden');
+      panel.classList.remove('panel-hidden');
       // Mark all as read when opening
       notifications.forEach(n => n.unread = false);
       renderNotifications();
@@ -339,15 +370,18 @@ function initNotifications() {
       btn.classList.add('ring');
       setTimeout(() => btn.classList.remove('ring'), 600);
     } else {
-      panel.classList.add('hidden');
+      panel.classList.add('panel-hidden');
     }
   });
 
   // Close panel when clicking outside
   const wrapper = document.getElementById('notification-wrapper');
   document.addEventListener('click', (e) => {
-    if (wrapper && !wrapper.contains(e.target)) {
-      panel.classList.add('hidden');
+    if (wrapper && !wrapper.contains(e.target) && !panel.classList.contains('panel-hidden')) {
+      // Add bounce effect on close
+      btn.classList.add('btn-clicked');
+      setTimeout(() => btn.classList.remove('btn-clicked'), 150);
+      panel.classList.add('panel-hidden');
     }
   });
 

@@ -167,7 +167,7 @@
               <i data-lucide="bell"></i>
               <span class="notification-badge" id="notification-badge">3</span>
             </button>
-            <div class="notification-panel hidden" id="notification-panel">
+            <div class="notification-panel panel-hidden" id="notification-panel">
               <div class="notification-panel-header">
                 <h4>Notifications</h4>
                 <button class="notification-clear-btn" id="notification-clear-btn">Clear all</button>
@@ -560,56 +560,69 @@
           </div>
         </section>
 
-        <!-- ========== SETTINGS PAGE ========== -->
-        <section class="page page-settings" id="page-settings">
-          <div class="page-header">
-            <h2>Settings</h2>
-            <p>Manage your account and preferences</p>
-          </div>
-          <div class="settings-grid">
-            <div class="settings-card">
-              <h4><i data-lucide="user"></i> Profile</h4>
-              <form id="settings-profile-form">
-                <div class="form-group" style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg);">
-                  <div class="topbar-avatar" id="settings-avatar-preview" style="width: 64px; height: 64px; font-size: 1.5rem;">
-                    <i data-lucide="user"></i>
-                  </div>
-                  <div>
-                    <label for="settings-avatar-upload" class="btn btn-secondary btn-sm" style="cursor: pointer;">Change Photo</label>
-                    <input type="file" id="settings-avatar-upload" accept="image/jpeg,image/png,image/webp" hidden>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="settings-name">Name</label>
-                  <input type="text" id="settings-name">
-                </div>
-                <div class="form-group">
-                  <label for="settings-email">Email</label>
-                  <input type="email" id="settings-email">
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
-              </form>
-            </div>
-            <div class="settings-card">
-              <h4><i data-lucide="lock"></i> Change Password</h4>
-              <form id="settings-password-form">
-                <div class="form-group">
-                  <label for="settings-current-pw">Current Password</label>
-                  <input type="password" id="settings-current-pw">
-                </div>
-                <div class="form-group">
-                  <label for="settings-new-pw">New Password</label>
-                  <input type="password" id="settings-new-pw" minlength="6">
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
-              </form>
-            </div>
 
-          </div>
-        </section>
 
       </div>
     </main>
+  </div>
+
+  <!-- ========== SETTINGS PANEL ========== -->
+  <div class="settings-panel-container panel-hidden" id="settings-panel">
+    <button class="settings-side-toggle" id="settings-close-btn" aria-label="Close Settings">
+      <i data-lucide="chevrons-right"></i>
+    </button>
+    
+    <aside class="settings-panel-inner">
+      <div class="settings-panel-header">
+        <div class="settings-panel-title">
+          <i data-lucide="settings"></i>
+          <h2>Settings</h2>
+        </div>
+      </div>
+      
+      <div class="settings-panel-content">
+        <p class="settings-subtitle">Manage your account and preferences</p>
+        <div class="settings-grid">
+          <div class="settings-card">
+            <h4><i data-lucide="user"></i> Profile</h4>
+            <form id="settings-profile-form">
+              <div class="form-group" style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg);">
+                <div class="topbar-avatar" id="settings-avatar-preview" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                  <i data-lucide="user"></i>
+                </div>
+                <div>
+                  <label for="settings-avatar-upload" class="btn btn-secondary btn-sm" style="cursor: pointer;">Change Photo</label>
+                  <input type="file" id="settings-avatar-upload" accept="image/jpeg,image/png,image/webp" hidden>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="settings-name">Name</label>
+                <input type="text" id="settings-name">
+              </div>
+              <div class="form-group">
+                <label for="settings-email">Email</label>
+                <input type="email" id="settings-email">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+            </form>
+          </div>
+          <div class="settings-card">
+            <h4><i data-lucide="lock"></i> Change Password</h4>
+            <form id="settings-password-form">
+              <div class="form-group">
+                <label for="settings-current-pw">Current Password</label>
+                <input type="password" id="settings-current-pw">
+              </div>
+              <div class="form-group">
+                <label for="settings-new-pw">New Password</label>
+                <input type="password" id="settings-new-pw" minlength="6">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </aside>
   </div>
 
   <!-- ========== FLOATING CHAT WIDGET ========== -->
@@ -617,7 +630,7 @@
     <i data-lucide="message-circle"></i>
   </div>
 
-  <div class="chat-widget hidden" id="chat-widget">
+  <div class="chat-widget widget-hidden" id="chat-widget">
     <div class="chat-widget-header">
       <div class="chat-widget-title">
         <i data-lucide="sparkles"></i>

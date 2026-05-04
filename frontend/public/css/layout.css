@@ -296,7 +296,7 @@ body::after {
 .topbar.topbar-scrolled {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  background: rgba(15, 15, 20, 0.6);
+  background: rgb(197 126 50 / 4%);
   border: 1px solid rgba(212, 175, 55, 0.15);
 }
 
@@ -469,11 +469,16 @@ body::after {
   animation: bellRing 0.6s var(--ease-out);
 }
 
+.topbar-action-btn.btn-clicked,
+.topbar-avatar.btn-clicked {
+  transform: scale(0.85) !important;
+}
+
 /* ---- Notification Panel ---- */
 .notification-panel {
   position: absolute;
   top: calc(100% + var(--space-sm));
-  right: 0;
+  right: -8px; /* Slightly adjust right to align perfectly */
   width: 360px;
   max-height: 440px;
   border: 1px solid var(--border-color);
@@ -482,23 +487,16 @@ body::after {
   display: flex;
   flex-direction: column;
   z-index: 200;
-  animation: notifSlideIn 0.25s var(--ease-out);
   overflow: hidden;
+  transition: opacity 0.3s, visibility 0.3s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: calc(100% - 15px) -15px; /* Center of the bell icon */
 }
 
-.notification-panel.hidden {
-  display: none !important;
-}
-
-@keyframes notifSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.notification-panel.panel-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.2);
+  pointer-events: none;
 }
 
 .notification-panel-header {

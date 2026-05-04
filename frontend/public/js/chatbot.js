@@ -186,26 +186,50 @@
 
     if (!fab || !widget) return;
 
+    function updateWidgetOrigin() {
+      const fabRect = fab.getBoundingClientRect();
+      const originX = (fabRect.left + fabRect.width / 2) - widget.offsetLeft;
+      const originY = (fabRect.top + fabRect.height / 2) - widget.offsetTop;
+      widget.style.transformOrigin = `${originX}px ${originY}px`;
+      
+      // Force a reflow so the browser applies the origin BEFORE the transition starts
+      void widget.offsetWidth;
+    }
+
+    function toggleFabBounce() {
+      fab.classList.add('fab-clicked');
+      setTimeout(() => fab.classList.remove('fab-clicked'), 150);
+    }
+
     // Toggle widget
     fab.addEventListener('click', () => {
-      const isOpen = !widget.classList.contains('hidden');
+      toggleFabBounce();
+      updateWidgetOrigin();
+
+      const isOpen = !widget.classList.contains('widget-hidden');
       if (isOpen) {
-        widget.classList.add('hidden');
+        widget.classList.add('widget-hidden');
       } else {
-        widget.classList.remove('hidden');
+        widget.classList.remove('widget-hidden');
         if (input) input.focus();
       }
     });
 
     // Close widget
     if (closeBtn) {
-      closeBtn.addEventListener('click', () => widget.classList.add('hidden'));
+      closeBtn.addEventListener('click', () => {
+        toggleFabBounce();
+        updateWidgetOrigin();
+        widget.classList.add('widget-hidden');
+      });
     }
 
     // Expand to full chatbot page
     if (expandBtn) {
       expandBtn.addEventListener('click', () => {
-        widget.classList.add('hidden');
+        toggleFabBounce();
+        updateWidgetOrigin();
+        widget.classList.add('widget-hidden');
         if (typeof navigateTo === 'function') navigateTo('chatbot');
       });
     }
@@ -222,6 +246,82 @@
           e.preventDefault();
           const msg = input.value.trim();
           if (msg) { input.value = ''; handleWidgetSend(msg); }
+        }
+      });
+    }
+
+    // Make widget draggable by header
+    const header = widget.querySelector('.chat-widget-header');
+    let isDragging = false;
+    let startX, startY, initialX, initialY;
+
+    if (header) {
+      header.addEventListener('mousedown', (e) => {
+        // Prevent dragging if clicking buttons
+        if (e.target.closest('button')) return;
+        
+        isDragging = true;
+        
+        // Temporarily clear right/bottom styles to fix it to left/top
+        const rect = widget.getBoundingClientRect();
+        widget.style.right = 'auto';
+        widget.style.bottom = 'auto';
+        widget.style.left = rect.left + 'px';
+        widget.style.top = rect.top + 'px';
+
+        // Set the transform origin EXACTLY where the user clicked, so the shrink feels physical
+        const originX = e.clientX - rect.left;
+        const originY = e.clientY - rect.top;
+        widget.style.transformOrigin = `${originX}px ${originY}px`;
+        
+        // Force reflow before applying dragging class
+        void widget.offsetWidth;
+        
+        widget.classList.add('dragging');
+
+        initialX = rect.left;
+        initialY = rect.top;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        
+        widget.style.left = (initialX + dx) + 'px';
+        widget.style.top = (initialY + dy) + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          widget.classList.remove('dragging');
+          
+          // Boundary check & smooth snap-back
+          let newLeft = widget.offsetLeft;
+          let newTop = widget.offsetTop;
+          
+          const padding = 20;
+          const wWidth = widget.offsetWidth;
+          const wHeight = widget.offsetHeight;
+          
+          if (newLeft < padding) newLeft = padding;
+          if (newLeft + wWidth > window.innerWidth - padding) newLeft = window.innerWidth - wWidth - padding;
+          
+          if (newTop < padding) newTop = padding;
+          if (newTop + wHeight > window.innerHeight - padding) newTop = window.innerHeight - wHeight - padding;
+          
+          if (newLeft !== widget.offsetLeft || newTop !== widget.offsetTop) {
+            widget.classList.add('snap-back');
+            widget.style.left = newLeft + 'px';
+            widget.style.top = newTop + 'px';
+            setTimeout(() => widget.classList.remove('snap-back'), 400);
+          }
         }
       });
     }
@@ -274,7 +374,7 @@
         fab.classList.add('hidden');
         // Also hide widget when on chatbot page
         const widget = document.getElementById('chat-widget');
-        if (widget) widget.classList.add('hidden');
+        if (widget) widget.classList.add('widget-hidden');
       } else {
         fab.classList.remove('hidden');
       }
