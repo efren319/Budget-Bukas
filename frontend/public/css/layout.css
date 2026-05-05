@@ -7,7 +7,7 @@
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background: transparent; /* Changed from var(--bg-primary) */
+  background: none; /* Changed from var(--bg-primary) */
   position: relative;
   z-index: 1;
   overflow: visible; /* NOT hidden */

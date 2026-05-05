@@ -17,6 +17,19 @@ function animateCounter(elementId, targetValue, duration = 1200) {
   const el = document.getElementById(elementId);
   if (!el) return;
 
+  // Delay animation if loading screen is still visible
+  const overlay = document.getElementById('dashboard-loading-overlay');
+  if (overlay && !overlay.classList.contains('hidden')) {
+    el.textContent = '₱0.00'; // Keep it at 0 while waiting
+    setTimeout(() => animateCounter(elementId, targetValue, duration), 400);
+    return;
+  }
+
+  // Also, when switching tabs, reset to 0 immediately so it doesn't show old value before animating
+  if (el.textContent !== '₱0.00' && parseFloat(el.textContent.replace(/[^0-9.-]+/g,"")) !== targetValue) {
+      el.textContent = '₱0.00';
+  }
+
   const start = performance.now();
   const target = parseFloat(targetValue) || 0;
   const isNegative = target < 0;
@@ -77,6 +90,14 @@ function initDashboard() {
 }
 
 async function loadDashboardData() {
+  // Reset stat cards to 0 immediately so old data isn't shown during fetch
+  const incomeEl = document.getElementById('stat-income');
+  const expenseEl = document.getElementById('stat-expenses');
+  const balanceEl = document.getElementById('stat-balance');
+  if (incomeEl) incomeEl.textContent = '₱0.00';
+  if (expenseEl) expenseEl.textContent = '₱0.00';
+  if (balanceEl) balanceEl.textContent = '₱0.00';
+
   try {
     const data = await apiGet('/transactions/dashboard/stats');
     if (!data || !data.success) return;
