@@ -732,11 +732,23 @@ body::before {
 
 .page {
   display: none;
-  animation: fadeIn var(--duration-normal) var(--ease-out);
+  opacity: 0;
 }
 
 .page.active {
   display: block;
+  animation: pageEnter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(15px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .page-header {

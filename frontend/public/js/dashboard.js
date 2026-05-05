@@ -7,6 +7,53 @@ let pieChart = null;
 let currentDashboardDataStr = null;
 let pollingInterval = null;
 
+/**
+ * Smoothly animates a number element from 0 to its target value (Philippine Peso format).
+ * @param {string} elementId - The ID of the element to animate.
+ * @param {number} targetValue - The final numeric value to count up to.
+ * @param {number} duration - Animation duration in ms (default 1200ms).
+ */
+function animateCounter(elementId, targetValue, duration = 1200) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+
+  const start = performance.now();
+  const target = parseFloat(targetValue) || 0;
+  const isNegative = target < 0;
+  const absTarget = Math.abs(target);
+
+  // Easing: ease-out cubic
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const easedProgress = easeOutCubic(progress);
+    const current = absTarget * easedProgress;
+
+    // Format with Philippine Peso sign
+    const formatted = '₱' + current.toLocaleString('en-PH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    el.textContent = (isNegative ? '-' : '') + formatted;
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    } else {
+      // Ensure final value is exactly right using the shared formatter
+      if (typeof formatPeso === 'function') {
+        el.textContent = formatPeso(targetValue);
+      }
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
+
 function initDashboard() {
   // Load data on first load
   loadDashboardData();
@@ -39,10 +86,10 @@ async function loadDashboardData() {
 
     const { balance, monthly, recent, categories } = data.data;
 
-    // Update stat cards
-    document.getElementById('stat-income').textContent = formatPeso(balance.total_income);
-    document.getElementById('stat-expenses').textContent = formatPeso(balance.total_expenses);
-    document.getElementById('stat-balance').textContent = formatPeso(balance.remaining_balance);
+    // Update stat cards with smooth count-up animation
+    animateCounter('stat-income', balance.total_income);
+    animateCounter('stat-expenses', balance.total_expenses);
+    animateCounter('stat-balance', balance.remaining_balance);
 
     // Render recent activity
     renderRecentActivity(recent);
@@ -259,9 +306,15 @@ function renderMembers(members) {
     return;
   }
 
+  // Use absolute API base for avatar URLs so they work on production
+  const apiBase = window.API_URL ? window.API_URL.replace('/api', '') : '';
+
   container.innerHTML = members.map(member => {
+    // Add timestamp to bust any CDN/proxy cache on avatar images
+    const avatarSrc = `${apiBase}/api/auth/avatar/${member.avatar_url}?t=${Date.now()}`;
     const avatarHtml = member.avatar_url 
-      ? `<img src="/api/auth/avatar/${member.avatar_url}" alt="${member.name}">`
+      ? `<img src="${avatarSrc}" alt="${member.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+         <i data-lucide="user" style="display:none;"></i>`
       : `<i data-lucide="user"></i>`;
       
     const roleClass = member.role === 'admin' ? 'badge-primary' : 'badge-secondary';

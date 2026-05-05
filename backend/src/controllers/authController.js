@@ -267,6 +267,11 @@ function serveAvatar(req, res) {
 // Get all users for Members Panels
 async function getAllUsers(req, res) {
   try {
+    // Prevent any caching so deployed site always gets fresh data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     let query = `
       SELECT id, name, email, role, position, avatar_url, is_active, must_change_password, created_at 
       FROM users 
