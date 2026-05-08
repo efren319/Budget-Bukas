@@ -1,0 +1,110 @@
+/* ============================================================
+   GLASS CARD — 5-Layer Glassmorphism System
+   Interactive Mouse-Tracking Glows
+   ============================================================ */
+
+/* ── Card base ───────────────────────────────── */
+.glass-card {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  border: none;
+  cursor: default; /* Not a pointer by default */
+  background: var(--glass-gold-bg);
+  backdrop-filter: var(--glass-gold-blur);
+  -webkit-backdrop-filter: var(--glass-gold-blur);
+  transition:
+    background 0.4s ease,
+    backdrop-filter 0.4s ease,
+    -webkit-backdrop-filter 0.4s ease,
+    transform 0.3s ease;
+}
+
+/* Explicitly interactive cards */
+a.glass-card,
+button.glass-card,
+.glass-card[onclick],
+.glass-card.clickable {
+  cursor: pointer;
+}
+
+.glass-card:hover {
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transform: translateY(-2px);
+}
+
+/* Proximity Border Highlight */
+.glass-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    300px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--glass-outline-color, rgba(212, 175, 55, 0.6)),
+    transparent 40%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Glow layers ─────────────────────────────── */
+
+/* Layer 1: Large ambient glow — Mouse Tracking Blob */
+.glass-glow-bottom {
+  pointer-events: none;
+  position: absolute;
+  top: var(--mouse-y, 50%);
+  left: var(--mouse-x, 50%);
+  transform: translate(-50%, -50%) rotate(-5deg);
+  width: 350px; 
+  height: 350px;
+  filter: blur(60px);
+  z-index: 1;
+  background: var(--glow-bottom-gold);
+  border-radius: 40% 60% 70% 30% / 50% 40% 60% 50%;
+  transition: background 0.4s ease;
+}
+
+/* Layer 2: Tight bright accent — Mouse Tracking Blob */
+.glass-glow-bright {
+  pointer-events: none;
+  position: absolute;
+  top: var(--mouse-y, 50%);
+  left: var(--mouse-x, 50%);
+  transform: translate(-50%, -50%) rotate(8deg);
+  width: 200px;
+  height: 200px;
+  filter: blur(35px);
+  z-index: 2;
+  background: var(--glow-bright-gold);
+  border-radius: 30% 70% 40% 60% / 60% 30% 60% 40%;
+  transition: background 0.4s ease;
+}
+
+/* Layer 3: Subtle ambient glow — Mouse Tracking Blob */
+.glass-glow-top {
+  pointer-events: none;
+  position: absolute;
+  top: var(--mouse-y, 50%);
+  left: var(--mouse-x, 50%);
+  transform: translate(-50%, -50%) rotate(-12deg);
+  width: 300px;
+  height: 300px;
+  filter: blur(40px);
+  z-index: 1;
+  background: var(--glow-top-gold);
+  border-radius: 60% 40% 30% 70% / 50% 30% 70% 50%;
+  transition: background 0.4s ease;
+}
+
+/* ── Content wrapper ─────────────────────────── */
+.glass-card-content {
+  position: relative;
+  z-index: 5;
+}

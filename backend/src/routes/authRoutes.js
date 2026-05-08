@@ -1,12 +1,9 @@
-// ============================================
-// Auth Routes
-// ============================================
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const {
   login, getProfile, updateProfile, changePassword,
-  uploadAvatar, serveAvatar, getAllUsers, upload,
+  uploadAvatar, deleteAvatar, serveAvatar, getAllUsers, upload,
   loginValidation, forceChangePassword
 } = require('../controllers/authController');
 
@@ -19,7 +16,8 @@ router.put('/profile', auth, updateProfile);
 router.put('/password', auth, changePassword);
 router.put('/force-change-password', auth, forceChangePassword);
 router.post('/avatar', auth, upload.single('avatar'), uploadAvatar);
-router.get('/avatar/:filename', serveAvatar);
+router.delete('/avatar', auth, deleteAvatar);
+router.get('/avatar/:userId', serveAvatar);
 router.get('/users', auth, getAllUsers);
 
 module.exports = router;

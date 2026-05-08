@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   
@@ -28,6 +29,8 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/avatar.css">
+  <link rel="stylesheet" href="css/glass-card.css">
 
   <style>
     /* ---------- Loading Overlay ---------- */
@@ -91,7 +94,7 @@
     }
   </style>
 </head>
-<body style="background-color: #0a0a0a; color: #ffffff;">
+<body>
   <!-- Loading Screen Overlay -->
   <div class="dashboard-loading-overlay" id="dashboard-loading-overlay">
     <div class="loading-content">
@@ -212,25 +215,49 @@
 
               <!-- Stats Row (separated from hero) -->
               <div class="stats-row">
-                <div class="stat-card stat-income">
-                  <div class="stat-icon"><i data-lucide="trending-up"></i></div>
-                  <div class="stat-info">
-                    <span class="stat-label">Total Funds</span>
-                    <span class="stat-value" id="stat-income">₱0.00</span>
+                <div class="stat-card stat-income glass-card">
+                  <!-- Glass card glow layers -->
+                  <div class="glass-glow-bottom"></div>
+                  <div class="glass-glow-bright"></div>
+                  <div class="glass-glow-top"></div>
+
+                  <!-- Content -->
+                  <div class="glass-card-content" style="display: flex; align-items: center; gap: var(--space-md);">
+                    <div class="stat-icon"><i data-lucide="trending-up"></i></div>
+                    <div class="stat-info">
+                      <span class="stat-label">Total Funds</span>
+                      <span class="stat-value" id="stat-income">₱0.00</span>
+                    </div>
                   </div>
                 </div>
-                <div class="stat-card stat-expense">
-                  <div class="stat-icon"><i data-lucide="trending-down"></i></div>
-                  <div class="stat-info">
-                    <span class="stat-label">Total Expenses</span>
-                    <span class="stat-value" id="stat-expenses">₱0.00</span>
+                <div class="stat-card stat-expense glass-card">
+                  <!-- Glass card glow layers -->
+                  <div class="glass-glow-bottom"></div>
+                  <div class="glass-glow-bright"></div>
+                  <div class="glass-glow-top"></div>
+
+                  <!-- Content -->
+                  <div class="glass-card-content" style="display: flex; align-items: center; gap: var(--space-md);">
+                    <div class="stat-icon"><i data-lucide="trending-down"></i></div>
+                    <div class="stat-info">
+                      <span class="stat-label">Total Expenses</span>
+                      <span class="stat-value" id="stat-expenses">₱0.00</span>
+                    </div>
                   </div>
                 </div>
-                <div class="stat-card stat-balance">
-                  <div class="stat-icon"><i data-lucide="wallet"></i></div>
-                  <div class="stat-info">
-                    <span class="stat-label">Remaining Balance</span>
-                    <span class="stat-value gold" id="stat-balance">₱0.00</span>
+                <div class="stat-card stat-balance glass-card">
+                  <!-- Glass card glow layers -->
+                  <div class="glass-glow-bottom"></div>
+                  <div class="glass-glow-bright"></div>
+                  <div class="glass-glow-top"></div>
+
+                  <!-- Content -->
+                  <div class="glass-card-content" style="display: flex; align-items: center; gap: var(--space-md);">
+                    <div class="stat-icon"><i data-lucide="wallet"></i></div>
+                    <div class="stat-info">
+                      <span class="stat-label">Remaining Balance</span>
+                      <span class="stat-value gold" id="stat-balance">₱0.00</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -258,34 +285,61 @@
 
           <!-- Chart + Right Panel Row -->
           <div class="dashboard-grid">
-            <div class="chart-panel">
-              <div class="panel-header">
-                <h3>Income vs Expenses</h3>
-              </div>
-              <div class="chart-container">
-                <canvas id="main-chart"></canvas>
+            <div class="chart-panel glass-card">
+              <!-- Glass card glow layers -->
+              <div class="glass-glow-bottom"></div>
+              <div class="glass-glow-bright"></div>
+              <div class="glass-glow-top"></div>
+              <div class="glass-sheen"></div>
+              <div class="glass-edge"></div>
+              <!-- Content -->
+              <div class="glass-card-content">
+                <div class="panel-header">
+                  <h3>Income vs Expenses</h3>
+                </div>
+                <div class="chart-container">
+                  <canvas id="main-chart"></canvas>
+                </div>
               </div>
             </div>
 
             <div class="right-panel">
               <!-- Recent Activity -->
-              <div class="side-card">
-                <div class="side-card-header">
-                  <h4>Recent Activity</h4>
-                  <a href="#" class="see-all" data-goto="records">See all</a>
-                </div>
-                <div class="activity-list" id="recent-activity">
-                  <div class="empty-state-small">No recent activity</div>
+              <div class="side-card glass-card">
+                <!-- Glass card glow layers -->
+                <div class="glass-glow-bottom"></div>
+                <div class="glass-glow-bright"></div>
+                <div class="glass-glow-top"></div>
+                <div class="glass-sheen"></div>
+                <div class="glass-edge"></div>
+                <!-- Content -->
+                <div class="glass-card-content">
+                  <div class="side-card-header">
+                    <h4>Recent Activity</h4>
+                    <a href="#" class="see-all" data-goto="records">See all</a>
+                  </div>
+                  <div class="activity-list" id="recent-activity">
+                    <div class="empty-state-small">No recent activity</div>
+                  </div>
                 </div>
               </div>
 
               <!-- Category Breakdown -->
-              <div class="side-card">
-                <div class="side-card-header">
-                  <h4>Top Categories</h4>
-                </div>
-                <div class="category-list" id="category-breakdown">
-                  <div class="empty-state-small">No data yet</div>
+              <div class="side-card glass-card">
+                <!-- Glass card glow layers -->
+                <div class="glass-glow-bottom"></div>
+                <div class="glass-glow-bright"></div>
+                <div class="glass-glow-top"></div>
+                <div class="glass-sheen"></div>
+                <div class="glass-edge"></div>
+                <!-- Content -->
+                <div class="glass-card-content">
+                  <div class="side-card-header">
+                    <h4>Top Categories</h4>
+                  </div>
+                  <div class="category-list" id="category-breakdown">
+                    <div class="empty-state-small">No data yet</div>
+                  </div>
                 </div>
               </div> <!-- /side-card (categories) -->
 
@@ -297,22 +351,40 @@
         <!-- ========== SIDE CONTENT COLUMN ========== -->
         <div class="dashboard-side-content">
           <!-- Organization Members -->
-          <div class="side-card member-card">
-            <div class="side-card-header">
-              <h4>Organization Members</h4>
-            </div>
-            <div class="member-list" id="members-list">
-              <div class="empty-state-small">Loading members...</div>
+          <div class="side-card member-card glass-card">
+            <!-- Glass card glow layers -->
+            <div class="glass-glow-bottom"></div>
+            <div class="glass-glow-bright"></div>
+            <div class="glass-glow-top"></div>
+            <div class="glass-sheen"></div>
+            <div class="glass-edge"></div>
+            <!-- Content -->
+            <div class="glass-card-content">
+              <div class="side-card-header">
+                <h4>Organization Members</h4>
+              </div>
+              <div class="member-list" id="members-list">
+                <div class="empty-state-small">Loading members...</div>
+              </div>
             </div>
           </div>
 
           <!-- Category Pie Chart -->
-          <div class="side-card pie-chart-card">
-            <div class="side-card-header">
-              <h4>Expenses Distribution</h4>
-            </div>
-            <div class="pie-chart-container">
-              <canvas id="category-pie-chart"></canvas>
+          <div class="side-card pie-chart-card glass-card">
+            <!-- Glass card glow layers -->
+            <div class="glass-glow-bottom"></div>
+            <div class="glass-glow-bright"></div>
+            <div class="glass-glow-top"></div>
+            <div class="glass-sheen"></div>
+            <div class="glass-edge"></div>
+            <!-- Content -->
+            <div class="glass-card-content">
+              <div class="side-card-header">
+                <h4>Expenses Distribution</h4>
+              </div>
+              <div class="pie-chart-container">
+                <canvas id="category-pie-chart"></canvas>
+              </div>
             </div>
           </div>
         </div> <!-- /dashboard-side-content -->
@@ -335,105 +407,114 @@
             <h2>Add Transaction</h2>
             <p>Record a new income or expense</p>
           </div>
-          <div class="form-card">
-            <form id="transaction-form" autocomplete="off">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Transaction Type</label>
-                  <div class="type-selector" id="type-selector">
-                    <button type="button" class="type-btn active" data-type="income">
-                      <i data-lucide="trending-up"></i> Income
-                    </button>
-                    <button type="button" class="type-btn" data-type="expense">
-                      <i data-lucide="trending-down"></i> Expense
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="form-row two-col">
-                <div class="form-group">
-                  <label for="tx-amount">Amount (₱)</label>
-                  <input type="number" id="tx-amount" step="0.01" min="0.01" placeholder="0.00" required>
-                </div>
-                <div class="form-group">
-                  <label for="tx-date">Date</label>
-                  <input type="date" id="tx-date" required>
-                </div>
-              </div>
-              <!-- Income Fields -->
-              <div class="form-row income-fields" id="income-fields">
-                <div class="form-group">
-                  <label for="tx-source">Source</label>
-                  <input type="text" id="tx-source" placeholder="e.g., Membership Fees, Donation">
-                </div>
-              </div>
-              <!-- Expense Fields -->
-              <div class="form-row expense-fields hidden" id="expense-fields">
-                <div class="form-group">
-                  <label for="tx-category">Category</label>
-                  <select id="tx-category">
-                    <option value="">Select category</option>
-                    <option value="Food & Beverages">Food & Beverages</option>
-                    <option value="Transportation">Transportation</option>
-                    <option value="Supplies">Supplies</option>
-                    <option value="Printing">Printing</option>
-                    <option value="Events">Events</option>
-                    <option value="Equipment">Equipment</option>
-                    <option value="Venue">Venue</option>
-                    <option value="Miscellaneous">Miscellaneous</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-row expense-fields hidden">
-                <div class="form-group">
-                  <label for="tx-description">Description</label>
-                  <textarea id="tx-description" rows="3" placeholder="Brief description of the expense..."></textarea>
-                </div>
-              </div>
-
-              <!-- Receipt Upload (expense only) -->
-              <div class="form-row expense-fields hidden">
-                <div class="form-group">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-                    <label style="margin: 0;">Receipt (Optional)</label>
-                    <label class="toggle-switch" style="transform: scale(0.8);">
-                      <input type="checkbox" id="toggle-ocr" checked>
-                      <span class="toggle-slider"></span>
-                      <span style="margin-left: 50px; font-size:12px; color:var(--text-secondary); white-space:nowrap;">Auto OCR</span>
-                    </label>
-                  </div>
-                  
-                  <div class="receipt-upload-area" id="receipt-upload-area">
-                    <i data-lucide="upload-cloud"></i>
-                    <p>Click or drag receipt image here</p>
-                    <span>JPG, PNG, WebP — Max 5MB</span>
-                    <input type="file" id="receipt-file" accept="image/jpeg,image/png,image/webp" hidden>
-                  </div>
-                  <div class="receipt-preview hidden" id="receipt-preview">
-                    <img id="receipt-preview-img" alt="Receipt preview">
-                    <button type="button" class="btn-remove-receipt" id="btn-remove-receipt">
-                      <i data-lucide="x"></i>
-                    </button>
-                    <div class="ocr-status" id="ocr-status">
-                      <i data-lucide="loader" class="spin"></i> Scanning receipt...
+          <div class="form-card glass-card">
+            <!-- Glass card glow layers -->
+            <div class="glass-glow-bottom"></div>
+            <div class="glass-glow-bright"></div>
+            <div class="glass-glow-top"></div>
+            <div class="glass-sheen"></div>
+            <div class="glass-edge"></div>
+            <!-- Content -->
+            <div class="glass-card-content">
+              <form id="transaction-form" autocomplete="off">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Transaction Type</label>
+                    <div class="type-selector" id="type-selector">
+                      <button type="button" class="type-btn active" data-type="income">
+                        <i data-lucide="trending-up"></i> Income
+                      </button>
+                      <button type="button" class="type-btn" data-type="expense">
+                        <i data-lucide="trending-down"></i> Expense
+                      </button>
                     </div>
                   </div>
                 </div>
-              </div>
+                <div class="form-row two-col">
+                  <div class="form-group">
+                    <label for="tx-amount">Amount (₱)</label>
+                    <input type="number" id="tx-amount" step="0.01" min="0.01" placeholder="0.00" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="tx-date">Date</label>
+                    <input type="date" id="tx-date" required>
+                  </div>
+                </div>
+                <!-- Income Fields -->
+                <div class="form-row income-fields" id="income-fields">
+                  <div class="form-group">
+                    <label for="tx-source">Source</label>
+                    <input type="text" id="tx-source" placeholder="e.g., Membership Fees, Donation">
+                  </div>
+                </div>
+                <!-- Expense Fields -->
+                <div class="form-row expense-fields hidden" id="expense-fields">
+                  <div class="form-group">
+                    <label for="tx-category">Category</label>
+                    <select id="tx-category">
+                      <option value="">Select category</option>
+                      <option value="Food & Beverages">Food & Beverages</option>
+                      <option value="Transportation">Transportation</option>
+                      <option value="Supplies">Supplies</option>
+                      <option value="Printing">Printing</option>
+                      <option value="Events">Events</option>
+                      <option value="Equipment">Equipment</option>
+                      <option value="Venue">Venue</option>
+                      <option value="Miscellaneous">Miscellaneous</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row expense-fields hidden">
+                  <div class="form-group">
+                    <label for="tx-description">Description</label>
+                    <textarea id="tx-description" rows="3" placeholder="Brief description of the expense..."></textarea>
+                  </div>
+                </div>
 
-              <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="btn-reset-form">Reset</button>
-                <button type="submit" class="btn btn-primary" id="btn-save-transaction">
-                  <i data-lucide="save"></i> Save Transaction
-                </button>
-              </div>
-            </form>
+                <!-- Receipt Upload (expense only) -->
+                <div class="form-row expense-fields hidden">
+                  <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+                      <label style="margin: 0;">Receipt (Optional)</label>
+                      <label class="toggle-switch" style="transform: scale(0.8);">
+                        <input type="checkbox" id="toggle-ocr" checked>
+                        <span class="toggle-slider"></span>
+                        <span style="margin-left: 50px; font-size:12px; color:var(--text-secondary); white-space:nowrap;">Auto OCR</span>
+                      </label>
+                    </div>
+                    
+                    <div class="receipt-upload-area" id="receipt-upload-area">
+                      <i data-lucide="upload-cloud"></i>
+                      <p>Click or drag receipt image here</p>
+                      <span>JPG, PNG, WebP — Max 5MB</span>
+                      <input type="file" id="receipt-file" accept="image/jpeg,image/png,image/webp" hidden>
+                    </div>
+                    <div class="receipt-preview hidden" id="receipt-preview">
+                      <img id="receipt-preview-img" alt="Receipt preview">
+                      <button type="button" class="btn-remove-receipt" id="btn-remove-receipt">
+                        <i data-lucide="x"></i>
+                      </button>
+                      <div class="ocr-status" id="ocr-status">
+                        <i data-lucide="loader" class="spin"></i> Scanning receipt...
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-            <!-- Edit mode indicator -->
-            <div class="edit-mode-banner hidden" id="edit-mode-banner">
-              <i data-lucide="edit-3"></i>
-              <span>Editing transaction #<b id="edit-tx-id"></b></span>
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-edit">Cancel</button>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="btn-reset-form">Reset</button>
+                  <button type="submit" class="btn btn-primary" id="btn-save-transaction">
+                    <i data-lucide="save"></i> Save Transaction
+                  </button>
+                </div>
+              </form>
+
+              <!-- Edit mode indicator -->
+              <div class="edit-mode-banner hidden" id="edit-mode-banner">
+                <i data-lucide="edit-3"></i>
+                <span>Editing transaction #<b id="edit-tx-id"></b></span>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-cancel-edit">Cancel</button>
+              </div>
             </div>
           </div>
         </section>
@@ -632,42 +713,61 @@
       <div class="settings-panel-content">
         <p class="settings-subtitle">Manage your account and preferences</p>
         <div class="settings-grid">
-          <div class="settings-card">
-            <h4><i data-lucide="user"></i> Profile</h4>
-            <form id="settings-profile-form">
-              <div class="form-group" style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg);">
-                <div class="topbar-avatar" id="settings-avatar-preview" style="width: 64px; height: 64px; font-size: 1.5rem;">
-                  <i data-lucide="user"></i>
+          <div class="settings-card glass-card">
+            <!-- Glass card glow layers -->
+            <div class="glass-glow-bottom"></div>
+            <div class="glass-glow-bright"></div>
+            <div class="glass-glow-top"></div>
+            <div class="glass-sheen"></div>
+            <div class="glass-edge"></div>
+            <!-- Content -->
+            <div class="glass-card-content">
+              <h4><i data-lucide="user"></i> Profile</h4>
+              <form id="settings-profile-form">
+                <div class="form-group" style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg);">
+                  <div class="topbar-avatar avatar-preview-trigger" id="settings-avatar-preview" style="width: 72px; height: 72px; font-size: 1.8rem; cursor: zoom-in;" title="Click to view fullscreen">
+                    <i data-lucide="user"></i>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: var(--space-xs);">
+                    <label for="settings-avatar-upload" class="btn btn-secondary btn-sm" style="cursor: pointer;">Change Photo</label>
+                    <button type="button" id="btn-remove-avatar" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: rgba(255, 59, 92, 0.2);">Remove Photo</button>
+                    <input type="file" id="settings-avatar-upload" accept="image/jpeg,image/png,image/webp" hidden>
+                  </div>
                 </div>
-                <div>
-                  <label for="settings-avatar-upload" class="btn btn-secondary btn-sm" style="cursor: pointer;">Change Photo</label>
-                  <input type="file" id="settings-avatar-upload" accept="image/jpeg,image/png,image/webp" hidden>
+                <div class="form-group">
+                  <label for="settings-name">Name</label>
+                  <input type="text" id="settings-name">
                 </div>
-              </div>
-              <div class="form-group">
-                <label for="settings-name">Name</label>
-                <input type="text" id="settings-name">
-              </div>
-              <div class="form-group">
-                <label for="settings-email">Email</label>
-                <input type="email" id="settings-email">
-              </div>
-              <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
-            </form>
+                <div class="form-group">
+                  <label for="settings-email">Email</label>
+                  <input type="email" id="settings-email">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+              </form>
+            </div>
           </div>
-          <div class="settings-card">
-            <h4><i data-lucide="lock"></i> Change Password</h4>
-            <form id="settings-password-form">
-              <div class="form-group">
-                <label for="settings-current-pw">Current Password</label>
-                <input type="password" id="settings-current-pw">
-              </div>
-              <div class="form-group">
-                <label for="settings-new-pw">New Password</label>
-                <input type="password" id="settings-new-pw" minlength="6">
-              </div>
-              <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
-            </form>
+          <div class="settings-card glass-card">
+            <!-- Glass card glow layers -->
+            <div class="glass-glow-bottom"></div>
+            <div class="glass-glow-bright"></div>
+            <div class="glass-glow-top"></div>
+            <div class="glass-sheen"></div>
+            <div class="glass-edge"></div>
+            <!-- Content -->
+            <div class="glass-card-content">
+              <h4><i data-lucide="lock"></i> Change Password</h4>
+              <form id="settings-password-form">
+                <div class="form-group">
+                  <label for="settings-current-pw">Current Password</label>
+                  <input type="password" id="settings-current-pw">
+                </div>
+                <div class="form-group">
+                  <label for="settings-new-pw">New Password</label>
+                  <input type="password" id="settings-new-pw" minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
@@ -818,7 +918,59 @@
   <!-- Toast Notification -->
   <div class="toast-container" id="toast-container"></div>
 
+  <!-- ========== AVATAR FULLSCREEN PREVIEW MODAL ========== -->
+  <div class="avatar-lightbox" id="avatar-lightbox" role="dialog" aria-modal="true" aria-label="Profile photo preview">
+    <div class="avatar-lightbox-backdrop" id="avatar-lightbox-backdrop"></div>
+    <div class="avatar-lightbox-content">
+      <button class="avatar-lightbox-close" id="avatar-lightbox-close" aria-label="Close preview">
+        <i data-lucide="x"></i>
+      </button>
+      <div class="avatar-lightbox-img-wrap">
+        <img id="avatar-lightbox-img" alt="Profile photo" src="">
+      </div>
+      <div class="avatar-lightbox-name" id="avatar-lightbox-name"></div>
+    </div>
+  </div>
+
+  <!-- ========== AVATAR CROP MODAL ========== -->
+  <div class="avatar-crop-modal" id="avatar-crop-modal" role="dialog" aria-modal="true" aria-label="Crop your photo">
+    <div class="avatar-crop-backdrop"></div>
+    <div class="avatar-crop-dialog glass-card" style="cursor: default;">
+      <!-- Glass card glow layers -->
+      <div class="glass-glow-bottom"></div>
+      <div class="glass-glow-bright"></div>
+      <div class="glass-glow-top"></div>
+      <div class="glass-sheen"></div>
+      <div class="glass-edge"></div>
+      <!-- Content -->
+      <div class="glass-card-content">
+        <div class="avatar-crop-header">
+          <h3><i data-lucide="crop"></i> Crop Your Photo</h3>
+          <button class="avatar-crop-close" id="avatar-crop-cancel" aria-label="Cancel">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="avatar-crop-body">
+          <div class="avatar-crop-wrapper">
+            <img id="avatar-crop-img" alt="Crop preview" src="">
+          </div>
+          <div class="avatar-crop-hint">
+            <i data-lucide="move"></i> Drag to reposition &nbsp;·&nbsp;
+            <i data-lucide="zoom-in"></i> Scroll to zoom
+          </div>
+        </div>
+        <div class="avatar-crop-actions">
+          <button class="btn btn-outline" id="avatar-crop-cancel-btn">Cancel</button>
+          <button class="btn btn-primary" id="avatar-crop-confirm">
+            <i data-lucide="check"></i> Apply &amp; Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
 

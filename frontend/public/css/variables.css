@@ -5,25 +5,26 @@
 
 :root {
   /* ---- Primary Palette ---- */
+  /* ---- Primary Palette ---- */
   --gold: #d3ac77;
   --gold-light: #f2dab2;
   --gold-dark: #d28447;
-  --gold-muted: rgb(212 142 55 / 15%);
+  --gold-muted: rgba(212, 175, 55, 0.15);
 
   /* ---- Gradients ---- */
   --grad-gold: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
 
   /* ---- Dark Mode (Default) ---- */
   --bg-primary: #080604;
-  --bg-secondary: #1e140f;
-  --bg-card: #2e1d16;
-  --bg-elevated: #190a02cc;
-  --bg-input: #16120e7a;
+  --bg-secondary: #12100d;
+  --bg-card: #1a1612;
+  --bg-elevated: rgba(22, 18, 14, 0.8);
+  --bg-input: rgba(22, 18, 14, 0.5);
   --text-primary: #faf7f3;
-  --text-secondary: #877e74;
-  --text-muted: #6d6864;
-  --border-color:  rgba(255, 255, 255, 0.08);
-  --border-gold:   rgba(212, 144, 55, 0.2);
+  --text-secondary: #a6a096;
+  --text-muted: #7a746e;
+  --border-color:  rgba(255, 255, 255, 0.06);
+  --border-gold:   rgba(212, 175, 55, 0.2);
 
   /* ---- Semantic Colors ---- */
   --success:     #34C759;
@@ -56,8 +57,8 @@
   --shadow-md:   0 8px 24px rgba(0,0,0,0.4);
   --shadow-card: 0 12px 32px rgba(0,0,0,0.5);
   --shadow-lg:   0 16px 48px rgba(0,0,0,0.6);
-  --shadow-glow: 0 0 16px rgba(212, 139, 55, 0.1);
-  --shadow-glow-strong: 0 0 32px rgba(212, 144, 55, 0.2);
+  --shadow-glow: 0 0 16px rgba(212, 175, 55, 0.1);
+  --shadow-glow-strong: 0 0 32px rgba(212, 175, 55, 0.2);
 
   /* ---- Typography ---- */
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -84,11 +85,11 @@
              border: var(--glass-border);
              box-shadow: var(--glass-shadow);
      ═══════════════════════════════════════════════ */
-  --glass-bg: linear-gradient(135deg, rgb(0 0 0 / 12%) 0%,
-   rgb(0 0 0 / 4%) 40%, rgba(255, 255, 255, 0.01) 100%),
-    radial-gradient(ellipse at 20% 15%, rgb(0 0 0 / 27%) 0%,
+  --glass-bg: linear-gradient(135deg, rgba(0,0,0, 0.15) 0%,
+    rgba(0,0,0, 0.05) 40%, rgba(255, 255, 255, 0.01) 100%),
+    radial-gradient(ellipse at 20% 15%, rgba(0,0,0, 0.3) 0%,
      transparent 55%), radial-gradient(ellipse at 80% 85%,
-      rgb(49 28 24 / 4%) 0%, transparent 50%), rgb(41 28 12 / 45%);
+      rgba(49, 28, 24, 0.05) 0%, transparent 50%), rgba(20, 16, 12, 0.45);
   --glass-blur: blur(24px) saturate(1.6) brightness(1.05);
   --glass-border: 1px solid rgba(255,255,255,0.12);
   --glass-border-top: 1px solid rgba(255,255,255,0.25);
@@ -110,20 +111,34 @@
              border: var(--glass-gold-border);
              box-shadow: var(--glass-gold-shadow);
      ═══════════════════════════════════════════════ */
-  --glass-bg: linear-gradient(135deg, rgb(0 0 0 / 12%) 0%,
-   rgb(0 0 0 / 4%) 40%, rgba(255, 255, 255, 0.01) 100%), 
-   radial-gradient(ellipse at 20% 15%, rgb(0 0 0 / 27%) 0%, 
-   transparent 55%), radial-gradient(ellipse at 80% 85%,
-    rgb(49 28 24 / 4%) 0%, transparent 50%), rgb(55 40 31 / 45%);
   --glass-gold-blur: blur(16px) saturate(1.4) brightness(0.52);
-  --glass-gold-border: 1px solid rgba(212,175,55,0.15);
-  --glass-gold-border-top: 1px solid rgba(255,215,80,0.3);
-  --glass-gold-border-left: 1px solid rgba(212,175,55,0.2);
-  --glass-gold-bg: linear-gradient(135deg, rgb(31 13 8 / 14%) 0%, 
-  rgb(27 16 4 / 6%) 40%, rgb(53 23 8 / 2%) 100%), 
-  radial-gradient(ellipse at 25% 15%, rgb(61 36 18 / 18%) 0%, 
-  #00000000 55%), radial-gradient(ellipse at 75% 85%,
-   rgb(51 36 29 / 14%) 0%, #00000021 50%), rgb(37 26 19 / 27%);
+  --glass-gold-border: 1px solid rgba(212, 175, 55, 0.15);
+  --glass-gold-border-top: 1px solid rgba(255, 215, 80, 0.3);
+  --glass-gold-border-left: 1px solid rgba(212, 175, 55, 0.2);
+  --glass-gold-bg: linear-gradient(135deg, rgba(31, 13, 8, 0.14) 0%, 
+  rgba(27, 16, 4, 0.06) 40%, rgba(53, 23, 8, 0.02) 100%), 
+  radial-gradient(ellipse at 25% 15%, rgba(61, 36, 18, 0.18) 0%, 
+  transparent 55%), radial-gradient(ellipse at 75% 85%,
+    rgba(51, 36, 29, 0.14) 0%, rgba(0,0,0,0.1) 50%), rgba(20, 16, 12, 0.3);
   --glass-gold-highlight:
-    linear-gradient(180deg, rgba(255,215,80,0.1) 0%, rgba(212,175,55,0.03) 35%, transparent 100%);
+    linear-gradient(180deg, rgba(255, 215, 80, 0.1) 0%, rgba(212, 175, 55, 0.03) 35%, transparent 100%);
+
+  /* ═══════════════════════════════════════════════
+     GLASS CARD — Gold Glow Layers
+     5-layer radial glow system for premium cards
+     ═══════════════════════════════════════════════ */
+  --glow-bottom-gold:  radial-gradient(ellipse at 50% 90%, rgba(212, 175, 55, 0.4) 0%, rgba(210, 145, 35, 0.2) 25%, rgba(180, 115, 20, 0.1) 50%, transparent 72%);
+  --glow-bottom-hover: radial-gradient(ellipse at 50% 90%, rgba(180, 130, 80, 0.25) 0%, rgba(140, 95, 55, 0.12) 30%, rgba(100, 65, 35, 0.05) 55%, transparent 72%);
+
+  --glow-bright-gold:  radial-gradient(ellipse at 50% 100%, rgba(255, 220, 120, 0.35) 0%, rgba(240, 190, 80, 0.15) 40%, transparent 70%);
+  --glow-bright-hover: radial-gradient(ellipse at 50% 100%, rgba(210, 170, 120, 0.2) 0%, rgba(180, 140, 95, 0.08) 40%, transparent 70%);
+
+  --glow-top-gold:     radial-gradient(ellipse at 50% 10%, rgba(235, 185, 70, 0.1) 0%, transparent 65%);
+  --glow-top-hover:    radial-gradient(ellipse at 50% 10%, rgba(200, 165, 120, 0.08) 0%, transparent 65%);
+
+  --sheen-gold:        linear-gradient(180deg, rgba(255, 230, 150, 0.08) 0%, rgba(255, 210, 110, 0.03) 35%, transparent 100%);
+  --sheen-hover:       linear-gradient(180deg, rgba(255, 245, 235, 0.06) 0%, rgba(230, 215, 195, 0.02) 35%, transparent 100%);
+
+  --edge-gold:         linear-gradient(90deg, transparent 0%, rgba(255, 210, 100, 0.25) 30%, rgba(255, 230, 140, 0.45) 50%, rgba(255, 210, 100, 0.25) 70%, transparent 100%);
+  --edge-hover:        linear-gradient(90deg, transparent 0%, rgba(210, 185, 155, 0.15) 30%, rgba(230, 210, 185, 0.25) 50%, rgba(210, 185, 155, 0.15) 70%, transparent 100%);
 }

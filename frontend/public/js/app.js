@@ -32,8 +32,8 @@ async function initApp() {
     const avatarEl = document.getElementById('user-avatar');
     if (nameEl) nameEl.textContent = user.name || 'User';
     if (roleEl) roleEl.textContent = user.role || 'Member';
-    if (avatarEl && user.avatar_url) {
-      avatarEl.innerHTML = `<img src="/api/auth/avatar/${user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+    if (avatarEl && user.id) {
+      avatarEl.innerHTML = `<img src="/api/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
     }
   }
 
@@ -63,6 +63,7 @@ async function initApp() {
   initReceiptsPage();
   initChatbot();
   initSettings();
+  initGlassmorphism();
   if (typeof initAdmin === 'function') initAdmin();
 
   // Refresh Lucide icons
@@ -460,50 +461,28 @@ function initSettings() {
   const user = getCurrentUser();
 
   // Populate profile form
-  const nameInput = document.getElementById('settings-name');
-  const emailInput = document.getElementById('settings-email');
+  const nameInput    = document.getElementById('settings-name');
+  const emailInput   = document.getElementById('settings-email');
   const avatarPreview = document.getElementById('settings-avatar-preview');
-  
-  if (nameInput && user) nameInput.value = user.name || '';
+
+  if (nameInput  && user) nameInput.value  = user.name  || '';
   if (emailInput && user) emailInput.value = user.email || '';
-  if (avatarPreview && user && user.avatar_url) {
-    avatarPreview.innerHTML = `<img src="/api/auth/avatar/${user.avatar_url}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+
+  // Always render avatar from user ID (backend always returns photo or initials SVG)
+  if (avatarPreview && user && user.id) {
+    avatarPreview.innerHTML = `<img src="/api/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="${user.name || 'Avatar'}">`;
   }
 
-  // Avatar upload via File Input
-  const avatarInput = document.getElementById('settings-avatar-upload');
-  if (avatarInput) {
-    avatarInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+  // ---- Fullscreen Avatar Lightbox ----
+  initAvatarLightbox(user);
 
-      const formData = new FormData();
-      formData.append('avatar', file);
+  // ---- Cropper-based Avatar Upload ----
+  initAvatarCropUpload(user, avatarPreview);
 
-      try {
-        const result = await apiUpload('/auth/avatar', formData);
-        if (result && result.success) {
-          const avatarUrl = result.data.avatar_url;
-          
-          // Update local storage
-          const updatedUser = { ...user, avatar_url: avatarUrl };
-          localStorage.setItem('bb_user', JSON.stringify(updatedUser));
-          
-          // Update DOM instances
-          const imgMarkup = `<img src="/api/auth/avatar/${avatarUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-          if (avatarPreview) avatarPreview.innerHTML = imgMarkup;
-          const topbarAvatar = document.getElementById('user-avatar');
-          if (topbarAvatar) topbarAvatar.innerHTML = imgMarkup;
-          
-          showToast('Profile photo updated successfully');
-        }
-      } catch (err) {
-        showToast(err.message || 'Failed to update avatar', 'error');
-      }
-    });
-  }
+  // ---- Remove Photo ----
+  initAvatarRemove(user, avatarPreview);
 
-  // Profile form submit
+  // ---- Profile form submit ----
   const profileForm = document.getElementById('settings-profile-form');
   if (profileForm) {
     profileForm.addEventListener('submit', async (e) => {
@@ -513,8 +492,7 @@ function initSettings() {
           name: nameInput.value,
           email: emailInput.value
         });
-        // Update local storage
-        const updatedUser = { ...user, name: nameInput.value, email: emailInput.value };
+        const updatedUser = { ...getCurrentUser(), name: nameInput.value, email: emailInput.value };
         localStorage.setItem('bb_user', JSON.stringify(updatedUser));
         document.getElementById('user-name').textContent = updatedUser.name;
         showToast('Profile updated successfully');
@@ -524,7 +502,7 @@ function initSettings() {
     });
   }
 
-  // Password form submit
+  // ---- Password form submit ----
   const passwordForm = document.getElementById('settings-password-form');
   if (passwordForm) {
     passwordForm.addEventListener('submit', async (e) => {
@@ -532,12 +510,168 @@ function initSettings() {
       try {
         await apiPut('/auth/password', {
           currentPassword: document.getElementById('settings-current-pw').value,
-          newPassword: document.getElementById('settings-new-pw').value
+          newPassword:     document.getElementById('settings-new-pw').value
         });
         showToast('Password changed successfully');
         passwordForm.reset();
       } catch (err) {
         showToast(err.message, 'error');
+      }
+    });
+  }
+}
+
+// ---- Fullscreen Avatar Lightbox ----
+function initAvatarLightbox(user) {
+  const lightbox    = document.getElementById('avatar-lightbox');
+  const lightboxImg = document.getElementById('avatar-lightbox-img');
+  const lightboxName = document.getElementById('avatar-lightbox-name');
+  const closeBtn    = document.getElementById('avatar-lightbox-close');
+  const backdrop    = document.getElementById('avatar-lightbox-backdrop');
+  const trigger     = document.getElementById('settings-avatar-preview');
+
+  if (!lightbox || !trigger) return;
+
+  function openLightbox() {
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser.id) return;
+    lightboxImg.src  = `/api/auth/avatar/${currentUser.id}?t=${Date.now()}`;
+    lightboxName.textContent = currentUser.name || '';
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  trigger.addEventListener('click', openLightbox);
+  if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+  if (backdrop) backdrop.addEventListener('click', closeLightbox);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox.classList.contains('active')) closeLightbox();
+  });
+}
+
+// ---- Cropper-based Avatar Upload ----
+function initAvatarCropUpload(user, avatarPreview) {
+  const fileInput    = document.getElementById('settings-avatar-upload');
+  const cropModal    = document.getElementById('avatar-crop-modal');
+  const cropImg      = document.getElementById('avatar-crop-img');
+  const cropConfirm  = document.getElementById('avatar-crop-confirm');
+  const cropCancelBtn = document.getElementById('avatar-crop-cancel-btn');
+  const cropCancelX  = document.getElementById('avatar-crop-cancel');
+
+  if (!fileInput || !cropModal) return;
+
+  let cropperInstance = null;
+
+  // Open crop modal when file selected
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate type & size client-side
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file (JPG, PNG, WebP)', 'error');
+      fileInput.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image too large — max 5MB', 'error');
+      fileInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      // Set crop img src and open modal
+      cropImg.src = ev.target.result;
+      cropModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      // Destroy previous cropper if any
+      if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+
+      // Init Cropper.js after image loads
+      cropImg.onload = () => {
+        cropperInstance = new Cropper(cropImg, {
+          aspectRatio: 1,
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 0.85,
+          restore: false,
+          guides: true,
+          center: true,
+          highlight: false,
+          cropBoxMovable: false,
+          cropBoxResizable: false,
+          toggleDragModeOnDblclick: false,
+          background: false,
+          modal: true,
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      };
+    };
+    reader.readAsDataURL(file);
+    fileInput.value = ''; // reset so same file can be re-selected
+  });
+
+  // Close crop modal
+  function closeCropModal() {
+    cropModal.classList.remove('active');
+    document.body.style.overflow = '';
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+  }
+
+  if (cropCancelBtn) cropCancelBtn.addEventListener('click', closeCropModal);
+  if (cropCancelX)   cropCancelX.addEventListener('click', closeCropModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && cropModal.classList.contains('active')) closeCropModal();
+  });
+
+  // Confirm crop → compress → upload
+  if (cropConfirm) {
+    cropConfirm.addEventListener('click', async () => {
+      if (!cropperInstance) return;
+
+      cropConfirm.disabled = true;
+      cropConfirm.innerHTML = '<i data-lucide="loader"></i> Uploading...';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+
+      try {
+        // Get cropped canvas (512×512 max for quality vs size balance)
+        const canvas = cropperInstance.getCroppedCanvas({ width: 512, height: 512, imageSmoothingQuality: 'high' });
+
+        // Compress to JPEG blob (~85% quality)
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+
+        const formData = new FormData();
+        formData.append('avatar', blob, 'avatar.jpg');
+
+        const result = await apiUpload('/auth/avatar', formData);
+
+        if (result && result.success) {
+          // Update stored user
+          const currentUser = getCurrentUser();
+          const updatedUser = { ...currentUser, avatar_url: result.data.avatar_url };
+          localStorage.setItem('bb_user', JSON.stringify(updatedUser));
+          
+          refreshAllAvatars();
+
+          closeCropModal();
+          showToast('Profile photo updated! ✨');
+        } else {
+          throw new Error(result?.message || 'Upload failed');
+        }
+      } catch (err) {
+        showToast(err.message || 'Failed to upload avatar', 'error');
+      } finally {
+        cropConfirm.disabled = false;
+        cropConfirm.innerHTML = '<i data-lucide="check"></i> Apply &amp; Upload';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
       }
     });
   }
@@ -581,6 +715,95 @@ function initForcePassword() {
       showToast(err.message || 'Failed to update password', 'error');
       document.getElementById('btn-force-password').disabled = false;
       document.getElementById('btn-force-password').textContent = 'Update Password';
+    }
+  });
+}
+
+// ---- Remove Avatar ----
+function initAvatarRemove(user, avatarPreview) {
+  const removeBtn = document.getElementById('btn-remove-avatar');
+  if (!removeBtn) return;
+
+  removeBtn.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to remove your profile photo?')) return;
+    
+    try {
+      await apiDelete('/auth/avatar');
+      
+      // Update local storage
+      const currentUser = getCurrentUser();
+      const updatedUser = { ...currentUser, avatar_url: null };
+      localStorage.setItem('bb_user', JSON.stringify(updatedUser));
+      
+      refreshAllAvatars();
+      showToast('Profile photo removed');
+    } catch (err) {
+      showToast(err.message || 'Failed to remove avatar', 'error');
+    }
+  });
+}
+
+// Helper to update all avatar instances on the page immediately
+function refreshAllAvatars() {
+  const user = getCurrentUser();
+  if (!user || !user.id) return;
+  
+  const ts = Date.now();
+  // We use the timestamp for cache busting
+  const avatarUrl = `/api/auth/avatar/${user.id}?t=${ts}`;
+  
+  // 1. Topbar avatar
+  const topbarAvatar = document.getElementById('user-avatar');
+  if (topbarAvatar) {
+    topbarAvatar.innerHTML = `<img src="${avatarUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="${user.name || ''}">`;
+  }
+  
+  // 2. Settings preview
+  const settingsPreview = document.getElementById('settings-avatar-preview');
+  if (settingsPreview) {
+    settingsPreview.innerHTML = `<img src="${avatarUrl}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="${user.name || ''}">`;
+  }
+  
+  // 3. Admin panel and dashboard member lists
+  document.querySelectorAll(`.user-avatar-${user.id}`).forEach(img => {
+    img.src = avatarUrl;
+  });
+
+  // Also update the lightbox if it's open
+  const lightboxImg = document.getElementById('avatar-lightbox-img');
+  if (lightboxImg) lightboxImg.src = avatarUrl;
+}
+
+// =============================================
+// GLASSMORPHISM MOUSE TRACKING (Proximity Lighting)
+// =============================================
+function initGlassmorphism() {
+  let cards = document.querySelectorAll('.glass-card');
+  let isTicking = false;
+  let mouseX = 0;
+  let mouseY = 0;
+
+  // Refresh the card list periodically in case the DOM changes
+  setInterval(() => {
+    cards = document.querySelectorAll('.glass-card');
+  }, 1000);
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+
+    if (!isTicking) {
+      requestAnimationFrame(() => {
+        cards.forEach(card => {
+          const rect = card.getBoundingClientRect();
+          const x = mouseX - rect.left;
+          const y = mouseY - rect.top;
+          card.style.setProperty('--mouse-x', `${x}px`);
+          card.style.setProperty('--mouse-y', `${y}px`);
+        });
+        isTicking = false;
+      });
+      isTicking = true;
     }
   });
 }

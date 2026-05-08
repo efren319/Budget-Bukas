@@ -86,11 +86,8 @@
    FORM ELEMENTS
    ============================================= */
 .form-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
   padding: var(--space-xl);
-  box-shadow: var(--shadow-sm);
+  /* background/border/shadow handled by .glass-card */
 }
 
 .form-row {
@@ -746,11 +743,8 @@
 }
 
 .settings-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  box-shadow: var(--shadow-sm);
+  /* background/border/shadow handled by .glass-card */
 }
 
 .settings-card h4 {

@@ -10,25 +10,27 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Avatar setup
-const AVATAR_DIR = path.join(__dirname, '../../uploads/avatars');
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (!fs.existsSync(AVATAR_DIR)) fs.mkdirSync(AVATAR_DIR, { recursive: true });
-    cb(null, AVATAR_DIR);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `avatar-${Date.now()}${path.extname(file.originalname)}`);
-  }
-});
+// Avatar setup — store in DB (memory storage, no disk)
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Only images allowed'), false);
   }
 });
+
+// Auto-migrate: add avatar_data and avatar_mime columns if missing
+async function migrateAvatarColumns() {
+  try {
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_data TEXT`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime VARCHAR(100)`);
+    console.log('✅ Avatar DB columns ready (avatar_data, avatar_mime)');
+  } catch (e) {
+    console.warn('Avatar migration note:', e.message);
+  }
+}
+migrateAvatarColumns();
 
 
 
@@ -241,26 +243,109 @@ function generateToken(payload) {
   return jwt.sign(payload, secret, { expiresIn: '24h' });
 }
 
-// Upload Avatar endpoint
+// Upload Avatar endpoint — saves image as base64 in the database
 async function uploadAvatar(req, res) {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded.' });
-    const avatarUrl = req.file.filename;
-    await pool.query('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, req.user.id]);
-    res.json({ success: true, message: 'Avatar updated', data: { avatar_url: avatarUrl } });
+
+    const base64Data = req.file.buffer.toString('base64');
+    const mimeType = req.file.mimetype;
+
+    // Store image data in DB and set avatar_url to the user's own ID
+    await pool.query(
+      'UPDATE users SET avatar_data = ?, avatar_mime = ?, avatar_url = ? WHERE id = ?',
+      [base64Data, mimeType, req.user.id.toString(), req.user.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Avatar updated',
+      data: { avatar_url: req.user.id.toString() }
+    });
   } catch (error) {
     console.error('Avatar upload error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 }
 
-// Serve Avatar endpoint
-function serveAvatar(req, res) {
-  const filePath = path.join(AVATAR_DIR, req.params.filename);
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath);
-  } else {
-    res.status(404).json({ success: false, message: 'Not found' });
+// Generate a simplified default initials SVG avatar (black & gold theme)
+function generateInitialsSvg(name) {
+  const initial = (name || '?').trim().charAt(0).toUpperCase();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"  stop-color="#1a1408"/>
+      <stop offset="100%" stop-color="#0d0a04"/>
+    </radialGradient>
+    <linearGradient id="letterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#f2dab2"/>
+      <stop offset="100%"  stop-color="#d3ac77"/>
+    </linearGradient>
+  </defs>
+  <!-- Base circle -->
+  <circle cx="60" cy="60" r="60" fill="url(#bgGrad)"/>
+  <!-- Letter -->
+  <text
+    x="60" y="80"
+    font-family="Georgia, 'Palatino Linotype', 'Times New Roman', serif"
+    font-size="64"
+    font-weight="bold"
+    fill="url(#letterGrad)"
+    text-anchor="middle"
+  >${initial}</text>
+</svg>`;
+}
+
+// Delete Avatar endpoint — removes custom photo and reverts to initials
+async function deleteAvatar(req, res) {
+  try {
+    await pool.query(
+      'UPDATE users SET avatar_data = NULL, avatar_mime = NULL, avatar_url = NULL WHERE id = ?',
+      [req.user.id]
+    );
+    res.json({ success: true, message: 'Avatar removed' });
+  } catch (error) {
+    console.error('Avatar delete error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
+// Serve Avatar endpoint — reads from DB, or returns initials SVG
+async function serveAvatar(req, res) {
+  try {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId)) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+      return res.send(generateInitialsSvg('?'));
+    }
+
+    const [rows] = await pool.query(
+      'SELECT name, avatar_data, avatar_mime FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (!rows || rows.length === 0) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+      return res.send(generateInitialsSvg('?'));
+    }
+
+    const user = rows[0];
+
+    if (user.avatar_data) {
+      const imgBuffer = Buffer.from(user.avatar_data, 'base64');
+      res.setHeader('Content-Type', user.avatar_mime || 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(imgBuffer);
+    }
+
+    // No photo — serve initials SVG
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.send(generateInitialsSvg(user.name));
+  } catch (error) {
+    console.error('Serve avatar error:', error);
+    res.setHeader('Content-Type', 'image/svg+xml');
+    return res.send(generateInitialsSvg('?'));
   }
 }
 
@@ -303,6 +388,7 @@ module.exports = {
   changePassword,
   forceChangePassword,
   uploadAvatar,
+  deleteAvatar,
   serveAvatar,
   getAllUsers,
   upload,
