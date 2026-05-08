@@ -42,7 +42,7 @@ button.glass-card,
   border-radius: inherit;
   padding: 1px;
   background: radial-gradient(
-    300px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    300px circle at var(--mouse-x, -1000px) var(--mouse-y, -1000px),
     var(--glass-outline-color, rgba(212, 175, 55, 0.6)),
     transparent 40%
   );
@@ -59,8 +59,8 @@ button.glass-card,
 .glass-glow-bottom {
   pointer-events: none;
   position: absolute;
-  top: var(--mouse-y, 50%);
-  left: var(--mouse-x, 50%);
+  top: var(--mouse-y, -1000px);
+  left: var(--mouse-x, -1000px);
   transform: translate(-50%, -50%) rotate(-5deg);
   width: 350px; 
   height: 350px;
@@ -75,8 +75,8 @@ button.glass-card,
 .glass-glow-bright {
   pointer-events: none;
   position: absolute;
-  top: var(--mouse-y, 50%);
-  left: var(--mouse-x, 50%);
+  top: var(--mouse-y, -1000px);
+  left: var(--mouse-x, -1000px);
   transform: translate(-50%, -50%) rotate(8deg);
   width: 200px;
   height: 200px;
@@ -91,8 +91,8 @@ button.glass-card,
 .glass-glow-top {
   pointer-events: none;
   position: absolute;
-  top: var(--mouse-y, 50%);
-  left: var(--mouse-x, 50%);
+  top: var(--mouse-y, -1000px);
+  left: var(--mouse-x, -1000px);
   transform: translate(-50%, -50%) rotate(-12deg);
   width: 300px;
   height: 300px;

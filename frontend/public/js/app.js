@@ -33,7 +33,7 @@ async function initApp() {
     if (nameEl) nameEl.textContent = user.name || 'User';
     if (roleEl) roleEl.textContent = user.role || 'Member';
     if (avatarEl && user.id) {
-      avatarEl.innerHTML = `<img src="/api/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+      avatarEl.innerHTML = `<img src="${API_BASE}/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
     }
   }
 
@@ -470,7 +470,7 @@ function initSettings() {
 
   // Always render avatar from user ID (backend always returns photo or initials SVG)
   if (avatarPreview && user && user.id) {
-    avatarPreview.innerHTML = `<img src="/api/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="${user.name || 'Avatar'}">`;
+    avatarPreview.innerHTML = `<img src="${API_BASE}/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="${user.name || 'Avatar'}">`;
   }
 
   // ---- Fullscreen Avatar Lightbox ----
@@ -535,7 +535,7 @@ function initAvatarLightbox(user) {
   function openLightbox() {
     const currentUser = getCurrentUser();
     if (!currentUser || !currentUser.id) return;
-    lightboxImg.src  = `/api/auth/avatar/${currentUser.id}?t=${Date.now()}`;
+    lightboxImg.src  = `${API_BASE}/auth/avatar/${currentUser.id}?t=${Date.now()}`;
     lightboxName.textContent = currentUser.name || '';
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -749,8 +749,7 @@ function refreshAllAvatars() {
   if (!user || !user.id) return;
   
   const ts = Date.now();
-  // We use the timestamp for cache busting
-  const avatarUrl = `/api/auth/avatar/${user.id}?t=${ts}`;
+  const avatarUrl = `${API_BASE}/auth/avatar/${user.id}?t=${ts}`;
   
   // 1. Topbar avatar
   const topbarAvatar = document.getElementById('user-avatar');

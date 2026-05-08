@@ -139,7 +139,7 @@ function renderAdminUsers(users = currentUsers) {
         <td>
           <div style="display: flex; align-items: center; gap: 10px;">
             <div class="topbar-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
-              <img src="/api/auth/avatar/${user.id}" class="user-avatar-${user.id}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+              <img src="${API_BASE}/auth/avatar/${user.id}" class="user-avatar-${user.id}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
             </div>
             <strong>${user.name}</strong>
           </div>
