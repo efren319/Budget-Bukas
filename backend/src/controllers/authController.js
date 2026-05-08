@@ -271,7 +271,8 @@ async function uploadAvatar(req, res) {
 // Generate a simplified default initials SVG avatar (black & gold theme)
 function generateInitialsSvg(name) {
   const initial = (name || '?').trim().charAt(0).toUpperCase();
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <defs>
     <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%"  stop-color="#1a1408"/>

@@ -308,7 +308,7 @@ function renderMembers(members) {
 
   container.innerHTML = members.map(member => {
     // Always use user ID — backend always returns photo or initials SVG
-    const avatarHtml = `<img src="${API_BASE}/auth/avatar/${member.id}" class="user-avatar-${member.id}" alt="${member.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    const avatarHtml = `<img src="${API_BASE}/auth/avatar/${member.id}?t=${Date.now()}" class="user-avatar-${member.id}" alt="${member.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
       
     const roleClass = member.role === 'admin' ? 'badge-primary' : 'badge-secondary';
 

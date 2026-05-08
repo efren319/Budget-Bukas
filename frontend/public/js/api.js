@@ -2,8 +2,9 @@
 // API Wrapper — Centralized fetch utility
 // ============================================
 
-// API base URL — uses env-based URL in production, relative in dev
-const API_BASE = window.API_URL || 'http://localhost:10000/api';
+// API base URL — uses relative '/api' in production, localhost in dev
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE = window.API_URL || (isLocalhost ? 'http://localhost:10000/api' : '/api');
 
 /**
  * Make an authenticated API request
