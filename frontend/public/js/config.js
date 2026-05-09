@@ -11,7 +11,7 @@ const isRender = window.location.hostname.includes('onrender.com');
 // Vercel/other → full Render backend URL
 let API_URL;
 if (isLocal) {
-  API_URL = "http://localhost:10000/api";
+  API_URL = "http://localhost:3000/api";
 } else if (isRender) {
   API_URL = "/api";
 } else {
