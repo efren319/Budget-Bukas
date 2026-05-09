@@ -132,7 +132,7 @@ function navigateTo(page) {
       loadDashboardData();
       break;
     case 'records':
-      loadTransactions();
+      loadRecords();
       break;
     case 'receipts':
       loadReceipts();
