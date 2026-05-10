@@ -459,6 +459,20 @@ async function loadRecords(page = 1, sort = 'date', order = 'desc') {
   if (endDate) url += `&endDate=${endDate}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
 
+  // Show skeletons
+  tbody.innerHTML = Array(5).fill(0).map(() => `
+    <tr>
+      <td><div class="skeleton skeleton-text" style="width: 80px;"></div></td>
+      <td><div class="skeleton skeleton-text" style="width: 60px;"></div></td>
+      <td><div class="skeleton skeleton-text" style="width: 70px;"></div></td>
+      <td><div class="skeleton skeleton-text" style="width: 100px;"></div></td>
+      <td><div class="skeleton skeleton-text" style="width: 150px;"></div></td>
+      <td><div class="skeleton skeleton-text" style="width: 90px;"></div></td>
+      <td><div class="skeleton skeleton-text" style="width: 30px;"></div></td>
+      <td><div class="skeleton skeleton-text" style="width: 50px;"></div></td>
+    </tr>
+  `).join('');
+
   try {
     const data = await apiGet(url);
     if (!data || !data.success) return;
@@ -469,6 +483,7 @@ async function loadRecords(page = 1, sort = 'date', order = 'desc') {
       tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No records found</td></tr>';
     } else {
       tbody.innerHTML = records.map(r => {
+        tbody.classList.add('content-fade-in');
         const detail = r.type === 'income' ? (r.source || '—') : (r.category || '—');
         const desc = r.description || '—';
         const officerActions = isAdmin() ? `

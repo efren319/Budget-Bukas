@@ -87,6 +87,11 @@ async function loadReceipts() {
   if (!grid) return;
 
   try {
+    // Show skeletons
+    grid.innerHTML = Array(6).fill(0).map(() => `
+      <div class="receipt-card skeleton" style="height: 200px; border: none;"></div>
+    `).join('');
+
     const data = await apiGet('/receipts');
     if (!data || !data.success) return;
 
@@ -109,7 +114,7 @@ async function loadReceipts() {
         </div>
       </div>
     `).join('');
-
+    grid.classList.add('content-fade-in');
   } catch (error) {
     grid.innerHTML = '<div class="empty-state">Error loading receipts</div>';
   }
@@ -145,10 +150,18 @@ async function viewReceipt(id) {
         </div>
       ` : ''}
     `;
+    info.classList.add('content-fade-in');
 
     modal.classList.remove('hidden');
 
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    // Reveal image once loaded
+    img.onload = () => {
+      const skeleton = document.getElementById('receipt-modal-img-skeleton');
+      if (skeleton) skeleton.remove();
+      img.style.display = 'block';
+      img.classList.add('content-fade-in');
+      setupZoomAndPan();
+    };
   } catch (error) {
     showToast('Error loading receipt', 'error');
   }

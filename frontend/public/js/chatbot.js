@@ -151,10 +151,12 @@
     const row = document.createElement('div');
     row.className = 'ai-typing-row';
     row.innerHTML = `
-      <div class="ai-typing-indicator">
+      <div class="ai-msg-ai-content">
         <div class="ai-msg-avatar"><i data-lucide="sparkles"></i></div>
-        <div class="ai-typing-dots">
-          <span></span><span></span><span></span>
+        <div class="ai-msg-body">
+          <div class="skeleton skeleton-text full"></div>
+          <div class="skeleton skeleton-text long"></div>
+          <div class="skeleton skeleton-text short"></div>
         </div>
       </div>
     `;
@@ -340,7 +342,10 @@
     // Typing
     const typing = document.createElement('div');
     typing.className = 'widget-msg ai';
-    typing.innerHTML = '<p>...</p>';
+    typing.innerHTML = `
+      <div class="skeleton skeleton-text full"></div>
+      <div class="skeleton skeleton-text short"></div>
+    `;
     messagesEl.appendChild(typing);
     messagesEl.scrollTop = messagesEl.scrollHeight;
 

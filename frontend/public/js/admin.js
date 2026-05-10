@@ -81,6 +81,22 @@ function initAdmin() {
 async function loadAdminUsers() {
   try {
     console.log('📥 Loading admin users...');
+    
+    // Show skeletons
+    const tbody = document.getElementById('admin-users-tbody');
+    if (tbody) {
+      tbody.innerHTML = Array(4).fill(0).map(() => `
+        <tr>
+          <td><div class="skeleton skeleton-text" style="width: 150px;"></div></td>
+          <td><div class="skeleton skeleton-text" style="width: 180px;"></div></td>
+          <td><div class="skeleton skeleton-text" style="width: 100px;"></div></td>
+          <td><div class="skeleton skeleton-text" style="width: 70px;"></div></td>
+          <td><div class="skeleton skeleton-text" style="width: 60px;"></div></td>
+          <td><div class="skeleton skeleton-text" style="width: 120px;"></div></td>
+        </tr>
+      `).join('');
+    }
+
     const data = await apiGet('/auth/users');
     if (data && data.success) {
       currentUsers = data.data;
@@ -95,6 +111,8 @@ async function loadAdminUsers() {
 function renderAdminUsers(users = currentUsers) {
   const tbody = document.getElementById('admin-users-tbody');
   if (!tbody) return;
+
+  tbody.classList.add('content-fade-in');
 
   const showInactive = document.getElementById('toggle-inactive-users')?.checked || false;
   const filteredUsers = users.filter(u => showInactive ? true : u.is_active);

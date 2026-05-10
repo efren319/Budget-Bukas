@@ -30,10 +30,34 @@ async function initApp() {
     const nameEl = document.getElementById('user-name');
     const roleEl = document.getElementById('user-role');
     const avatarEl = document.getElementById('user-avatar');
-    if (nameEl) nameEl.textContent = user.name || 'User';
-    if (roleEl) roleEl.textContent = user.role || 'Member';
+    
+    // Hide skeletons and reveal content
+    const nameSkel = document.getElementById('user-name-skeleton');
+    const roleSkel = document.getElementById('user-role-skeleton');
+    if (nameSkel) nameSkel.remove();
+    if (roleSkel) roleSkel.remove();
+
+    // Remove loading states from global containers
+    const topbarUser = document.getElementById('topbar-user-container');
+    if (topbarUser) topbarUser.classList.remove('loading-state');
+    
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+      setTimeout(() => sidebar.classList.remove('loading-state'), 500);
+    }
+
+    if (nameEl) {
+      nameEl.textContent = user.name || 'User';
+      nameEl.style.display = '';
+      nameEl.classList.add('content-fade-in');
+    }
+    if (roleEl) {
+      roleEl.textContent = user.role || 'Member';
+      roleEl.style.display = '';
+      roleEl.classList.add('content-fade-in');
+    }
     if (avatarEl && user.id) {
-      avatarEl.innerHTML = `<img src="${API_BASE}/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+      avatarEl.innerHTML = `<img src="${API_BASE}/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" class="content-fade-in">`;
     }
   }
 
@@ -54,7 +78,7 @@ async function initApp() {
   initMobileSidebar();
   initTopbarScroll();
   initNotifications();
-  initAvatarSettings();
+  initAvatarProfile();
   initLogout();
   initGlobalSearch();
   initDashboard();
@@ -62,7 +86,7 @@ async function initApp() {
   initRecords();
   initReceiptsPage();
   initChatbot();
-  initSettings();
+  initProfile();
   initGlassmorphism();
   if (typeof initAdmin === 'function') initAdmin();
 
@@ -146,36 +170,8 @@ function navigateTo(page) {
 }
 
 // =============================================
-// LOADING SCREEN MANAGER
+// APP INITIALIZATION
 // =============================================
-let d3dLoaded = false;
-let dataLoaded = false;
-
-function checkLoadingFinished() {
-  if (d3dLoaded && dataLoaded) {
-    setTimeout(() => {
-      const overlay = document.getElementById('dashboard-loading-overlay');
-      if (overlay) overlay.classList.add('hidden');
-    }, 400);
-  }
-}
-
-window.addEventListener('dashboard-3d-loaded', () => {
-  d3dLoaded = true;
-  checkLoadingFinished();
-});
-
-window.addEventListener('dashboard-data-loaded', () => {
-  dataLoaded = true;
-  checkLoadingFinished();
-});
-
-// Safety fallback
-setTimeout(() => {
-  d3dLoaded = true;
-  dataLoaded = true;
-  checkLoadingFinished();
-}, 8000);
 
 
 // =============================================
@@ -220,14 +216,15 @@ function initTopbarScroll() {
 }
 
 // =============================================
-// AVATAR → SETTINGS NAVIGATION
+// AVATAR → PROFILE NAVIGATION
 // =============================================
-function initAvatarSettings() {
+function initAvatarProfile() {
   const avatar = document.getElementById('user-avatar');
   if (!avatar) return;
 
   const settingsPanel = document.getElementById('settings-panel');
   const closeBtn = document.getElementById('settings-close-btn');
+  const backdrop = document.getElementById('settings-backdrop');
 
   function openSettings(e) {
     if (e) e.stopPropagation();
@@ -236,12 +233,20 @@ function initAvatarSettings() {
     setTimeout(() => avatar.classList.remove('btn-clicked'), 150);
     
     if (settingsPanel) settingsPanel.classList.remove('panel-hidden');
+    if (backdrop) backdrop.classList.add('active');
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
   }
 
   function closeSettings() {
     if (settingsPanel && !settingsPanel.classList.contains('panel-hidden')) {
       settingsPanel.classList.add('panel-hidden');
     }
+    if (backdrop) backdrop.classList.remove('active');
+    
+    // Restore body scroll
+    document.body.style.overflow = '';
   }
 
   avatar.addEventListener('click', openSettings);
@@ -257,9 +262,16 @@ function initAvatarSettings() {
     closeBtn.addEventListener('click', closeSettings);
   }
 
+  if (backdrop) {
+    backdrop.addEventListener('click', closeSettings);
+  }
+
   // Click outside to close
   document.addEventListener('click', (e) => {
-    if (settingsPanel && !settingsPanel.contains(e.target) && !avatar.contains(e.target)) {
+    const lightbox = document.getElementById('avatar-lightbox');
+    const isLightboxClick = lightbox && lightbox.contains(e.target);
+    
+    if (settingsPanel && !settingsPanel.contains(e.target) && !avatar.contains(e.target) && !isLightboxClick) {
       closeSettings();
     }
   });
@@ -455,9 +467,9 @@ function initGlobalSearch() {
 }
 
 // =============================================
-// SETTINGS
+// PROFILE (Management & Security)
 // =============================================
-function initSettings() {
+function initProfile() {
   const user = getCurrentUser();
 
   // Populate profile form
@@ -482,40 +494,61 @@ function initSettings() {
   // ---- Remove Photo ----
   initAvatarRemove(user, avatarPreview);
 
-  // ---- Profile form submit ----
-  const profileForm = document.getElementById('settings-profile-form');
-  if (profileForm) {
-    profileForm.addEventListener('submit', async (e) => {
+  // ---- Unified form submit (Profile + Password) ----
+  const unifiedForm = document.getElementById('settings-unified-form');
+  if (unifiedForm) {
+    unifiedForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      try {
-        await apiPut('/auth/profile', {
-          name: nameInput.value,
-          email: emailInput.value
-        });
-        const updatedUser = { ...getCurrentUser(), name: nameInput.value, email: emailInput.value };
-        localStorage.setItem('bb_user', JSON.stringify(updatedUser));
-        document.getElementById('user-name').textContent = updatedUser.name;
-        showToast('Profile updated successfully');
-      } catch (err) {
-        showToast(err.message, 'error');
+      
+      const newName = document.getElementById('settings-name').value;
+      const newEmail = document.getElementById('settings-email').value;
+      const currentPw = document.getElementById('settings-current-pw').value;
+      const newPw = document.getElementById('settings-new-pw').value;
+      
+      let profileChanged = (newName !== user.name || newEmail !== user.email);
+      let passwordAttempt = (currentPw || newPw);
+      
+      if (!profileChanged && !passwordAttempt) {
+        showToast('No changes detected');
+        return;
       }
-    });
-  }
-
-  // ---- Password form submit ----
-  const passwordForm = document.getElementById('settings-password-form');
-  if (passwordForm) {
-    passwordForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+      
       try {
-        await apiPut('/auth/password', {
-          currentPassword: document.getElementById('settings-current-pw').value,
-          newPassword:     document.getElementById('settings-new-pw').value
-        });
-        showToast('Password changed successfully');
-        passwordForm.reset();
+        const submitBtn = unifiedForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="spin" data-lucide="loader-2"></i> Saving...';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // 1. Update Profile if changed
+        if (profileChanged) {
+          await apiPut('/auth/profile', { name: newName, email: newEmail });
+          const updatedUser = { ...getCurrentUser(), name: newName, email: newEmail };
+          localStorage.setItem('bb_user', JSON.stringify(updatedUser));
+          document.getElementById('user-name').textContent = updatedUser.name;
+        }
+        
+        // 2. Update Password if fields filled
+        if (passwordAttempt) {
+          if (!currentPw || !newPw) {
+            throw new Error('Please fill both current and new password fields to update password');
+          }
+          await apiPut('/auth/password', { currentPassword: currentPw, newPassword: newPw });
+          document.getElementById('settings-current-pw').value = '';
+          document.getElementById('settings-new-pw').value = '';
+        }
+        
+        showToast('Profile updated successfully');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
       } catch (err) {
         showToast(err.message, 'error');
+        const submitBtn = unifiedForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i data-lucide="save"></i> Save Profile Changes';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
       }
     });
   }

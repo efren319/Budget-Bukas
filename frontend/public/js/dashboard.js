@@ -76,6 +76,34 @@ function initDashboard() {
   pollingInterval = setInterval(pollForUpdates, 15000);
 }
 
+/**
+ * Replaces a skeleton placeholder with real content using a smooth transition
+ */
+function revealContent(elementId, skeletonSelector) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+
+  // Find and remove skeletons associated with this element
+  const parent = element.parentElement;
+  if (parent) {
+    const skeletons = parent.querySelectorAll(skeletonSelector || '.skeleton');
+    skeletons.forEach(s => {
+      s.classList.add('content-fade-out');
+      setTimeout(() => s.remove(), 400);
+    });
+
+    // Remove loading state from parent/grandparent if exists
+    const container = element.closest('.loading-state');
+    if (container) {
+      setTimeout(() => container.classList.remove('loading-state'), 300);
+    }
+  }
+
+  // Show the actual element with a fade-in animation
+  element.style.display = '';
+  element.classList.add('content-fade-in');
+}
+
 async function loadDashboardData() {
   try {
     const data = await apiGet('/transactions/dashboard/stats');
@@ -86,10 +114,22 @@ async function loadDashboardData() {
 
     const { balance, monthly, recent, categories } = data.data;
 
+    // Reveal stat cards and charts (hiding skeletons)
+    revealContent('stat-income');
+    revealContent('stat-expenses');
+    revealContent('stat-balance');
+    revealContent('main-chart');
+    
     // Update stat cards with smooth count-up animation
     animateCounter('stat-income', balance.total_income);
     animateCounter('stat-expenses', balance.total_expenses);
     animateCounter('stat-balance', balance.remaining_balance);
+    
+    const chartSkeleton = document.querySelector('#main-chart-container .skeleton');
+    if (chartSkeleton) {
+      chartSkeleton.classList.add('content-fade-out');
+      setTimeout(() => chartSkeleton.remove(), 400);
+    }
 
     // Render recent activity
     renderRecentActivity(recent);
@@ -135,6 +175,13 @@ function renderRecentActivity(items) {
   const container = document.getElementById('recent-activity');
   if (!container) return;
 
+  // Reveal panel
+  const panel = container.closest('.loading-state');
+  if (panel) panel.classList.remove('loading-state');
+
+  // Add fade-in for real content
+  container.classList.add('content-fade-in');
+
   if (!items || items.length === 0) {
     container.innerHTML = '<div class="empty-state-small">No recent activity</div>';
     return;
@@ -168,6 +215,12 @@ function renderCategoryBreakdown(categories) {
   const container = document.getElementById('category-breakdown');
   if (!container) return;
 
+  // Reveal panel
+  const panel = container.closest('.loading-state');
+  if (panel) panel.classList.remove('loading-state');
+
+  container.classList.add('content-fade-in');
+
   if (!categories || categories.length === 0) {
     container.innerHTML = '<div class="empty-state-small">No data yet</div>';
     return;
@@ -197,6 +250,22 @@ function renderCategoryBreakdown(categories) {
 function renderCategoryPieChart(categories) {
   const canvas = document.getElementById('category-pie-chart');
   if (!canvas) return;
+
+  // Handle skeleton removal
+  const container = document.getElementById('pie-chart-container');
+  if (container) {
+    const skeleton = container.querySelector('.skeleton');
+    if (skeleton) {
+      skeleton.classList.add('content-fade-out');
+      setTimeout(() => skeleton.remove(), 400);
+    }
+    const panel = container.closest('.loading-state');
+    if (panel) panel.classList.remove('loading-state');
+  }
+
+  canvas.style.display = 'block';
+  canvas.classList.add('content-fade-in');
+
   const ctx = canvas.getContext('2d');
 
   if (pieChart) {
@@ -300,6 +369,9 @@ async function fetchMembers() {
 function renderMembers(members) {
   const container = document.getElementById('members-list');
   if (!container) return;
+
+  // Add fade-in for real content
+  container.classList.add('content-fade-in');
 
   if (!members || members.length === 0) {
     container.innerHTML = '<div class="empty-state-small">No members found</div>';

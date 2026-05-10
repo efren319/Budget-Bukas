@@ -31,78 +31,10 @@
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/avatar.css">
   <link rel="stylesheet" href="css/glass-card.css">
+  <link rel="stylesheet" href="css/skeletons.css">
 
-  <style>
-    /* ---------- Loading Overlay ---------- */
-    .dashboard-loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #0a0a0a; 
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
-    }
-
-    .dashboard-loading-overlay.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .loading-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-xl);
-      animation: pulseLoading 2s infinite ease-in-out;
-    }
-
-    .loading-spinner {
-      width: 45px;
-      height: 45px;
-      border: 2px solid rgba(212, 175, 55, 0.1);
-      border-top: 2px solid var(--gold);
-      border-radius: 50%;
-      animation: spinLoading 1s linear infinite;
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-    }
-
-    .loading-text {
-      font-family: var(--font-display);
-      font-size: 0.9rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-light) 50%, var(--gold) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    @keyframes spinLoading {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    @keyframes pulseLoading {
-      0%, 100% { opacity: 0.85; transform: scale(0.98); }
-      50% { opacity: 1; transform: scale(1); }
-    }
-  </style>
 </head>
 <body>
-  <!-- Loading Screen Overlay -->
-  <div class="dashboard-loading-overlay" id="dashboard-loading-overlay">
-    <div class="loading-content">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Synchronizing Data</div>
-    </div>
-  </div>
-
   <!-- 3D Background Dashboard Model -->
   <div class="dashboard-3d-container" id="dashboard-3d-container">
     <canvas id="dashboard-3d-canvas"></canvas>
@@ -110,7 +42,7 @@
 
   <div class="app-wrapper" id="app-wrapper">
     <!-- ==================== SIDEBAR ==================== -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar loading-state" id="sidebar">
       <div class="sidebar-brand">
         <img src="assets/logos/logo.png" alt="PondoSync" class="sidebar-logo" onerror="this.style.display='none'">
         <img src="assets/logos/logo text.png" alt="PondoSync" class="sidebar-logo-text" onerror="this.style.display='none'">
@@ -190,13 +122,15 @@
           </div>
 
 
-          <div class="topbar-user">
+          <div class="topbar-user loading-state" id="topbar-user-container">
             <div class="topbar-user-info">
-              <span class="topbar-user-name" id="user-name">User</span>
-              <span class="topbar-user-role" id="user-role">Member</span>
+              <div class="skeleton skeleton-text" style="width: 80px; height: 0.9rem; margin: 0 0 4px 0;" id="user-name-skeleton"></div>
+              <div class="skeleton skeleton-text" style="width: 50px; height: 0.7rem; margin: 0;" id="user-role-skeleton"></div>
+              <span class="topbar-user-name" id="user-name" style="display: none;">User</span>
+              <span class="topbar-user-role" id="user-role" style="display: none;">Member</span>
             </div>
             <div class="topbar-avatar" id="user-avatar" role="button" tabindex="0" title="Settings" aria-label="Open settings">
-              <i data-lucide="user"></i>
+              <div class="skeleton skeleton-avatar" style="width: 100%; height: 100%; margin: 0;"></div>
             </div>
             <button class="btn-logout" id="btn-logout" title="Logout">
               <i data-lucide="log-out"></i>
@@ -215,7 +149,7 @@
 
               <!-- Stats Row (separated from hero) -->
               <div class="stats-row">
-                <div class="stat-card stat-income glass-card">
+                <div class="stat-card stat-income glass-card loading-state">
                   <!-- Glass card glow layers -->
                   <div class="glass-glow-bottom"></div>
                   <div class="glass-glow-bright"></div>
@@ -226,11 +160,12 @@
                     <div class="stat-icon"><i data-lucide="trending-up"></i></div>
                     <div class="stat-info">
                       <span class="stat-label">Total Funds</span>
-                      <span class="stat-value" id="stat-income">₱0.00</span>
+                      <div class="skeleton skeleton-text large"></div>
+                      <span class="stat-value" id="stat-income" style="display: none;">₱0.00</span>
                     </div>
                   </div>
                 </div>
-                <div class="stat-card stat-expense glass-card">
+                <div class="stat-card stat-expense glass-card loading-state">
                   <!-- Glass card glow layers -->
                   <div class="glass-glow-bottom"></div>
                   <div class="glass-glow-bright"></div>
@@ -241,11 +176,12 @@
                     <div class="stat-icon"><i data-lucide="trending-down"></i></div>
                     <div class="stat-info">
                       <span class="stat-label">Total Expenses</span>
-                      <span class="stat-value" id="stat-expenses">₱0.00</span>
+                      <div class="skeleton skeleton-text large"></div>
+                      <span class="stat-value" id="stat-expenses" style="display: none;">₱0.00</span>
                     </div>
                   </div>
                 </div>
-                <div class="stat-card stat-balance glass-card">
+                <div class="stat-card stat-balance glass-card loading-state">
                   <!-- Glass card glow layers -->
                   <div class="glass-glow-bottom"></div>
                   <div class="glass-glow-bright"></div>
@@ -256,7 +192,8 @@
                     <div class="stat-icon"><i data-lucide="wallet"></i></div>
                     <div class="stat-info">
                       <span class="stat-label">Remaining Balance</span>
-                      <span class="stat-value gold" id="stat-balance">₱0.00</span>
+                      <div class="skeleton skeleton-text large"></div>
+                      <span class="stat-value gold" id="stat-balance" style="display: none;">₱0.00</span>
                     </div>
                   </div>
                 </div>
@@ -285,7 +222,7 @@
 
           <!-- Chart + Right Panel Row -->
           <div class="dashboard-grid">
-            <div class="chart-panel glass-card">
+            <div class="chart-panel glass-card loading-state">
               <!-- Glass card glow layers -->
               <div class="glass-glow-bottom"></div>
               <div class="glass-glow-bright"></div>
@@ -297,15 +234,16 @@
                 <div class="panel-header">
                   <h3>Income vs Expenses</h3>
                 </div>
-                <div class="chart-container">
-                  <canvas id="main-chart"></canvas>
+                <div class="chart-container" id="main-chart-container">
+                  <div class="skeleton skeleton-chart"></div>
+                  <canvas id="main-chart" style="display: none;"></canvas>
                 </div>
               </div>
             </div>
 
             <div class="right-panel">
               <!-- Recent Activity -->
-              <div class="side-card glass-card">
+              <div class="side-card glass-card loading-state">
                 <!-- Glass card glow layers -->
                 <div class="glass-glow-bottom"></div>
                 <div class="glass-glow-bright"></div>
@@ -319,13 +257,26 @@
                     <a href="#" class="see-all" data-goto="records">See all</a>
                   </div>
                   <div class="activity-list" id="recent-activity">
-                    <div class="empty-state-small">No recent activity</div>
+                    <div class="skeleton-flex-row">
+                      <div class="skeleton skeleton-avatar"></div>
+                      <div class="skeleton-flex-col">
+                        <div class="skeleton skeleton-text full"></div>
+                        <div class="skeleton skeleton-text short"></div>
+                      </div>
+                    </div>
+                    <div class="skeleton-flex-row">
+                      <div class="skeleton skeleton-avatar"></div>
+                      <div class="skeleton-flex-col">
+                        <div class="skeleton skeleton-text full"></div>
+                        <div class="skeleton skeleton-text short"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Category Breakdown -->
-              <div class="side-card glass-card">
+              <div class="side-card glass-card loading-state">
                 <!-- Glass card glow layers -->
                 <div class="glass-glow-bottom"></div>
                 <div class="glass-glow-bright"></div>
@@ -338,7 +289,14 @@
                     <h4>Top Categories</h4>
                   </div>
                   <div class="category-list" id="category-breakdown">
-                    <div class="empty-state-small">No data yet</div>
+                    <div class="skeleton-flex-row">
+                      <div class="skeleton skeleton-text medium" style="width: 60%;"></div>
+                      <div class="skeleton skeleton-text medium" style="width: 30%;"></div>
+                    </div>
+                    <div class="skeleton-flex-row">
+                      <div class="skeleton skeleton-text medium" style="width: 50%;"></div>
+                      <div class="skeleton skeleton-text medium" style="width: 40%;"></div>
+                    </div>
                   </div>
                 </div>
               </div> <!-- /side-card (categories) -->
@@ -351,7 +309,7 @@
         <!-- ========== SIDE CONTENT COLUMN ========== -->
         <div class="dashboard-side-content">
           <!-- Organization Members -->
-          <div class="side-card member-card glass-card">
+          <div class="side-card member-card glass-card loading-state">
             <!-- Glass card glow layers -->
             <div class="glass-glow-bottom"></div>
             <div class="glass-glow-bright"></div>
@@ -364,13 +322,26 @@
                 <h4>Organization Members</h4>
               </div>
               <div class="member-list" id="members-list">
-                <div class="empty-state-small">Loading members...</div>
+                <div class="skeleton-flex-row">
+                  <div class="skeleton skeleton-avatar"></div>
+                  <div class="skeleton-flex-col">
+                    <div class="skeleton skeleton-text full"></div>
+                    <div class="skeleton skeleton-text short"></div>
+                  </div>
+                </div>
+                <div class="skeleton-flex-row">
+                  <div class="skeleton skeleton-avatar"></div>
+                  <div class="skeleton-flex-col">
+                    <div class="skeleton skeleton-text full"></div>
+                    <div class="skeleton skeleton-text short"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Category Pie Chart -->
-          <div class="side-card pie-chart-card glass-card">
+          <div class="side-card pie-chart-card glass-card loading-state">
             <!-- Glass card glow layers -->
             <div class="glass-glow-bottom"></div>
             <div class="glass-glow-bright"></div>
@@ -382,8 +353,9 @@
               <div class="side-card-header">
                 <h4>Expenses Distribution</h4>
               </div>
-              <div class="pie-chart-container">
-                <canvas id="category-pie-chart"></canvas>
+              <div class="pie-chart-container" id="pie-chart-container">
+                <div class="skeleton skeleton-pie"></div>
+                <canvas id="category-pie-chart" style="display: none;"></canvas>
               </div>
             </div>
           </div>
@@ -579,11 +551,19 @@
 
           <!-- Receipt Modal -->
           <div class="modal-overlay hidden" id="receipt-modal">
-            <div class="modal-content receipt-modal-content">
-              <button class="modal-close" id="receipt-modal-close"><i data-lucide="x"></i></button>
-              <div class="receipt-modal-body">
-                <img id="receipt-modal-img" alt="Receipt">
-                <div class="receipt-modal-info" id="receipt-modal-info"></div>
+            <div class="receipt-modal-content glass-card">
+              <button class="receipt-modal-close" id="receipt-modal-close">&times;</button>
+              <div class="receipt-modal-layout">
+                <div class="receipt-modal-image-area">
+                  <div class="skeleton skeleton-chart" id="receipt-modal-img-skeleton" style="height: 100%; min-height: 400px;"></div>
+                  <img src="" alt="Receipt" id="receipt-modal-img" style="display: none;">
+                </div>
+                <div class="receipt-modal-info" id="receipt-modal-info">
+                  <div class="skeleton skeleton-title"></div>
+                  <div class="skeleton skeleton-text long"></div>
+                  <div class="skeleton skeleton-text long"></div>
+                  <div class="skeleton skeleton-row" style="height: 150px;"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -696,79 +676,86 @@
     </main>
   </div>
 
+  <!-- ========== SETTINGS PANEL BACKDROP ========== -->
+  <div class="settings-backdrop" id="settings-backdrop"></div>
+
   <!-- ========== SETTINGS PANEL ========== -->
   <div class="settings-panel-container panel-hidden" id="settings-panel">
-    <button class="settings-side-toggle" id="settings-close-btn" aria-label="Close Settings">
-      <i data-lucide="chevrons-right"></i>
-    </button>
-    
     <aside class="settings-panel-inner">
       <div class="settings-panel-header">
         <div class="settings-panel-title">
-          <i data-lucide="settings"></i>
-          <h2>Settings</h2>
+          <i data-lucide="user"></i>
+          <h2>Profile</h2>
         </div>
+        <button class="settings-close-x" id="settings-close-btn" aria-label="Close Profile">
+          <i data-lucide="x"></i>
+        </button>
       </div>
       
       <div class="settings-panel-content">
         <p class="settings-subtitle">Manage your account and preferences</p>
-        <div class="settings-grid">
-          <div class="settings-card glass-card">
-            <!-- Glass card glow layers -->
-            <div class="glass-glow-bottom"></div>
-            <div class="glass-glow-bright"></div>
-            <div class="glass-glow-top"></div>
-            <div class="glass-sheen"></div>
-            <div class="glass-edge"></div>
-            <!-- Content -->
-            <div class="glass-card-content">
-              <h4><i data-lucide="user"></i> Profile</h4>
-              <form id="settings-profile-form">
-                <div class="form-group" style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg);">
-                  <div class="topbar-avatar avatar-preview-trigger" id="settings-avatar-preview" style="width: 72px; height: 72px; font-size: 1.8rem; cursor: zoom-in;" title="Click to view fullscreen">
-                    <i data-lucide="user"></i>
+        <div class="profile-unified-form-wrapper">
+          <form id="settings-unified-form">
+            <div class="settings-grid" style="grid-template-columns: 1fr;">
+              <div class="settings-card glass-card">
+                <div class="glass-glow-bottom"></div>
+                <div class="glass-glow-bright"></div>
+                <div class="glass-glow-top"></div>
+                <div class="glass-sheen"></div>
+                <div class="glass-edge"></div>
+                <div class="glass-card-content" style="padding: var(--space-xl);">
+                  <!-- PERSONAL INFO SECTION -->
+                  <div class="profile-layout">
+                    <div class="profile-left">
+                      <span class="profile-avatar-label">Avatar</span>
+                      <div class="topbar-avatar avatar-preview-trigger" id="settings-avatar-preview">
+                        <i data-lucide="user"></i>
+                        <div class="pfp-edit-badge">
+                          <i data-lucide="pencil"></i>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="profile-right">
+                      <div class="form-section-title">
+                        <h4><i data-lucide="user"></i> Personal Information</h4>
+                      </div>
+                      <div class="form-group">
+                        <label for="settings-name">Full Name</label>
+                        <input type="text" id="settings-name" placeholder="Enter your name">
+                      </div>
+                      <div class="form-group">
+                        <label for="settings-email">Email Address</label>
+                        <input type="email" id="settings-email" placeholder="Enter your email">
+                      </div>
+                    </div>
                   </div>
-                  <div style="display: flex; flex-direction: column; gap: var(--space-xs);">
-                    <label for="settings-avatar-upload" class="btn btn-secondary btn-sm" style="cursor: pointer;">Change Photo</label>
-                    <button type="button" id="btn-remove-avatar" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: rgba(255, 59, 92, 0.2);">Remove Photo</button>
-                    <input type="file" id="settings-avatar-upload" accept="image/jpeg,image/png,image/webp" hidden>
+
+                  <!-- SECURITY SECTION -->
+                  <div class="form-section-title">
+                    <h4><i data-lucide="lock"></i> Security</h4>
+                  </div>
+                  <div class="password-fields-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);">
+                    <div class="form-group">
+                      <label for="settings-current-pw">Current Password</label>
+                      <input type="password" id="settings-current-pw" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                      <label for="settings-new-pw">New Password</label>
+                      <input type="password" id="settings-new-pw" minlength="6" placeholder="Min. 6 characters">
+                    </div>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label for="settings-name">Name</label>
-                  <input type="text" id="settings-name">
-                </div>
-                <div class="form-group">
-                  <label for="settings-email">Email</label>
-                  <input type="email" id="settings-email">
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
-              </form>
+              </div>
             </div>
-          </div>
-          <div class="settings-card glass-card">
-            <!-- Glass card glow layers -->
-            <div class="glass-glow-bottom"></div>
-            <div class="glass-glow-bright"></div>
-            <div class="glass-glow-top"></div>
-            <div class="glass-sheen"></div>
-            <div class="glass-edge"></div>
-            <!-- Content -->
-            <div class="glass-card-content">
-              <h4><i data-lucide="lock"></i> Change Password</h4>
-              <form id="settings-password-form">
-                <div class="form-group">
-                  <label for="settings-current-pw">Current Password</label>
-                  <input type="password" id="settings-current-pw">
-                </div>
-                <div class="form-group">
-                  <label for="settings-new-pw">New Password</label>
-                  <input type="password" id="settings-new-pw" minlength="6">
-                </div>
-                <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
-              </form>
+            
+            <div class="profile-form-actions" style="margin-top: var(--space-lg); display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn btn-primary" style="padding: 12px 40px;">
+                <i data-lucide="save" style="width: 18px; height: 18px; margin-right: 8px;"></i>
+                Save Profile Changes
+              </button>
             </div>
-          </div>
+          </form>
+          <input type="file" id="settings-avatar-upload" accept="image/jpeg,image/png,image/webp" hidden>
         </div>
       </div>
     </aside>
@@ -929,6 +916,15 @@
         <img id="avatar-lightbox-img" alt="Profile photo" src="">
       </div>
       <div class="avatar-lightbox-name" id="avatar-lightbox-name"></div>
+      
+      <div class="avatar-lightbox-actions">
+        <label for="settings-avatar-upload" class="btn btn-secondary">
+          <i data-lucide="image"></i> Change Photo
+        </label>
+        <button type="button" id="btn-remove-avatar" class="btn btn-outline-danger">
+          <i data-lucide="trash-2"></i> Remove Photo
+        </button>
+      </div>
     </div>
   </div>
 
