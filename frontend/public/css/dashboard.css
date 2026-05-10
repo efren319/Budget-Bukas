@@ -20,7 +20,7 @@
 }
 
 .dashboard-side-content {
-  width: 320px;
+  width: 410px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -193,11 +193,94 @@
   background: linear-gradient(180deg, rgb(15 15 15 / 30%) 0%, rgba(15, 15, 15, 0.6) 40%, rgb(27 19 7) 100%);
 }
 
-.hero-content {
+/* Chart Options Dropdown (Integrated into Panel Header) */
+.chart-options-dropdown {
   position: relative;
-  z-index: 2;
+  z-index: 10;
+}
+
+.options-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.options-trigger:hover {
+  border-color: var(--gold-muted);
+  color: var(--gold-light);
+  background: rgba(211, 172, 119, 0.08);
+}
+
+.options-trigger i {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.3s ease;
+}
+
+.chart-options-dropdown.open .options-trigger i {
+  transform: rotate(180deg);
+}
+
+.options-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 130px;
+  background: var(--bg-card);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chart-options-dropdown.open .options-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.options-menu .pill {
   width: 100%;
-  padding: var(--space-xl) var(--space-xl) var(--space-lg);
+  text-align: left;
+  padding: 8px 12px;
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+}
+
+.options-menu .pill:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-primary);
+}
+
+.options-menu .pill.active {
+  background: rgba(211, 172, 119, 0.1) !important;
+  color: var(--gold-light) !important;
 }
 
 .hero-text {

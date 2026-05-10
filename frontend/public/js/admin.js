@@ -201,8 +201,10 @@ function openEditMemberModal(userId) {
   document.getElementById('admin-user-id').value = user.id;
   document.getElementById('admin-user-name').value = user.name;
   document.getElementById('admin-user-email').value = user.email;
-  document.getElementById('admin-user-position').value = user.position || '';
-  document.getElementById('admin-user-role').value = user.role;
+  
+  // Use custom dropdown setter
+  setCustomDropdownValue('admin-user-position-dropdown', user.position || '');
+  setCustomDropdownValue('admin-user-role-dropdown', user.role || 'user');
   
   // Email is non-editable in this flow for existing users to avoid conflicts,
   // or it can be left editable depending on requirements. Let's leave it editable.

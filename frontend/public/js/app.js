@@ -88,6 +88,7 @@ async function initApp() {
   initChatbot();
   initProfile();
   initGlassmorphism();
+  initCustomDropdowns();
   if (typeof initAdmin === 'function') initAdmin();
 
   // Refresh Lucide icons
@@ -216,8 +217,104 @@ function initTopbarScroll() {
 }
 
 // =============================================
-// AVATAR → PROFILE NAVIGATION
+// CUSTOM DROPDOWN LOGIC
 // =============================================
+function initCustomDropdowns() {
+  const dropdowns = document.querySelectorAll('.custom-dropdown');
+  
+  dropdowns.forEach(dropdown => {
+    const trigger = dropdown.querySelector('.dropdown-trigger');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    const searchInput = dropdown.querySelector('.dropdown-search input');
+    const options = dropdown.querySelectorAll('.dropdown-item');
+    const hiddenInput = dropdown.querySelector('input[type="hidden"]');
+    
+    // Toggle menu
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Close all other dropdowns first
+      document.querySelectorAll('.custom-dropdown').forEach(d => {
+        if (d !== dropdown) d.classList.remove('active');
+      });
+      dropdown.classList.toggle('active');
+      
+      // Auto-focus search if exists
+      if (dropdown.classList.contains('active') && searchInput) {
+        setTimeout(() => searchInput.focus(), 100);
+      }
+    });
+
+    // Option selection
+    options.forEach(option => {
+      option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const value = option.dataset.value;
+        const text = option.textContent.trim();
+        
+        // Update selection
+        options.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        
+        // Update trigger text
+        trigger.querySelector('span').textContent = text;
+        
+        // Update hidden input
+        if (hiddenInput) {
+          hiddenInput.value = value;
+          // Trigger change event for other JS to catch
+          hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        
+        dropdown.classList.remove('active');
+      });
+    });
+
+    // Search/Filter logic
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        options.forEach(option => {
+          const text = option.textContent.toLowerCase();
+          if (text.includes(term)) {
+            option.classList.remove('hidden');
+          } else {
+            option.classList.add('hidden');
+          }
+        });
+      });
+      
+      // Stop clicks in search from closing menu
+      searchInput.addEventListener('click', (e) => e.stopPropagation());
+    }
+  });
+
+  // Global click-to-close
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('active'));
+  });
+}
+
+// Helper to set custom dropdown value programmatically
+function setCustomDropdownValue(dropdownId, value) {
+  const dropdown = document.getElementById(dropdownId);
+  if (!dropdown) return;
+  
+  const options = dropdown.querySelectorAll('.dropdown-item');
+  const trigger = dropdown.querySelector('.dropdown-trigger');
+  const hiddenInput = dropdown.querySelector('input[type="hidden"]');
+  
+  options.forEach(option => {
+    if (option.dataset.value === value) {
+      options.forEach(opt => opt.classList.remove('selected'));
+      option.classList.add('selected');
+      trigger.querySelector('span').textContent = option.textContent.trim();
+      if (hiddenInput) {
+        hiddenInput.value = value;
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+  });
+}
 function initAvatarProfile() {
   const avatar = document.getElementById('user-avatar');
   if (!avatar) return;

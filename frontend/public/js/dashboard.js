@@ -61,12 +61,37 @@ function initDashboard() {
   // Fetch members asynchronously without blocking
   fetchMembers();
 
-  // Filter pills
+  // Chart Options Dropdown Logic
+  const optionsDropdown = document.getElementById('chart-options-dropdown');
+  const optionsTrigger = document.getElementById('options-trigger');
   const pills = document.querySelectorAll('#chart-filters .pill');
+
+  if (optionsTrigger && optionsDropdown) {
+    optionsTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      optionsDropdown.classList.toggle('open');
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', () => {
+      optionsDropdown.classList.remove('open');
+    });
+  }
+
   pills.forEach(pill => {
     pill.addEventListener('click', () => {
       pills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
+      
+      // Update trigger text
+      if (optionsTrigger) {
+        const periodText = pill.textContent.trim();
+        optionsTrigger.querySelector('span').textContent = `This ${periodText}`;
+      }
+      
+      // Close dropdown
+      if (optionsDropdown) optionsDropdown.classList.remove('open');
+      
       loadChartData(pill.dataset.period);
     });
   });

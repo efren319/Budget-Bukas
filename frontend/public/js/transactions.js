@@ -156,6 +156,9 @@ function resetTransactionForm() {
   const dateInput = document.getElementById('tx-date');
   if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
 
+  // Reset custom category dropdown
+  setCustomDropdownValue('tx-category-dropdown', '');
+
   // Hide edit banner
   const banner = document.getElementById('edit-mode-banner');
   if (banner) banner.classList.add('hidden');
@@ -191,7 +194,7 @@ function editTransaction(id) {
     if (tx.type === 'income') {
       document.getElementById('tx-source').value = tx.source || '';
     } else {
-      document.getElementById('tx-category').value = tx.category || '';
+      setCustomDropdownValue('tx-category-dropdown', tx.category || '');
       document.getElementById('tx-description').value = tx.description || '';
     }
 

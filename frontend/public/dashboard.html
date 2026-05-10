@@ -213,12 +213,7 @@
                 </div>
               </div>
 
-          <!-- Filter Pills -->
-          <div class="filter-pills" id="chart-filters">
-            <button class="pill active" data-period="week">Week</button>
-            <button class="pill" data-period="month">Month</button>
-            <button class="pill" data-period="year">Year</button>
-          </div>
+
 
           <!-- Chart + Right Panel Row -->
           <div class="dashboard-grid">
@@ -233,6 +228,17 @@
               <div class="glass-card-content">
                 <div class="panel-header">
                   <h3>Income vs Expenses</h3>
+                  <div class="chart-options-dropdown" id="chart-options-dropdown">
+                    <button class="options-trigger" id="options-trigger">
+                      <span>This Week</span>
+                      <i data-lucide="chevron-down"></i>
+                    </button>
+                    <div class="options-menu" id="chart-filters">
+                      <button class="pill active" data-period="week">Week</button>
+                      <button class="pill" data-period="month">Month</button>
+                      <button class="pill" data-period="year">Year</button>
+                    </div>
+                  </div>
                 </div>
                 <div class="chart-container" id="main-chart-container">
                   <div class="skeleton skeleton-chart"></div>
@@ -423,17 +429,25 @@
                 <div class="form-row expense-fields hidden" id="expense-fields">
                   <div class="form-group">
                     <label for="tx-category">Category</label>
-                    <select id="tx-category">
-                      <option value="">Select category</option>
-                      <option value="Food & Beverages">Food & Beverages</option>
-                      <option value="Transportation">Transportation</option>
-                      <option value="Supplies">Supplies</option>
-                      <option value="Printing">Printing</option>
-                      <option value="Events">Events</option>
-                      <option value="Equipment">Equipment</option>
-                      <option value="Venue">Venue</option>
-                      <option value="Miscellaneous">Miscellaneous</option>
-                    </select>
+                    <div class="custom-dropdown" id="tx-category-dropdown">
+                      <div class="dropdown-trigger">
+                        <span>Select Category</span>
+                        <i data-lucide="chevron-down"></i>
+                      </div>
+                      <div class="dropdown-menu">
+                        <div class="dropdown-options">
+                          <div class="dropdown-item" data-value="Food & Beverages">Food & Beverages</div>
+                          <div class="dropdown-item" data-value="Transportation">Transportation</div>
+                          <div class="dropdown-item" data-value="Supplies">Supplies</div>
+                          <div class="dropdown-item" data-value="Printing">Printing</div>
+                          <div class="dropdown-item" data-value="Events">Events</div>
+                          <div class="dropdown-item" data-value="Equipment">Equipment</div>
+                          <div class="dropdown-item" data-value="Venue">Venue</div>
+                          <div class="dropdown-item" data-value="Miscellaneous">Miscellaneous</div>
+                        </div>
+                      </div>
+                      <input type="hidden" id="tx-category" required>
+                    </div>
                   </div>
                 </div>
                 <div class="form-row expense-fields hidden">
@@ -501,11 +515,20 @@
           <!-- Filters Row -->
           <div class="records-filters">
             <div class="filter-group">
-              <select id="filter-type">
-                <option value="">All Types</option>
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
-              </select>
+              <div class="custom-dropdown" id="filter-type-dropdown" style="width: 150px;">
+                <div class="dropdown-trigger" style="padding: 10px 14px; font-size: 0.8rem;">
+                  <span>All Types</span>
+                  <i data-lucide="chevron-down"></i>
+                </div>
+                <div class="dropdown-menu">
+                  <div class="dropdown-options">
+                    <div class="dropdown-item selected" data-value="">All Types</div>
+                    <div class="dropdown-item" data-value="income">Income</div>
+                    <div class="dropdown-item" data-value="expense">Expense</div>
+                  </div>
+                </div>
+                <input type="hidden" id="filter-type">
+              </div>
               <input type="date" id="filter-start" placeholder="Start date">
               <input type="date" id="filter-end" placeholder="End date">
               <input type="text" id="filter-search" placeholder="Search...">
@@ -806,37 +829,58 @@
           </div>
           <div class="form-group">
             <label for="admin-user-position">Position</label>
-            <select id="admin-user-position" required>
-              <option value="" disabled selected>Select Position</option>
-              <option value="Governor">Governor</option>
-              <option value="President">President</option>
-              <option value="Vice President for Internal Affairs">Vice President for Internal Affairs</option>
-              <option value="Vice President for External Affairs">Vice President for External Affairs</option>
-              <option value="General Secretary">General Secretary</option>
-              <option value="Deputy Secretary">Deputy Secretary</option>
-              <option value="Auditor">Auditor</option>
-              <option value="Treasurer">Treasurer</option>
-              <option value="Business Manager">Business Manager</option>
-              <option value="4th Year Representative">4th Year Representative</option>
-              <option value="3rd Year Representative">3rd Year Representative</option>
-              <option value="2nd Year Representative">2nd Year Representative</option>
-              <option value="1st Year Representative">1st Year Representative</option>
-              <option value="Creatives and Branding Head">Creatives and Branding Head</option>
-              <option value="Creatives and Branding Member">Creatives and Branding Member</option>
-              <option value="Media Committee Head">Media Committee Head</option>
-              <option value="Media Committee Member">Media Committee Member</option>
-              <option value="DRRM Committee Head">DRRM Committee Head</option>
-              <option value="DRRM Committee Member">DRRM Committee Member</option>
-              <option value="Technical Head Committee">Technical Head Committee</option>
-              <option value="Technical Committee Member">Technical Committee Member</option>
-            </select>
+            <div class="custom-dropdown" id="admin-user-position-dropdown">
+              <div class="dropdown-trigger">
+                <span>Select Position</span>
+                <i data-lucide="chevron-down"></i>
+              </div>
+              <div class="dropdown-menu">
+                <div class="dropdown-search">
+                  <input type="text" placeholder="Search position...">
+                  <i data-lucide="search"></i>
+                </div>
+                <div class="dropdown-options" id="admin-user-position-options">
+                  <div class="dropdown-item" data-value="Governor">Governor</div>
+                  <div class="dropdown-item" data-value="President">President</div>
+                  <div class="dropdown-item" data-value="Vice President for Internal Affairs">Vice President for Internal Affairs</div>
+                  <div class="dropdown-item" data-value="Vice President for External Affairs">Vice President for External Affairs</div>
+                  <div class="dropdown-item" data-value="General Secretary">General Secretary</div>
+                  <div class="dropdown-item" data-value="Deputy Secretary">Deputy Secretary</div>
+                  <div class="dropdown-item" data-value="Auditor">Auditor</div>
+                  <div class="dropdown-item" data-value="Treasurer">Treasurer</div>
+                  <div class="dropdown-item" data-value="Business Manager">Business Manager</div>
+                  <div class="dropdown-item" data-value="4th Year Representative">4th Year Representative</div>
+                  <div class="dropdown-item" data-value="3rd Year Representative">3rd Year Representative</div>
+                  <div class="dropdown-item" data-value="2nd Year Representative">2nd Year Representative</div>
+                  <div class="dropdown-item" data-value="1st Year Representative">1st Year Representative</div>
+                  <div class="dropdown-item" data-value="Creatives and Branding Head">Creatives and Branding Head</div>
+                  <div class="dropdown-item" data-value="Creatives and Branding Member">Creatives and Branding Member</div>
+                  <div class="dropdown-item" data-value="Media Committee Head">Media Committee Head</div>
+                  <div class="dropdown-item" data-value="Media Committee Member">Media Committee Member</div>
+                  <div class="dropdown-item" data-value="DRRM Committee Head">DRRM Committee Head</div>
+                  <div class="dropdown-item" data-value="DRRM Committee Member">DRRM Committee Member</div>
+                  <div class="dropdown-item" data-value="Technical Head Committee">Technical Head Committee</div>
+                  <div class="dropdown-item" data-value="Technical Committee Member">Technical Committee Member</div>
+                </div>
+              </div>
+              <input type="hidden" id="admin-user-position" required>
+            </div>
           </div>
           <div class="form-group">
             <label for="admin-user-role">Role</label>
-            <select id="admin-user-role" required>
-              <option value="viewer">Viewer (Read Only)</option>
-              <option value="admin">Admin (Full Access)</option>
-            </select>
+            <div class="custom-dropdown" id="admin-user-role-dropdown">
+              <div class="dropdown-trigger">
+                <span>Select Role</span>
+                <i data-lucide="chevron-down"></i>
+              </div>
+              <div class="dropdown-menu">
+                <div class="dropdown-options">
+                  <div class="dropdown-item" data-value="user">User (Viewer)</div>
+                  <div class="dropdown-item" data-value="admin">Admin (Full Access)</div>
+                </div>
+              </div>
+              <input type="hidden" id="admin-user-role" required>
+            </div>
           </div>
           <div class="modal-actions">
             <button type="button" class="btn btn-outline" onclick="closeAdminUserModal()">Cancel</button>
