@@ -189,16 +189,6 @@ async function viewReceipt(id) {
       console.warn('No base64 image data. Old/missing receipt. file_path:', r.file_path);
       if (skeleton) skeleton.style.display = 'none';
       img.style.display = 'none';
-    }
-
-    info.innerHTML = `
-      <h3 style="margin-bottom:var(--space-md)">${r.category || 'Receipt'}</h3>
-      <p><strong>Amount:</strong> ${formatPeso(r.amount)}</p>
-      <p><strong>Date:</strong> ${formatDate(r.date)}</p>
-      ${r.description ? `<p><strong>Description:</strong> ${r.description}</p>` : ''}
-    `;
-    info.classList.add('content-fade-in');
-
   } catch (error) {
     showToast('Error loading receipt', 'error');
     modal.classList.remove('active');
