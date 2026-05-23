@@ -94,24 +94,34 @@ async function handleTransactionSubmit(e) {
   try {
     const receiptFile = document.getElementById('receipt-file');
     const hasReceipt = type === 'expense' && receiptFile && receiptFile.files.length > 0;
+    let receiptSuccess = true;
 
     if (currentEditId) {
       await apiPut(`/transactions/${currentEditId}`, payload);
       // Also upload receipt if a new one was selected during edit
       if (hasReceipt) {
-        await uploadReceiptForExpense(currentEditId, receiptFile.files[0]);
+        receiptSuccess = await uploadReceiptForExpense(currentEditId, receiptFile.files[0]);
       }
-      showToast('Transaction updated successfully');
+      if (!hasReceipt || receiptSuccess) {
+        showToast('Transaction updated successfully');
+      }
     } else {
       const result = await apiPost('/transactions', payload);
       if (hasReceipt && result && result.data) {
-        await uploadReceiptForExpense(result.data.id, receiptFile.files[0]);
+        receiptSuccess = await uploadReceiptForExpense(result.data.id, receiptFile.files[0]);
       }
-      showToast('Transaction saved successfully');
+      if (!hasReceipt || receiptSuccess) {
+        showToast('Transaction saved successfully');
+      }
+    }
+
+    if (!receiptSuccess) {
+      showToast('Transaction saved, but receipt upload failed. Please try again.', 'warning');
     }
 
     resetTransactionForm();
     loadDashboardData();
+    if (typeof loadRecords === 'function') loadRecords(1);
   } catch (error) {
     showToast(error.message, 'error');
   } finally {
@@ -124,13 +134,16 @@ async function uploadReceiptForExpense(transactionId, file) {
     const formData = new FormData();
     formData.append('transaction_id', transactionId);
     formData.append('receipt', file);
+    
     const result = await apiUpload('/receipts/upload', formData);
     if (!result || !result.success) {
       console.error('Receipt upload failed:', result);
+      return false;
     }
+    return true;
   } catch (err) {
     console.error('Receipt upload error:', err);
-    // Non-blocking — transaction is already saved, just log the receipt failure
+    return false;
   }
 }
 
@@ -265,8 +278,9 @@ function initReceiptUpload() {
   }
 
   function handleReceiptFile(file) {
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('File size must be under 5MB', 'error');
+    // 5MB limit check (5 * 1024 * 1024 = 5242880 bytes)
+    if (file.size > 5242880) {
+      showToast('File size must be under 5MB.', 'error');
       fileInput.value = '';
       return;
     }
