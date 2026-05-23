@@ -25,7 +25,7 @@ async function getAll(req, res) {
         u.name AS user_name,
         i.source,
         e.category, e.description,
-        r.id AS receipt_id, r.file_path AS receipt_path
+        r.id AS receipt_id
       FROM transactions t
       LEFT JOIN users u ON u.id = t.user_id
       LEFT JOIN income i ON i.transaction_id = t.id
@@ -104,7 +104,7 @@ async function getOne(req, res) {
         t.*, u.name AS user_name,
         i.source,
         e.category, e.description,
-        r.id AS receipt_id, r.file_path AS receipt_path, r.extracted_text
+        r.id AS receipt_id
       FROM transactions t
       LEFT JOIN users u ON u.id = t.user_id
       LEFT JOIN income i ON i.transaction_id = t.id

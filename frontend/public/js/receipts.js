@@ -133,7 +133,10 @@ async function viewReceipt(id) {
   // Show modal immediately with loading state
   resetZoom();
   img.style.display = 'none';
-  img.src = '';
+  img.onload = null;
+  img.onerror = null;
+  img.removeAttribute('src');
+  
   const skeleton = document.getElementById('receipt-modal-img-skeleton');
   if (skeleton) {
     skeleton.style.display = 'block';
@@ -163,6 +166,9 @@ async function viewReceipt(id) {
     };
 
     img.onerror = () => {
+      // Ignore pseudo-errors fired by the browser when clearing src
+      if (!img.getAttribute('src') || !img.getAttribute('src').startsWith('data:')) return;
+
       console.error('Image render failed. file_path prefix:', r.file_path ? r.file_path.substring(0, 60) : 'null');
       if (skeleton) skeleton.style.display = 'none';
       img.style.display = 'none';
