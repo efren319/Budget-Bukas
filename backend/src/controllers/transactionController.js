@@ -193,28 +193,38 @@ async function update(req, res) {
 
     await connection.beginTransaction();
 
-    // Update parent
+    // Update parent transaction
     await connection.query(
       'UPDATE transactions SET type = ?, amount = ?, date = ? WHERE id = ?',
       [type, amount, date, id]
     );
 
-    // Update or recreate child records
-    // Delete old child records
-    await connection.query('DELETE FROM income WHERE transaction_id = ?', [id]);
-    await connection.query('DELETE FROM expenses WHERE transaction_id = ?', [id]);
-
-    // Insert new child
     if (type === 'income') {
-      await connection.query(
-        'INSERT INTO income (transaction_id, source) VALUES (?, ?)',
-        [id, source]
-      );
+      // Update income child row, or insert if missing
+      const [incomeRows] = await connection.query('SELECT id FROM income WHERE transaction_id = ?', [id]);
+      if (incomeRows.length > 0) {
+        await connection.query('UPDATE income SET source = ? WHERE transaction_id = ?', [source, id]);
+      } else {
+        await connection.query('INSERT INTO income (transaction_id, source) VALUES (?, ?)', [id, source]);
+      }
+      // Remove any leftover expense row (type switched)
+      await connection.query('DELETE FROM expenses WHERE transaction_id = ?', [id]);
     } else {
-      await connection.query(
-        'INSERT INTO expenses (transaction_id, category, description) VALUES (?, ?, ?)',
-        [id, category, description || null]
-      );
+      // Update expense child row, or insert if missing — PRESERVE existing row to keep receipt FK intact
+      const [expenseRows] = await connection.query('SELECT id FROM expenses WHERE transaction_id = ?', [id]);
+      if (expenseRows.length > 0) {
+        await connection.query(
+          'UPDATE expenses SET category = ?, description = ? WHERE transaction_id = ?',
+          [category, description || null, id]
+        );
+      } else {
+        await connection.query(
+          'INSERT INTO expenses (transaction_id, category, description) VALUES (?, ?, ?)',
+          [id, category, description || null]
+        );
+      }
+      // Remove any leftover income row (type switched)
+      await connection.query('DELETE FROM income WHERE transaction_id = ?', [id]);
     }
 
     await connection.commit();

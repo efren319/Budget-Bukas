@@ -460,14 +460,7 @@
                 <!-- Receipt Upload (expense only) -->
                 <div class="form-row expense-fields hidden">
                   <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-                      <label style="margin: 0;">Receipt (Optional)</label>
-                      <label class="toggle-switch" style="transform: scale(0.8);">
-                        <input type="checkbox" id="toggle-ocr" checked>
-                        <span class="toggle-slider"></span>
-                        <span style="margin-left: 50px; font-size:12px; color:var(--text-secondary); white-space:nowrap;">Auto OCR</span>
-                      </label>
-                    </div>
+                    <label>Receipt (Optional)</label>
                     
                     <div class="receipt-upload-area" id="receipt-upload-area">
                       <i data-lucide="upload-cloud"></i>
@@ -480,9 +473,6 @@
                       <button type="button" class="btn-remove-receipt" id="btn-remove-receipt">
                         <i data-lucide="x"></i>
                       </button>
-                      <div class="ocr-status" id="ocr-status">
-                        <i data-lucide="loader" class="spin"></i> Scanning receipt...
-                      </div>
                     </div>
                   </div>
                 </div>

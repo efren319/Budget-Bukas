@@ -1,12 +1,11 @@
 // ============================================
 // Receipt Controller
-// Upload, OCR processing, and receipt management
+// Upload and receipt management (no OCR)
 // ============================================
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const pool = require('../config/db');
-const { parseReceipt } = require('../utils/ocrParser');
 
 // Upload directory — backend/uploads/receipts/
 const UPLOAD_DIR = path.join(__dirname, '../../uploads/receipts');
@@ -42,57 +41,48 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB max
 });
 
-// POST /api/receipts/upload — Upload and scan receipt
+// POST /api/receipts/upload — Upload and link receipt to a transaction
 async function uploadReceipt(req, res) {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded.' });
     }
 
-    let ocrResult = null;
-
-    // Run OCR on uploaded image ONLY if scan is not explicitly disabled
-    if (req.query.scan !== 'false') {
-      ocrResult = await parseReceipt(req.file.path);
+    const transaction_id = req.body.transaction_id;
+    if (!transaction_id) {
+      return res.status(400).json({ success: false, message: 'transaction_id is required.' });
     }
 
-    res.json({
-      success: true,
-      message: ocrResult ? 'Receipt scanned successfully.' : 'Receipt uploaded without scanning.',
-      data: {
-        filePath: req.file.filename,
-        originalName: req.file.originalname,
-        ocr: ocrResult
-      }
-    });
-  } catch (error) {
-    console.error('Upload receipt error:', error);
-    res.status(500).json({ success: false, message: 'Error processing receipt.' });
-  }
-}
+    // Look up the expense record linked to this transaction
+    const [expenseRows] = await pool.query(
+      'SELECT id FROM expenses WHERE transaction_id = ?',
+      [transaction_id]
+    );
 
-// POST /api/receipts/save — Save receipt record (after user confirms data)
-async function saveReceipt(req, res) {
-  try {
-    const { expense_id, file_path, extracted_text, original_name } = req.body;
-
-    if (!expense_id || !file_path) {
-      return res.status(400).json({ success: false, message: 'expense_id and file_path required.' });
+    if (expenseRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'No expense record found for this transaction.' });
     }
 
+    const expense_id = expenseRows[0].id;
+
+    // Insert receipt record
     const [result] = await pool.query(
-      'INSERT INTO receipts (expense_id, file_path, original_name, extracted_text) VALUES (?, ?, ?, ?)',
-      [expense_id, file_path, original_name || null, extracted_text || null]
+      'INSERT INTO receipts (expense_id, file_path, original_name) VALUES (?, ?, ?)',
+      [expense_id, req.file.filename, req.file.originalname]
     );
 
     res.status(201).json({
       success: true,
-      message: 'Receipt saved.',
-      data: { id: result.insertId }
+      message: 'Receipt uploaded and saved.',
+      data: {
+        id: result.insertId,
+        filePath: req.file.filename,
+        originalName: req.file.originalname
+      }
     });
   } catch (error) {
-    console.error('Save receipt error:', error);
-    res.status(500).json({ success: false, message: 'Server error.' });
+    console.error('Upload receipt error:', error);
+    res.status(500).json({ success: false, message: 'Error saving receipt.' });
   }
 }
 
@@ -150,7 +140,6 @@ function serveImage(req, res) {
 module.exports = {
   upload,
   uploadReceipt,
-  saveReceipt,
   getAll,
   getOne,
   serveImage
