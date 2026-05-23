@@ -94,29 +94,21 @@ async function handleTransactionSubmit(e) {
   try {
     const receiptFile = document.getElementById('receipt-file');
     const hasReceipt = type === 'expense' && receiptFile && receiptFile.files.length > 0;
-    let receiptSuccess = true;
 
     if (currentEditId) {
       await apiPut(`/transactions/${currentEditId}`, payload);
-      // Also upload receipt if a new one was selected during edit
+      showToast('Transaction updated successfully');
+      // Upload receipt in background (non-blocking)
       if (hasReceipt) {
-        receiptSuccess = await uploadReceiptForExpense(currentEditId, receiptFile.files[0]);
-      }
-      if (!hasReceipt || receiptSuccess) {
-        showToast('Transaction updated successfully');
+        uploadReceiptForExpense(currentEditId, receiptFile.files[0]);
       }
     } else {
       const result = await apiPost('/transactions', payload);
+      showToast('Transaction saved successfully');
+      // Upload receipt in background (non-blocking)
       if (hasReceipt && result && result.data) {
-        receiptSuccess = await uploadReceiptForExpense(result.data.id, receiptFile.files[0]);
+        uploadReceiptForExpense(result.data.id, receiptFile.files[0]);
       }
-      if (!hasReceipt || receiptSuccess) {
-        showToast('Transaction saved successfully');
-      }
-    }
-
-    if (!receiptSuccess) {
-      showToast('Transaction saved, but receipt upload failed. Please try again.', 'warning');
     }
 
     resetTransactionForm();
@@ -138,12 +130,11 @@ async function uploadReceiptForExpense(transactionId, file) {
     const result = await apiUpload('/receipts/upload', formData);
     if (!result || !result.success) {
       console.error('Receipt upload failed:', result);
-      return false;
+      showToast('Transaction saved. Receipt upload failed — try again.', 'warning');
     }
-    return true;
   } catch (err) {
     console.error('Receipt upload error:', err);
-    return false;
+    showToast('Transaction saved. Receipt could not be uploaded.', 'warning');
   }
 }
 
