@@ -105,7 +105,7 @@ async function loadReceipts() {
     grid.innerHTML = receipts.map(r => `
       <div class="receipt-card hover-lift" onclick="viewReceipt(${r.id})">
         <div class="receipt-card-img">
-          <img src="/api/receipts/image/${r.file_path}" alt="Receipt" onerror="this.parentElement.innerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\'/><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'/><path d=\\'m21 15-5-5L5 21\\'/></svg>'">
+          <img src="${API_BASE}/receipts/image/${r.file_path}" alt="Receipt" onerror="this.parentElement.innerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\'/><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'/><path d=\\'m21 15-5-5L5 21\\'/></svg>'">
         </div>
         <div class="receipt-card-body">
           <h5>${r.category || 'Expense'}</h5>
@@ -133,7 +133,7 @@ async function viewReceipt(id) {
     const r = data.data;
 
     resetZoom(); // Start fresh
-    img.src = `/api/receipts/image/${r.file_path}`;
+    img.src = `${API_BASE}/receipts/image/${r.file_path}`;
     img.onerror = () => { img.style.display = 'none'; };
     
     // Attach event listeners
@@ -144,11 +144,6 @@ async function viewReceipt(id) {
       <p><strong>Amount:</strong> ${formatPeso(r.amount)}</p>
       <p><strong>Date:</strong> ${formatDate(r.date)}</p>
       ${r.description ? `<p><strong>Description:</strong> ${r.description}</p>` : ''}
-      ${r.extracted_text ? `
-        <div style="margin-top:var(--space-md);padding:var(--space-md);background:var(--bg-elevated);border-radius:var(--radius-md);font-size:0.8rem;color:var(--text-secondary);white-space:pre-wrap;max-height:200px;overflow-y:auto">
-          <strong style="color:var(--text-primary)">OCR Extracted Text:</strong><br>${r.extracted_text}
-        </div>
-      ` : ''}
     `;
     info.classList.add('content-fade-in');
 
