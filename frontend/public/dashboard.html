@@ -639,24 +639,6 @@
             <div class="empty-state">No receipts uploaded yet</div>
           </div>
 
-          <!-- Receipt Modal -->
-          <div class="modal-overlay hidden" id="receipt-modal">
-            <div class="receipt-modal-content glass-card">
-              <button class="receipt-modal-close" id="receipt-modal-close">&times;</button>
-              <div class="receipt-modal-layout">
-                <div class="receipt-modal-image-area">
-                  <div class="skeleton skeleton-chart" id="receipt-modal-img-skeleton" style="height: 100%; min-height: 400px;"></div>
-                  <img src="" alt="Receipt" id="receipt-modal-img" style="display: none;">
-                </div>
-                <div class="receipt-modal-info" id="receipt-modal-info">
-                  <div class="skeleton skeleton-title"></div>
-                  <div class="skeleton skeleton-text long"></div>
-                  <div class="skeleton skeleton-text long"></div>
-                  <div class="skeleton skeleton-row" style="height: 150px;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
         </section>
 
         <!-- ========== CHATBOT PAGE (ChatGPT-Style) ========== -->
@@ -1106,6 +1088,25 @@
           <button class="btn btn-primary" id="avatar-crop-confirm">
             <i data-lucide="check"></i> Apply &amp; Upload
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Receipt Modal (Used by both Receipts Page and Transactions Table) -->
+  <div class="modal-overlay hidden" id="receipt-modal">
+    <div class="receipt-modal-content glass-card">
+      <button class="receipt-modal-close" id="receipt-modal-close">&times;</button>
+      <div class="receipt-modal-layout">
+        <div class="receipt-modal-image-area">
+          <div class="skeleton skeleton-chart" id="receipt-modal-img-skeleton" style="height: 100%; min-height: 400px;"></div>
+          <img src="" alt="Receipt" id="receipt-modal-img" style="display: none;">
+        </div>
+        <div class="receipt-modal-info" id="receipt-modal-info">
+          <div class="skeleton skeleton-title"></div>
+          <div class="skeleton skeleton-text long"></div>
+          <div class="skeleton skeleton-text long"></div>
+          <div class="skeleton skeleton-row" style="height: 150px;"></div>
         </div>
       </div>
     </div>
