@@ -65,10 +65,13 @@ async function uploadReceipt(req, res) {
 
     const expense_id = expenseRows[0].id;
 
-    // Insert receipt record
+    // Delete existing receipt if there is one (to prevent unique constraint errors)
+    await pool.query('DELETE FROM receipts WHERE expense_id = ?', [expense_id]);
+
+    // Insert receipt record (extracted_text is left empty since OCR is removed, avoiding NOT NULL constraints)
     const [result] = await pool.query(
-      'INSERT INTO receipts (expense_id, file_path, original_name) VALUES (?, ?, ?)',
-      [expense_id, req.file.filename, req.file.originalname]
+      'INSERT INTO receipts (expense_id, file_path, original_name, extracted_text) VALUES (?, ?, ?, ?)',
+      [expense_id, req.file.filename, req.file.originalname, '']
     );
 
     res.status(201).json({

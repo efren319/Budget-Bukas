@@ -122,8 +122,8 @@ async function handleTransactionSubmit(e) {
 async function uploadReceiptForExpense(transactionId, file) {
   try {
     const formData = new FormData();
-    formData.append('receipt', file);
     formData.append('transaction_id', transactionId);
+    formData.append('receipt', file);
     const result = await apiUpload('/receipts/upload', formData);
     if (!result || !result.success) {
       console.error('Receipt upload failed:', result);
@@ -265,6 +265,12 @@ function initReceiptUpload() {
   }
 
   function handleReceiptFile(file) {
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File size must be under 5MB', 'error');
+      fileInput.value = '';
+      return;
+    }
+
     // Show preview only — actual upload happens on form submit
     const reader = new FileReader();
     reader.onload = (e) => {
