@@ -126,18 +126,51 @@ async function viewReceipt(id) {
   const info = document.getElementById('receipt-modal-info');
   if (!modal) return;
 
+  // Show modal immediately with loading state
+  resetZoom();
+  img.style.display = 'none';
+  img.src = '';
+  const skeleton = document.getElementById('receipt-modal-img-skeleton');
+  if (skeleton) {
+    skeleton.style.display = 'block';
+    skeleton.classList.remove('hidden');
+  }
+  modal.classList.remove('hidden');
+
   try {
     const data = await apiGet(`/receipts/${id}`);
-    if (!data || !data.success) return;
+    if (!data || !data.success) {
+      showToast('Could not load receipt', 'error');
+      modal.classList.add('hidden');
+      return;
+    }
 
     const r = data.data;
 
-    resetZoom(); // Start fresh
+    // Set image source — auth is NOT required for image serving
+    img.onload = () => {
+      if (skeleton) skeleton.style.display = 'none';
+      img.style.display = 'block';
+      img.classList.add('content-fade-in');
+      setupZoomAndPan();
+    };
+
+    img.onerror = () => {
+      if (skeleton) skeleton.style.display = 'none';
+      img.style.display = 'none';
+      // Show a fallback placeholder in the image area
+      const imgArea = document.querySelector('.receipt-modal-image-area');
+      if (imgArea && !imgArea.querySelector('.receipt-img-error')) {
+        imgArea.insertAdjacentHTML('beforeend', `
+          <div class="receipt-img-error" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:300px;gap:12px;color:var(--text-muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <span style="font-size:0.85rem;">Image unavailable</span>
+          </div>
+        `);
+      }
+    };
+
     img.src = `${API_BASE}/receipts/image/${r.file_path}`;
-    img.onerror = () => { img.style.display = 'none'; };
-    
-    // Attach event listeners
-    img.onload = () => setupZoomAndPan();
 
     info.innerHTML = `
       <h3 style="margin-bottom:var(--space-md)">${r.category || 'Receipt'}</h3>
@@ -147,17 +180,8 @@ async function viewReceipt(id) {
     `;
     info.classList.add('content-fade-in');
 
-    modal.classList.remove('hidden');
-
-    // Reveal image once loaded
-    img.onload = () => {
-      const skeleton = document.getElementById('receipt-modal-img-skeleton');
-      if (skeleton) skeleton.remove();
-      img.style.display = 'block';
-      img.classList.add('content-fade-in');
-      setupZoomAndPan();
-    };
   } catch (error) {
     showToast('Error loading receipt', 'error');
+    modal.classList.add('hidden');
   }
 }

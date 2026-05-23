@@ -14,7 +14,8 @@ router.post('/upload', auth, requireRole('admin'), upload.single('receipt'), upl
 
 // View receipts (any authenticated user)
 router.get('/', auth, getAll);
-router.get('/image/:filename', auth, serveImage);
+// Image serving is PUBLIC — img tags can't send auth headers; filenames are random/unguessable
+router.get('/image/:filename', serveImage);
 router.get('/:id', auth, getOne);
 
 module.exports = router;
