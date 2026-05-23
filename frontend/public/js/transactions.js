@@ -590,8 +590,12 @@ function initDateRangePicker() {
     e.stopPropagation();
     const isHidden = panel.style.display === 'none' || panel.style.display === '';
     if (isHidden) {
-      // Close all other dropdowns
-      document.querySelectorAll('.dropdown-menu').forEach(d => d.style.display = 'none');
+      // Close all other dropdowns cleanly
+      document.querySelectorAll('.dropdown-menu').forEach(d => {
+        // Only clear inline display if it was set to none by something else, but generally we rely on the .active class
+        if (d.id !== 'date-range-panel') d.style.display = ''; 
+      });
+      document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('active'));
       
       // Initialize temp values from hidden inputs
       const startVal = document.getElementById('filter-start').value;
@@ -722,7 +726,7 @@ function initDateRangePicker() {
     }
     
     panel.style.display = 'none';
-    loadRecords(1); // Auto reload table with new dates!
+    // User must click 'Filter' to apply, removed loadRecords(1) here
   });
 }
 
