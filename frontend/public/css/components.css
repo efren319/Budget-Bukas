@@ -1179,13 +1179,22 @@
 .admin-table-wrapper {
   display: flex;
   flex-direction: column;
-  /* Always keep the exact same height so the card border & pagination never jump */
+  /* Always keep the exact same height so the card border never jump */
   height: 565px;
+  position: relative;
+  padding-bottom: 70px; /* Static padding to prevent overlap with absolute pagination */
 }
 
 .admin-table-wrapper .pagination-container {
-  margin-top: auto;
-  padding-top: 20px;
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 /* Maintain constant height for premium table container and remove skeleton margin stretch */
@@ -1503,4 +1512,62 @@
   border-color: var(--gold);
   color: #000;
   box-shadow: 0 0 15px rgba(212, 175, 55, 0.35);
+}
+
+/* =============================================
+   PREMIUM DATE RANGE PICKER CALENDAR SYSTEM
+   ============================================= */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-header-day {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 4px 0;
+  text-transform: uppercase;
+}
+
+.calendar-day-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-day-btn:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.calendar-day-btn.selected {
+  background: var(--gold) !important;
+  color: #000 !important;
+  font-weight: 600;
+}
+
+.calendar-day-btn.in-range {
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--gold-light);
+}
+
+.calendar-day-btn.disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+.calendar-day-btn.empty {
+  pointer-events: none;
 }

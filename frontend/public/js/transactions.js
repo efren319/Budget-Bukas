@@ -425,6 +425,9 @@ function renderAutoComputeTable(items) {
 // RECORDS TABLE
 // =============================================
 function initRecords() {
+  // Initialize Custom Date Range Picker dropdown
+  initDateRangePicker();
+
   // Apply filters button
   const applyBtn = document.getElementById('btn-apply-filters');
   if (applyBtn) {
@@ -564,3 +567,265 @@ function renderPagination(pagination, sort, order) {
   container.innerHTML = html;
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
+
+// ============================================================================
+// DUAL-CALENDAR DATE RANGE PICKER CONTROLLER
+// ============================================================================
+let calStartYear, calStartMonth;
+let calEndYear, calEndMonth;
+let tempStartDate = null;
+let tempEndDate = null;
+
+function initDateRangePicker() {
+  const trigger = document.getElementById('date-range-trigger');
+  const panel = document.getElementById('date-range-panel');
+  const cancelBtn = document.getElementById('cal-btn-cancel');
+  const saveBtn = document.getElementById('cal-btn-save');
+  const clearBtn = document.getElementById('cal-btn-clear');
+  
+  if (!trigger || !panel) return;
+
+  // Toggle panel display
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = panel.style.display === 'none' || panel.style.display === '';
+    if (isHidden) {
+      // Close all other dropdowns
+      document.querySelectorAll('.dropdown-menu').forEach(d => d.style.display = 'none');
+      
+      // Initialize temp values from hidden inputs
+      const startVal = document.getElementById('filter-start').value;
+      const endVal = document.getElementById('filter-end').value;
+      
+      tempStartDate = startVal ? new Date(startVal) : null;
+      tempEndDate = endVal ? new Date(endVal) : null;
+      
+      const now = new Date();
+      calStartYear = tempStartDate ? tempStartDate.getFullYear() : now.getFullYear();
+      calStartMonth = tempStartDate ? tempStartDate.getMonth() : now.getMonth();
+      
+      // Default end calendar to start calendar month, or next month if not set
+      if (tempEndDate) {
+        calEndYear = tempEndDate.getFullYear();
+        calEndMonth = tempEndDate.getMonth();
+      } else {
+        calEndYear = calStartYear;
+        calEndMonth = calStartMonth;
+      }
+      
+      panel.style.display = 'flex';
+      renderBothCalendars();
+      updateCalFooter();
+    } else {
+      panel.style.display = 'none';
+    }
+  });
+
+  // Prevent clicking inside panel from closing it
+  panel.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  // Close panel on clicking outside
+  document.addEventListener('click', () => {
+    panel.style.display = 'none';
+  });
+
+  // Prev / Next month buttons
+  document.getElementById('cal-start-prev').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (calStartMonth === 0) {
+      calStartMonth = 11;
+      calStartYear--;
+    } else {
+      calStartMonth--;
+    }
+    renderBothCalendars();
+  });
+
+  document.getElementById('cal-start-next').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (calStartMonth === 11) {
+      calStartMonth = 0;
+      calStartYear++;
+    } else {
+      calStartMonth++;
+    }
+    renderBothCalendars();
+  });
+
+  document.getElementById('cal-end-prev').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (calEndMonth === 0) {
+      calEndMonth = 11;
+      calEndYear--;
+    } else {
+      calEndMonth--;
+    }
+    renderBothCalendars();
+  });
+
+  document.getElementById('cal-end-next').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (calEndMonth === 11) {
+      calEndMonth = 0;
+      calEndYear++;
+    } else {
+      calEndMonth++;
+    }
+    renderBothCalendars();
+  });
+
+  // Clear button
+  if (clearBtn) {
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tempStartDate = null;
+      tempEndDate = null;
+      renderBothCalendars();
+      updateCalFooter();
+    });
+  }
+
+  // Cancel button
+  cancelBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.style.display = 'none';
+  });
+
+  // Save button
+  saveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    // Save selections to hidden inputs
+    const startInput = document.getElementById('filter-start');
+    const endInput = document.getElementById('filter-end');
+    const displaySpan = document.getElementById('date-range-display');
+    
+    if (tempStartDate && tempEndDate) {
+      // Format to YYYY-MM-DD for backend
+      const startFmtBackend = tempStartDate.getFullYear() + '-' + String(tempStartDate.getMonth() + 1).padStart(2, '0') + '-' + String(tempStartDate.getDate()).padStart(2, '0');
+      const endFmtBackend = tempEndDate.getFullYear() + '-' + String(tempEndDate.getMonth() + 1).padStart(2, '0') + '-' + String(tempEndDate.getDate()).padStart(2, '0');
+      
+      startInput.value = startFmtBackend;
+      endInput.value = endFmtBackend;
+      
+      // Format to DD/MM/YYYY - DD/MM/YYYY for UI display
+      const startFmt = formatDateDMY(tempStartDate);
+      const endFmt = formatDateDMY(tempEndDate);
+      displaySpan.textContent = `${startFmt} - ${endFmt}`;
+      displaySpan.style.color = 'var(--text-primary)';
+    } else {
+      startInput.value = '';
+      endInput.value = '';
+      displaySpan.textContent = 'Select Date Range';
+      displaySpan.style.color = 'var(--text-secondary)';
+    }
+    
+    panel.style.display = 'none';
+    loadRecords(1); // Auto reload table with new dates!
+  });
+}
+
+// Date formatter helpers
+function formatDateDMY(date) {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
+}
+
+function isSameDay(d1, d2) {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+}
+
+function renderBothCalendars() {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  
+  // Left calendar (Start)
+  document.getElementById('cal-start-month-year').textContent = `${months[calStartMonth]} ${calStartYear}`;
+  renderCalendar('cal-start-grid', calStartYear, calStartMonth, 'start');
+  
+  // Right calendar (End)
+  document.getElementById('cal-end-month-year').textContent = `${months[calEndMonth]} ${calEndYear}`;
+  renderCalendar('cal-end-grid', calEndYear, calEndMonth, 'end');
+}
+
+function renderCalendar(gridId, year, month, type) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  
+  const daysOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  let html = daysOfWeek.map(d => `<div class="calendar-header-day">${d}</div>`).join('');
+  
+  const firstDayIndex = new Date(year, month, 1).getDay();
+  const numDays = new Date(year, month + 1, 0).getDate();
+  
+  // Empty slots before month start
+  for (let i = 0; i < firstDayIndex; i++) {
+    html += `<div class="calendar-day-btn empty"></div>`;
+  }
+  
+  // Render day buttons
+  for (let d = 1; d <= numDays; d++) {
+    const curDate = new Date(year, month, d);
+    let classes = 'calendar-day-btn';
+    
+    // Check range highlight
+    if (tempStartDate && isSameDay(curDate, tempStartDate)) {
+      classes += ' selected';
+    } else if (tempEndDate && isSameDay(curDate, tempEndDate)) {
+      classes += ' selected';
+    } else if (tempStartDate && tempEndDate && curDate > tempStartDate && curDate < tempEndDate) {
+      classes += ' in-range';
+    }
+    
+    html += `<button type="button" class="${classes}" onclick="handleCalDayClick('${type}', ${year}, ${month}, ${d})">${d}</button>`;
+  }
+  
+  grid.innerHTML = html;
+}
+
+function handleCalDayClick(type, year, month, day) {
+  const clickedDate = new Date(year, month, day);
+  
+  if (type === 'start') {
+    tempStartDate = clickedDate;
+    // If start date is now more advanced than end date, reset/swap them
+    if (tempEndDate && tempStartDate > tempEndDate) {
+      tempEndDate = new Date(tempStartDate);
+    }
+  } else {
+    tempEndDate = clickedDate;
+    // If end date is earlier than start date, make start date equal to end date
+    if (tempStartDate && tempEndDate < tempStartDate) {
+      tempStartDate = new Date(tempEndDate);
+    }
+  }
+  
+  renderBothCalendars();
+  updateCalFooter();
+}
+
+function updateCalFooter() {
+  const countSpan = document.getElementById('date-range-days-count');
+  const detailsSpan = document.getElementById('date-range-details');
+  
+  if (tempStartDate && tempEndDate) {
+    const diffTime = Math.abs(tempEndDate - tempStartDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
+    
+    countSpan.textContent = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} selected`;
+    detailsSpan.textContent = `${formatDateDMY(tempStartDate)} - ${formatDateDMY(tempEndDate)}`;
+  } else if (tempStartDate) {
+    countSpan.textContent = 'Selecting end date...';
+    detailsSpan.textContent = `Start: ${formatDateDMY(tempStartDate)}`;
+  } else {
+    countSpan.textContent = 'No range selected';
+    detailsSpan.textContent = 'Click dates on calendars above';
+  }
+}
+
+// Attach event handler to global window scope so it can be called via inline onclick
+window.handleCalDayClick = handleCalDayClick;

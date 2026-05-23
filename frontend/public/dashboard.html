@@ -428,7 +428,7 @@
                 <!-- Expense Fields -->
                 <div class="form-row expense-fields hidden" id="expense-fields">
                   <div class="form-group">
-                    <label for="tx-category">Category</label>
+                    <label>Category</label>
                     <div class="custom-dropdown" id="tx-category-dropdown">
                       <div class="dropdown-trigger">
                         <span>Select Category</span>
@@ -515,7 +515,7 @@
           </div>
 
           <!-- Filters Row -->
-          <div class="records-filters" style="margin-bottom: var(--space-lg); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md); background: rgba(20, 20, 20, 0.4); border: 1px solid var(--border-color); padding: 14px 20px; border-radius: 12px; backdrop-filter: blur(10px);">
+          <div class="records-filters" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md); background: rgba(20, 20, 20, 0.4); border: 1px solid var(--border-color); padding: 14px 20px; border-radius: 12px; backdrop-filter: blur(10px);">
             <div style="display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; flex-grow: 1;">
               <div class="custom-dropdown" id="filter-type-dropdown" style="width: 150px;">
                 <div class="dropdown-trigger" style="padding: 10px 16px; font-size: 0.85rem; height: 42px; border-radius: 8px;">
@@ -531,8 +531,65 @@
                 </div>
                 <input type="hidden" id="filter-type">
               </div>
-              <input type="date" id="filter-start" placeholder="Start date" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 0.85rem; height: 42px; padding: 0 14px; outline: none;">
-              <input type="date" id="filter-end" placeholder="End date" style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 0.85rem; height: 42px; padding: 0 14px; outline: none;">
+
+              <!-- Custom Date Range Picker Dropdown -->
+              <div class="custom-dropdown" id="date-range-picker-dropdown" style="width: 290px; position: relative;">
+                <div class="dropdown-trigger" id="date-range-trigger" style="padding: 10px 16px; font-size: 0.85rem; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                  <span id="date-range-display">Select Date Range</span>
+                  <i data-lucide="calendar" style="width: 16px; height: 16px; color: #fff;"></i>
+                </div>
+                
+                <!-- Date Picker Panel (Side-by-side Dual Calendar) -->
+                <div class="dropdown-menu" id="date-range-panel" style="width: 520px; padding: 18px; display: none; flex-direction: column; gap: var(--space-md); background: rgba(18, 18, 18, 0.96); backdrop-filter: blur(30px); border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg), 0 0 20px rgba(212, 175, 55, 0.06); position: absolute; top: calc(100% + 8px); left: 0; z-index: 10000; pointer-events: auto;">
+                  <!-- Two Calendars Side-by-Side -->
+                  <div style="display: flex; gap: var(--space-lg); justify-content: space-between;">
+                    
+                    <!-- Left Calendar: Start Date -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <button type="button" class="btn-icon" id="cal-start-prev" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i></button>
+                        <span id="cal-start-month-year" style="font-weight: 600; font-size: 0.85rem; color: var(--gold-light);">—</span>
+                        <button type="button" class="btn-icon" id="cal-start-next" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i></button>
+                      </div>
+                      
+                      <div class="calendar-grid" id="cal-start-grid">
+                        <!-- Rendered by JS -->
+                      </div>
+                    </div>
+
+                    <!-- Right Calendar: End Date -->
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <button type="button" class="btn-icon" id="cal-end-prev" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i></button>
+                        <span id="cal-end-month-year" style="font-weight: 600; font-size: 0.85rem; color: var(--gold-light);">—</span>
+                        <button type="button" class="btn-icon" id="cal-end-next" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i></button>
+                      </div>
+                      
+                      <div class="calendar-grid" id="cal-end-grid">
+                        <!-- Rendered by JS -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Footer / Status Info -->
+                  <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: 6px;">
+                    <div style="display: flex; flex-direction: column; gap: 2px; text-align: left;">
+                      <span id="date-range-days-count" style="font-size: 0.78rem; font-weight: 600; color: var(--gold);">No range selected</span>
+                      <span id="date-range-details" style="font-size: 0.72rem; color: var(--text-muted);">—</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                      <button type="button" class="btn btn-secondary btn-sm" id="cal-btn-clear" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; height: 32px; background: rgba(255, 85, 85, 0.08); color: #ff5555; border: 1px solid rgba(255, 85, 85, 0.2);">Clear</button>
+                      <button type="button" class="btn btn-secondary btn-sm" id="cal-btn-cancel" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; height: 32px;">Cancel</button>
+                      <button type="button" class="btn btn-primary btn-sm" id="cal-btn-save" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; height: 32px;">Save</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Hidden form inputs so backend query remains untouched! -->
+                <input type="hidden" id="filter-start">
+                <input type="hidden" id="filter-end">
+              </div>
+
               <div class="search-bar" style="max-width: 260px; width: 100%; margin: 0; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; height: 42px; display: flex; align-items: center; padding: 0 14px;">
                 <i data-lucide="search" style="width: 16px; height: 16px; color: var(--text-muted); margin-right: 8px;"></i>
                 <input type="text" id="filter-search" placeholder="Search records..." style="background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 0.85rem; width: 100%;">
@@ -883,7 +940,7 @@
             <input type="email" id="admin-user-email" required placeholder="juan@g.batstate-u.edu.ph">
           </div>
           <div class="form-group">
-            <label for="admin-user-position">Position</label>
+            <label>Position</label>
             <div class="custom-dropdown" id="admin-user-position-dropdown">
               <div class="dropdown-trigger">
                 <span>Select Position</span>
@@ -922,7 +979,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="admin-user-role">Role</label>
+            <label>Role</label>
             <div class="custom-dropdown" id="admin-user-role-dropdown">
               <div class="dropdown-trigger">
                 <span>Select Role</span>
