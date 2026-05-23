@@ -7,7 +7,7 @@ function initReceiptsPage() {
   const closeBtn = document.getElementById('receipt-modal-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
-      document.getElementById('receipt-modal')?.classList.add('hidden');
+      document.getElementById('receipt-modal')?.classList.remove('active');
     });
   }
 
@@ -16,7 +16,7 @@ function initReceiptsPage() {
   if (overlay) {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
-        overlay.classList.add('hidden');
+        overlay.classList.remove('active');
         resetZoom(); // Reset when closing
       }
     });
@@ -142,13 +142,13 @@ async function viewReceipt(id) {
     skeleton.style.display = 'block';
     skeleton.classList.remove('hidden');
   }
-  modal.classList.remove('hidden');
+  modal.classList.add('active');
 
   try {
     const data = await apiGet(`/receipts/${id}`);
     if (!data || !data.success) {
       showToast('Could not load receipt', 'error');
-      modal.classList.add('hidden');
+      modal.classList.remove('active');
       return;
     }
 
@@ -201,6 +201,6 @@ async function viewReceipt(id) {
 
   } catch (error) {
     showToast('Error loading receipt', 'error');
-    modal.classList.add('hidden');
+    modal.classList.remove('active');
   }
 }
