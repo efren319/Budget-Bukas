@@ -102,18 +102,22 @@ async function loadReceipts() {
       return;
     }
 
-    grid.innerHTML = receipts.map(r => `
-      <div class="receipt-card hover-lift" onclick="viewReceipt(${r.id})">
-        <div class="receipt-card-img">
-          <img src="${API_BASE}/receipts/image/${r.file_path}" alt="Receipt" onerror="this.parentElement.innerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\'/><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'/><path d=\\'m21 15-5-5L5 21\\'/></svg>'">
+    grid.innerHTML = receipts.map(r => {
+      const hasImage = r.file_path && r.file_path.startsWith('data:');
+      const imgHtml = hasImage
+        ? `<img src="${r.file_path}" alt="Receipt">`
+        : `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5'><rect x='3' y='3' width='18' height='18' rx='2'/><circle cx='8.5' cy='8.5' r='1.5'/><path d='m21 15-5-5L5 21'/></svg>`;
+      return `
+        <div class="receipt-card hover-lift" onclick="viewReceipt(${r.id})">
+          <div class="receipt-card-img">${imgHtml}</div>
+          <div class="receipt-card-body">
+            <h5>${r.category || 'Expense'}</h5>
+            <p>${formatDate(r.date)}${r.description ? ' • ' + r.description : ''}</p>
+            <div class="receipt-amount">${formatPeso(r.amount)}</div>
+          </div>
         </div>
-        <div class="receipt-card-body">
-          <h5>${r.category || 'Expense'}</h5>
-          <p>${formatDate(r.date)}${r.description ? ' • ' + r.description : ''}</p>
-          <div class="receipt-amount">${formatPeso(r.amount)}</div>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
     grid.classList.add('content-fade-in');
   } catch (error) {
     grid.innerHTML = '<div class="empty-state">Error loading receipts</div>';
@@ -147,7 +151,10 @@ async function viewReceipt(id) {
 
     const r = data.data;
 
-    // Set image source — auth is NOT required for image serving
+    // file_path is now a base64 data URI stored in the database
+    const hasImage = r.file_path && r.file_path.startsWith('data:');
+    console.log('Receipt data — id:', r.id, 'hasImage:', hasImage, 'file_path prefix:', r.file_path ? r.file_path.substring(0, 30) : 'null');
+
     img.onload = () => {
       if (skeleton) skeleton.style.display = 'none';
       img.style.display = 'block';
@@ -156,9 +163,9 @@ async function viewReceipt(id) {
     };
 
     img.onerror = () => {
+      console.error('Image render failed. file_path prefix:', r.file_path ? r.file_path.substring(0, 60) : 'null');
       if (skeleton) skeleton.style.display = 'none';
       img.style.display = 'none';
-      // Show a fallback placeholder in the image area
       const imgArea = document.querySelector('.receipt-modal-image-area');
       if (imgArea && !imgArea.querySelector('.receipt-img-error')) {
         imgArea.insertAdjacentHTML('beforeend', `
@@ -170,7 +177,13 @@ async function viewReceipt(id) {
       }
     };
 
-    img.src = `${API_BASE}/receipts/image/${r.file_path}`;
+    if (hasImage) {
+      img.src = r.file_path; // base64 data URI — no network request needed
+    } else {
+      console.warn('No base64 image data. Old/missing receipt. file_path:', r.file_path);
+      if (skeleton) skeleton.style.display = 'none';
+      img.style.display = 'none';
+    }
 
     info.innerHTML = `
       <h3 style="margin-bottom:var(--space-md)">${r.category || 'Receipt'}</h3>

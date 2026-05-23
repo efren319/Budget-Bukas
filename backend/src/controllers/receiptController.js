@@ -1,29 +1,14 @@
 // ============================================
 // Receipt Controller
-// Upload and receipt management (no OCR)
+// Stores images as base64 in DB — no filesystem dependency
 // ============================================
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const pool = require('../config/db');
 
-// Upload directory — backend/uploads/receipts/
-const UPLOAD_DIR = path.join(__dirname, '../../uploads/receipts');
-
-// Multer storage configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (!fs.existsSync(UPLOAD_DIR)) {
-      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    }
-    cb(null, UPLOAD_DIR);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `receipt-${uniqueSuffix}${ext}`);
-  }
-});
+// Multer uses memory storage so we never need to write to disk
+const storage = multer.memoryStorage();
 
 // File filter — only images
 const fileFilter = (req, file, cb) => {
@@ -53,6 +38,10 @@ async function uploadReceipt(req, res) {
       return res.status(400).json({ success: false, message: 'transaction_id is required.' });
     }
 
+    // Convert uploaded buffer to a base64 data URI — stored directly in DB
+    const base64 = req.file.buffer.toString('base64');
+    const dataUri = `data:${req.file.mimetype};base64,${base64}`;
+
     // Look up the expense record linked to this transaction
     const [expenseRows] = await pool.query(
       'SELECT id FROM expenses WHERE transaction_id = ?',
@@ -68,20 +57,16 @@ async function uploadReceipt(req, res) {
     // Delete any old receipt record for this expense (on edit, we overwrite)
     await pool.query('DELETE FROM receipts WHERE expense_id = ?', [expense_id]);
 
-    // Insert new receipt record
+    // Insert new receipt with base64 data URI stored as file_path
     const [result] = await pool.query(
       'INSERT INTO receipts (expense_id, file_path, original_name) VALUES (?, ?, ?)',
-      [expense_id, req.file.filename, req.file.originalname]
+      [expense_id, dataUri, req.file.originalname]
     );
 
     res.status(201).json({
       success: true,
       message: 'Receipt uploaded and saved.',
-      data: {
-        id: result.insertId,
-        filePath: req.file.filename,
-        originalName: req.file.originalname
-      }
+      data: { id: result.insertId }
     });
   } catch (error) {
     console.error('Upload receipt error:', error);
@@ -93,7 +78,8 @@ async function uploadReceipt(req, res) {
 async function getAll(req, res) {
   try {
     const [rows] = await pool.query(`
-      SELECT r.*, e.category, e.description, t.amount, t.date
+      SELECT r.id, r.expense_id, r.file_path, r.original_name, r.uploaded_at,
+             e.category, e.description, t.amount, t.date
       FROM receipts r
       JOIN expenses e ON e.id = r.expense_id
       JOIN transactions t ON t.id = e.transaction_id
@@ -111,7 +97,8 @@ async function getAll(req, res) {
 async function getOne(req, res) {
   try {
     const [rows] = await pool.query(`
-      SELECT r.*, e.category, e.description, t.amount, t.date
+      SELECT r.id, r.expense_id, r.file_path, r.original_name, r.uploaded_at,
+             e.category, e.description, t.amount, t.date
       FROM receipts r
       JOIN expenses e ON e.id = r.expense_id
       JOIN transactions t ON t.id = e.transaction_id
@@ -129,21 +116,9 @@ async function getOne(req, res) {
   }
 }
 
-// GET /api/receipts/image/:filename — Serve receipt image
-function serveImage(req, res) {
-  const filePath = path.join(UPLOAD_DIR, req.params.filename);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ success: false, message: 'Image not found.' });
-  }
-
-  res.sendFile(filePath);
-}
-
 module.exports = {
   upload,
   uploadReceipt,
   getAll,
-  getOne,
-  serveImage
+  getOne
 };
