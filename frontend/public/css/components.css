@@ -401,13 +401,47 @@
 }
 
 .type-badge.income {
-  background: rgba(52,199,89,0.1);
+  background: rgba(52,199,89,0.12);
   color: var(--success);
+  border: 1px solid rgba(52,199,89,0.25);
 }
 
 .type-badge.expense {
-  background: rgba(255,59,92,0.1);
+  background: rgba(255,59,92,0.12);
   color: var(--danger);
+  border: 1px solid rgba(255,59,92,0.25);
+}
+
+/* ── Role badges ── */
+.type-badge.role-admin {
+  background: rgba(212,175,55,0.12);
+  color: var(--gold);
+  border: 1px solid rgba(212,175,55,0.28);
+}
+
+.type-badge.role-viewer {
+  background: rgba(120,130,155,0.12);
+  color: #8a93a8;
+  border: 1px solid rgba(120,130,155,0.25);
+}
+
+/* ── Status badges ── */
+.type-badge.status-active {
+  background: rgba(52,199,89,0.12);
+  color: var(--success);
+  border: 1px solid rgba(52,199,89,0.25);
+}
+
+.type-badge.status-inactive {
+  background: rgba(255,59,92,0.12);
+  color: var(--danger);
+  border: 1px solid rgba(255,59,92,0.25);
+}
+
+.type-badge.status-new {
+  background: rgba(10,132,255,0.12);
+  color: #4da3ff;
+  border: 1px solid rgba(10,132,255,0.25);
 }
 
 .empty-state {
@@ -459,6 +493,9 @@
    ============================================= */
 .records-filters {
   margin-bottom: var(--space-lg);
+  overflow: visible !important;
+  position: relative;
+  z-index: 100 !important;
 }
 
 .filter-group {
@@ -1032,7 +1069,6 @@
   backdrop-filter: blur(30px) saturate(150%);
   -webkit-backdrop-filter: blur(30px) saturate(150%);
   border: 1px solid var(--border-color);
-  border-top: 2px solid var(--gold); /* Gold Accent Top */
   border-radius: var(--radius-md);
   box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(212, 175, 55, 0.05);
   z-index: 1000;
@@ -1105,18 +1141,17 @@
 
 .dropdown-item {
   position: relative;
-  padding: 12px 16px;
+  padding: 10px 14px;
   margin-bottom: 2px;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 12px;
-  border-left: 3px solid transparent;
 }
 
 .dropdown-item:last-child {
@@ -1124,19 +1159,348 @@
 }
 
 .dropdown-item:hover {
-  background: rgba(212, 175, 55, 0.08);
-  color: var(--gold-light);
-  border-left-color: var(--gold-muted);
-  padding-left: 20px; /* Subtle slide effect */
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
 }
 
 .dropdown-item.selected {
-  background: rgba(212, 175, 55, 0.15);
-  color: var(--gold);
-  border-left-color: var(--gold);
+  background: rgba(211, 172, 119, 0.1);
+  color: var(--gold-light);
   font-weight: 600;
 }
 
 .dropdown-item.hidden {
   display: none;
+}
+
+/* =============================================
+   ADMIN TABLE WRAPPER — keeps pagination pinned at bottom
+   ============================================= */
+.admin-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  /* Always keep the exact same height so the card border & pagination never jump */
+  height: 565px;
+}
+
+.admin-table-wrapper .pagination-container {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+/* Maintain constant height for premium table container and remove skeleton margin stretch */
+.admin-table-wrapper .premium-table-container {
+  flex-grow: 1;
+}
+
+.premium-table-container tbody tr td .skeleton-text {
+  margin-bottom: 0 !important;
+}
+
+/* =============================================
+   PREMIUM TABLE CONTAINER
+   ============================================= */
+.premium-table-container {
+  background: rgba(15, 15, 15, 0.6);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  margin-top: 8px; /* reduced from var(--space-lg) to tighten gap after filters */
+  position: relative;
+  overflow: visible !important;
+  z-index: 5;
+}
+
+/* Fixed layout + min-width so columns never collapse on small screens */
+.premium-table-container table,
+.premium-table-container .data-table {
+  width: 100%;
+  table-layout: fixed;
+  min-width: 700px;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0;
+}
+
+/* ── THEAD BOX ── styled as its own card */
+.premium-table-container thead tr th {
+  padding: 13px 20px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Box shape — radius on outer corners only */
+.premium-table-container thead tr th:first-child {
+  border-left: 1px solid var(--border-color);
+  border-radius: 8px 0 0 8px;
+}
+/* Right-align last th (Actions column — no text) */
+.premium-table-container thead tr th:last-child {
+  border-right: 1px solid var(--border-color);
+  border-radius: 0 8px 8px 0;
+  text-align: right;
+  padding-right: 22px;
+}
+
+/* ── BODY ROWS — flat, no box, no hover ── */
+.premium-table-container tbody tr {
+  background: transparent;
+}
+
+.premium-table-container tbody tr td {
+  padding: 14px 20px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: transparent;
+  /* Lock cell width — truncate long text with ellipsis */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0; /* required for text-overflow inside table-layout: fixed */
+}
+
+/* Right-align the actions td and push kebab button to the right */
+.premium-table-container tbody tr td:last-child {
+  text-align: right;
+  padding-right: 12px;
+  overflow: visible !important; /* CRITICAL: Prevent table cell from clipping absolute children */
+}
+
+/* Remove bottom border on the very last row */
+.premium-table-container tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Elevate the active row/cell stacking context so its dropdown floats over subsequent rows */
+.premium-table-container tbody tr:has(.kebab-menu-container.active) td:last-child {
+  position: relative;
+  z-index: 1000 !important;
+}
+
+/* No hover effects */
+.premium-table-container tbody tr:hover td { background: transparent; }
+.premium-table-container tbody tr:hover { transform: none; box-shadow: none; }
+
+/* Inactive rows */
+.premium-table-container tbody tr.inactive-user-row {
+  opacity: 0.45;
+  filter: grayscale(70%);
+}
+.premium-table-container tbody tr.inactive-user-row td {
+  color: var(--text-muted);
+}
+
+/* =============================================
+   PREMIUM 3-DOT KEBAB ACTION MENU
+   ============================================= */
+.kebab-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.kebab-trigger {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, background 0.2s ease;
+  outline: none;
+}
+
+.kebab-trigger:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gold);
+}
+
+/* Positioned absolutely beside / below the trigger — aligned right */
+.kebab-dropdown {
+  position: absolute;
+  top: 50%;             /* vertically centred on the trigger button */
+  transform: translateY(-50%) translateY(4px) scale(0.95);
+  right: 38px;
+  left: auto;
+  background: rgba(18, 18, 18, 0.98);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+  z-index: 100000 !important;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.95);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.kebab-menu-container.active .kebab-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateY(4px) scale(1);
+  pointer-events: auto;
+}
+
+.kebab-dropdown button {
+  background: transparent;
+  border: none;
+  padding: 10px 14px;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  width: 100%;
+  outline: none;
+}
+
+.kebab-dropdown button i {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.kebab-dropdown button:hover {
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--gold-light);
+  padding-left: 18px;
+}
+
+.kebab-dropdown button.btn-deactivate:hover {
+  background: rgba(255, 59, 92, 0.1);
+  color: #ff5e7e;
+}
+
+.kebab-dropdown button.btn-activate:hover {
+  background: rgba(40, 167, 69, 0.1);
+  color: #2ecc71;
+}
+
+/* =============================================
+   PREMIUM PAGINATION BAR
+   ============================================= */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-btn {
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  user-select: none;
+  height: 38px;
+  outline: none;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.08);
+  border-color: var(--gold-muted);
+  color: var(--gold-light);
+  transform: scale(0.93);
+}
+
+.pagination-btn:active:not(:disabled) {
+  transform: scale(0.86);
+  animation: pag-bounce 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(255, 255, 255, 0.02);
+}
+
+.pagination-number {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: rgba(20, 20, 20, 0.6);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  outline: none;
+}
+
+.pagination-number:hover {
+  background: rgba(212, 175, 55, 0.08);
+  border-color: var(--gold-muted);
+  color: var(--gold-light);
+  transform: scale(0.88);
+}
+
+.pagination-number:active {
+  transform: scale(0.78);
+  animation: pag-bounce 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
+@keyframes pag-bounce {
+  0%   { transform: scale(0.78); }
+  40%  { transform: scale(1.08); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.pagination-number.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #000;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.35);
 }

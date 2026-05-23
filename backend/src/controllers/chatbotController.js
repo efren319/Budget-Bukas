@@ -1,15 +1,9 @@
 // ============================================
 // Chatbot Controller — PURE AI INTEGRATION
-// Full Gemini AI Assistant with Database Context
+// Pollinations.ai Assistant with Database Context
 // No Hardcoded Responses. No Fake Intelligence.
 // ============================================
 const pool = require('../config/db');
-let GoogleGenAI = null;
-try { 
-  GoogleGenAI = require('@google/genai').GoogleGenAI; 
-} catch (e) {
-  console.error("Missing @google/genai SDK");
-}
 
 async function handleQuery(req, res) {
   try {

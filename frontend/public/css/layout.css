@@ -57,14 +57,14 @@ body::before {
 .sidebar {
   position: sticky;
   top: var(--radius-sm);
-  height: calc(100vh - calc(var(--radius-sm) * 2));
+  height: calc(100vh - calc(var(--radius-lg) * 2));
   width: 72px;
-  flex: 0 0 72px; /* FIXED base width */
+  flex: 0 0 72px;
   transition: flex-basis 0.3s ease;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
-  border-right: 1px solid rgba(255,255,255,0.05);
-  margin: var(--radius-sm);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  margin: var(--radius-lg);
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
@@ -74,7 +74,7 @@ body::before {
   overflow-y: auto;
   z-index: 100;
   box-shadow: var(--shadow-card);
-  align-self: flex-start; 
+  align-self: flex-start;
 }
 
 /* Gold glow at bottom */

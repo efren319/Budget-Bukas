@@ -22,8 +22,8 @@ pool.execute = async function(sql, params = []) {
   let i = 1;
   const pgSql = sql.replace(/\?/g, () => `$${i++}`);
 
-  // Trace the mapping for Render logs
-  console.log(`📡 DB Query: ${pgSql.substring(0, 100)}...`);
+  // Trace the mapping for Render logs (Disabled for cleaner terminal)
+  // console.log(`📡 DB Query: ${pgSql.substring(0, 100)}...`);
 
   // Auto-inject RETURNING id if it's an INSERT 
   const isInsert = pgSql.trim().toUpperCase().startsWith('INSERT');

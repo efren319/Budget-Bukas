@@ -384,7 +384,14 @@ async function fetchMembers() {
       renderMembers([]);
       return;
     }
-    renderMembers(data.data);
+    let members = data.data;
+    
+    // Sort by Hierarchy
+    if (typeof sortUsersByHierarchy === 'function') {
+      members = sortUsersByHierarchy(members);
+    }
+    
+    renderMembers(members);
   } catch (error) {
     console.error('Members fetch error:', error);
     renderMembers([]);

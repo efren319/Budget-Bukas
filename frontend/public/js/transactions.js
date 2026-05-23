@@ -456,14 +456,14 @@ async function loadRecords(page = 1, sort = 'date', order = 'desc') {
   const endDate = document.getElementById('filter-end')?.value || '';
   const search = document.getElementById('filter-search')?.value || '';
 
-  let url = `/transactions?page=${page}&sort=${sort}&order=${order}&limit=20`;
+  let url = `/transactions?page=${page}&sort=${sort}&order=${order}&limit=7`;
   if (type) url += `&type=${type}`;
   if (startDate) url += `&startDate=${startDate}`;
   if (endDate) url += `&endDate=${endDate}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
 
   // Show skeletons
-  tbody.innerHTML = Array(5).fill(0).map(() => `
+  tbody.innerHTML = Array(7).fill(0).map(() => `
     <tr>
       <td><div class="skeleton skeleton-text" style="width: 80px;"></div></td>
       <td><div class="skeleton skeleton-text" style="width: 60px;"></div></td>
@@ -538,9 +538,29 @@ function renderPagination(pagination, sort, order) {
     return;
   }
 
-  let html = '';
+  const currentPage = pagination.page;
+
+  let html = `
+    <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="loadRecords(${currentPage - 1}, '${sort}', '${order}')">
+      <i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i> Previous
+    </button>
+  `;
+
   for (let i = 1; i <= totalPages; i++) {
-    html += `<button class="${i === pagination.page ? 'active' : ''}" onclick="loadRecords(${i},'${sort}','${order}')">${i}</button>`;
+    const isActive = i === currentPage;
+    html += `
+      <button class="pagination-number ${isActive ? 'active' : ''}" onclick="loadRecords(${i}, '${sort}', '${order}')">
+        ${i}
+      </button>
+    `;
   }
+
+  html += `
+    <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="loadRecords(${currentPage + 1}, '${sort}', '${order}')">
+      Next <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+    </button>
+  `;
+
   container.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }

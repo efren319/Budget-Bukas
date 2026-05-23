@@ -4,6 +4,10 @@
 // ============================================
 
 let currentUsers = [];
+let adminSearchQuery = '';
+let adminStatusFilter = 'active';
+let adminCurrentPage = 1;
+const adminPageSize = 7;
 
 // Attach to global scope immediately
 window.openAddMemberModal = openAddMemberModal;
@@ -14,6 +18,7 @@ window.resetUserPassword = resetUserPassword;
 window.toggleUserStatus = toggleUserStatus;
 window.deleteUserAccount = deleteUserAccount;
 window.renderAdminUsers = renderAdminUsers;
+window.changeAdminPage = changeAdminPage;
 
 /**
  * Custom Confirmation Dialog
@@ -76,6 +81,44 @@ function initAdmin() {
       await saveAdminUser();
     });
   }
+
+  // Bind new Status Dropdown filter
+  const statusFilterInput = document.getElementById('admin-filter-status');
+  if (statusFilterInput) {
+    statusFilterInput.addEventListener('change', (e) => {
+      adminStatusFilter = e.target.value;
+      adminCurrentPage = 1; // Reset page on filter change
+      renderAdminUsers();
+    });
+  }
+
+  // Bind real-time Search input
+  const searchInput = document.getElementById('admin-search-name');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      adminSearchQuery = e.target.value;
+      adminCurrentPage = 1; // Reset page on search change
+      renderAdminUsers();
+    });
+  }
+
+  // Global click listener for kebab menus
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('.kebab-trigger');
+    const allContainers = document.querySelectorAll('.kebab-menu-container');
+
+    if (trigger) {
+      const container = trigger.closest('.kebab-menu-container');
+      const wasActive = container.classList.contains('active');
+      allContainers.forEach(c => c.classList.remove('active'));
+      if (!wasActive) {
+        container.classList.add('active');
+      }
+      e.stopPropagation();
+    } else {
+      allContainers.forEach(c => c.classList.remove('active'));
+    }
+  });
 }
 
 async function loadAdminUsers() {
@@ -114,46 +157,75 @@ function renderAdminUsers(users = currentUsers) {
 
   tbody.classList.add('content-fade-in');
 
-  const showInactive = document.getElementById('toggle-inactive-users')?.checked || false;
-  const filteredUsers = users.filter(u => showInactive ? true : u.is_active);
+  // Filter users based on search query and status filter
+  let filteredUsers = users.filter(user => {
+    // 1. Status Filter
+    if (adminStatusFilter === 'active' && !user.is_active) return false;
+    if (adminStatusFilter === 'inactive' && user.is_active) return false;
+    
+    // 2. Search Query Filter
+    if (adminSearchQuery.trim() !== '') {
+      const query = adminSearchQuery.toLowerCase();
+      const matchesName = (user.name || '').toLowerCase().includes(query);
+      const matchesEmail = (user.email || '').toLowerCase().includes(query);
+      if (!matchesName && !matchesEmail) return false;
+    }
+    
+    return true;
+  });
 
-  if (!filteredUsers || filteredUsers.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center">No users found</td></tr>';
+  // Sort by Hierarchy
+  if (typeof sortUsersByHierarchy === 'function') {
+    filteredUsers = sortUsersByHierarchy(filteredUsers);
+  }
+
+  const totalRecords = filteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / adminPageSize));
+  
+  // Guard page index bounds
+  if (adminCurrentPage > totalPages) {
+    adminCurrentPage = totalPages;
+  }
+  if (adminCurrentPage < 1) {
+    adminCurrentPage = 1;
+  }
+
+  const startIdx = (adminCurrentPage - 1) * adminPageSize;
+  const paginatedUsers = filteredUsers.slice(startIdx, startIdx + adminPageSize);
+
+  if (!paginatedUsers || paginatedUsers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 40px; color: var(--text-secondary);">No users found</td></tr>';
+    renderAdminPagination(0);
     return;
   }
 
-  tbody.innerHTML = filteredUsers.map(user => {
-    const statusClass = user.is_active ? 'badge-success' : 'badge-danger';
+  tbody.innerHTML = paginatedUsers.map(user => {
+    const statusClass = user.is_active ? 'status-active' : 'status-inactive';
     const statusText = user.is_active ? 'Active' : 'Inactive';
+    
+    // Muted/gray styling class for inactive users
+    const rowClass = user.is_active ? '' : 'inactive-user-row';
     
     // For must_change_password display if needed
     const passStatus = user.must_change_password 
-      ? '<span class="badge badge-warning" style="margin-left: 5px; font-size: 0.65rem;" title="Must change password">New</span>' 
+      ? '<span class="type-badge status-new" style="margin-left: 6px; font-size: 0.68rem; padding: 2px 6px;" title="Must change password">New</span>' 
       : '';
 
-    const actionButtons = user.is_active 
-      ? `
-        <button class="btn btn-sm btn-outline" onclick="openEditMemberModal(${user.id})" title="Edit User">
-          <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i>
-        </button>
-        <button class="btn btn-sm btn-outline" onclick="resetUserPassword(${user.id})" title="Reset Password">
-          <i data-lucide="key" style="width: 14px; height: 14px;"></i>
-        </button>
-        <button class="btn btn-sm btn-danger" onclick="toggleUserStatus(${user.id}, false)" title="Deactivate User">
-          <i data-lucide="user-x" style="width: 14px; height: 14px;"></i>
-        </button>
-      `
-      : `
-        <button class="btn btn-sm btn-success" onclick="toggleUserStatus(${user.id}, true)" title="Activate User">
-          <i data-lucide="user-check" style="width: 14px; height: 14px;"></i>
-        </button>
-        <button class="btn btn-sm btn-danger" onclick="deleteUserAccount(${user.id})" title="Permanently Delete (Free up Email)">
-          <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
-        </button>
-      `;
+    // Action button setup for Kebab dropdown
+    const statusActionText = user.is_active ? 'Deactivate User' : 'Activate User';
+    const statusActionClass = user.is_active ? 'btn-deactivate' : 'btn-activate';
+    const statusActionIcon = user.is_active ? 'user-x' : 'user-check';
+    const toggleStatusCall = user.is_active ? `toggleUserStatus(${user.id}, false)` : `toggleUserStatus(${user.id}, true)`;
+    
+    const deleteBtnHtml = !user.is_active 
+      ? `<button class="btn-deactivate" onclick="deleteUserAccount(${user.id})">
+           <i data-lucide="trash-2" style="color: var(--danger);"></i> 
+           <span style="color: var(--danger);">Delete Account</span>
+         </button>`
+      : '';
 
     return `
-      <tr>
+      <tr class="${rowClass}">
         <td>
           <div style="display: flex; align-items: center; gap: 10px;">
             <div class="topbar-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
@@ -164,11 +236,25 @@ function renderAdminUsers(users = currentUsers) {
         </td>
         <td>${user.email}</td>
         <td>${user.position || '—'}</td>
-        <td><span class="badge ${user.role === 'admin' ? 'badge-primary' : 'badge-secondary'}">${user.role}</span>${passStatus}</td>
-        <td><span class="badge ${statusClass}">${statusText}</span></td>
-        <td>
-          <div style="display: flex; gap: 8px;">
-            ${actionButtons}
+        <td><span class="type-badge role-${user.role === 'admin' ? 'admin' : 'viewer'}">${user.role}</span>${passStatus}</td>
+        <td><span class="type-badge ${statusClass}">${statusText}</span></td>
+        <td style="text-align: center;">
+          <div class="kebab-menu-container">
+            <button class="kebab-trigger" title="More Actions">
+              <i data-lucide="more-vertical" style="width: 18px; height: 18px;"></i>
+            </button>
+            <div class="kebab-dropdown">
+              <button onclick="openEditMemberModal(${user.id})">
+                <i data-lucide="edit-2"></i> Edit User
+              </button>
+              <button onclick="resetUserPassword(${user.id})">
+                <i data-lucide="key"></i> Reset Password
+              </button>
+              <button class="${statusActionClass}" onclick="${toggleStatusCall}">
+                <i data-lucide="${statusActionIcon}"></i> ${statusActionText}
+              </button>
+              ${deleteBtnHtml}
+            </div>
           </div>
         </td>
       </tr>
@@ -176,6 +262,48 @@ function renderAdminUsers(users = currentUsers) {
   }).join('');
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
+  
+  // Render centered bottom pagination bar
+  renderAdminPagination(totalPages);
+}
+
+function renderAdminPagination(totalPages) {
+  const container = document.getElementById('admin-users-pagination');
+  if (!container) return;
+
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = `
+    <button class="pagination-btn" ${adminCurrentPage === 1 ? 'disabled' : ''} onclick="changeAdminPage(${adminCurrentPage - 1})">
+      <i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i> Previous
+    </button>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    const isActive = i === adminCurrentPage;
+    html += `
+      <button class="pagination-number ${isActive ? 'active' : ''}" onclick="changeAdminPage(${i})">
+        ${i}
+      </button>
+    `;
+  }
+
+  html += `
+    <button class="pagination-btn" ${adminCurrentPage === totalPages ? 'disabled' : ''} onclick="changeAdminPage(${adminCurrentPage + 1})">
+      Next <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+    </button>
+  `;
+
+  container.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function changeAdminPage(pageNumber) {
+  adminCurrentPage = pageNumber;
+  renderAdminUsers();
 }
 
 function openAddMemberModal() {
