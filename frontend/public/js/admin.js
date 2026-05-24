@@ -347,6 +347,10 @@ function openAddMemberModal() {
   document.getElementById('admin-user-id').value = '';
   document.getElementById('admin-modal-title').textContent = 'Add New User';
   
+  // Set default values for custom dropdowns
+  setCustomDropdownValue('admin-user-position-dropdown', '');
+  setCustomDropdownValue('admin-user-role-dropdown', 'viewer');
+
   // Enable email for new users
   document.getElementById('admin-user-email').disabled = false;
   
@@ -366,7 +370,7 @@ function openEditMemberModal(userId) {
   
   // Use custom dropdown setter
   setCustomDropdownValue('admin-user-position-dropdown', user.position || '');
-  setCustomDropdownValue('admin-user-role-dropdown', user.role || 'user');
+  setCustomDropdownValue('admin-user-role-dropdown', user.role || 'viewer');
   
   // Email is non-editable in this flow for existing users to avoid conflicts,
   // or it can be left editable depending on requirements. Let's leave it editable.
