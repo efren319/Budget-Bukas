@@ -118,6 +118,14 @@ function initNavigation() {
       navigateTo(link.dataset.goto);
     });
   });
+
+  // Restore last visited page
+  const lastPage = localStorage.getItem('bb_last_page');
+  if (lastPage && document.getElementById(`page-${lastPage}`)) {
+    // Need a tiny timeout to ensure other modules are ready 
+    // and don't overwrite this via hardcoded initializations
+    setTimeout(() => navigateTo(lastPage), 50);
+  }
 }
 
 function navigateTo(page) {
@@ -126,6 +134,9 @@ function navigateTo(page) {
 
   // Prevent flicker/re-navigation if already active
   if (targetPage.classList.contains('active')) return;
+
+  // Save current page state
+  localStorage.setItem('bb_last_page', page);
 
   // Update sidebar active state
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
