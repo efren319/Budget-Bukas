@@ -548,9 +548,15 @@ td.empty-state {
 }
 
 .receipt-card {
-  background: var(--bg-card);
+  background: rgb(13 9 4 / 60%);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border-radius: 16px;
+  padding:16px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  margin-top: 8px;
+  position: relative;
   overflow: hidden;
   cursor: pointer;
   transition: all var(--duration-normal) var(--ease-out);
@@ -564,6 +570,7 @@ td.empty-state {
 
 .receipt-card-img {
   height: 160px;
+  border-radius: 10px;
   overflow: hidden;
   background: var(--bg-input);
   display: flex;
@@ -1223,7 +1230,7 @@ td.empty-state {
    PREMIUM TABLE CONTAINER
    ============================================= */
 .premium-table-container {
-  background: rgba(15, 15, 15, 0.6);
+  background: rgb(13 9 4 / 60%);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border: 1px solid var(--border-color);
@@ -1256,7 +1263,7 @@ td.empty-state {
   text-transform: uppercase;
   font-size: 0.72rem;
   letter-spacing: 1px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgb(40 29 15 / 62%);
   border-top: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
   white-space: nowrap;

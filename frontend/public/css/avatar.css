@@ -249,6 +249,7 @@
   /* background/border/shadow handled by .glass-card */
   transform: scale(0.9) translateY(16px);
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: default;
 }
 
 .avatar-crop-modal.active .avatar-crop-dialog {
