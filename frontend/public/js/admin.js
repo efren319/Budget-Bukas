@@ -8,6 +8,8 @@ let adminSearchQuery = '';
 let adminStatusFilter = 'active';
 let adminCurrentPage = 1;
 const adminPageSize = 7;
+let adminSortColumn = 'name'; // default sort column
+let adminSortOrder = 'asc'; // default sort order
 
 // Attach to global scope immediately
 window.openAddMemberModal = openAddMemberModal;
@@ -92,6 +94,23 @@ function initAdmin() {
     });
   }
 
+  // Bind sortable headers for User Management
+  const sortHeaders = document.querySelectorAll('#admin-users-table th.sortable');
+  sortHeaders.forEach(th => {
+    th.addEventListener('click', () => {
+      const sort = th.dataset.sort;
+      if (adminSortColumn === sort) {
+        // Toggle order
+        adminSortOrder = adminSortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        // Change column, default to asc
+        adminSortColumn = sort;
+        adminSortOrder = 'asc';
+      }
+      renderAdminUsers();
+    });
+  });
+
   // Bind real-time Search input
   const searchInput = document.getElementById('admin-search-name');
   if (searchInput) {
@@ -174,10 +193,25 @@ function renderAdminUsers(users = currentUsers) {
     return true;
   });
 
-  // Sort by Hierarchy
-  if (typeof sortUsersByHierarchy === 'function') {
-    filteredUsers = sortUsersByHierarchy(filteredUsers);
-  }
+  // Apply Sorting
+  filteredUsers.sort((a, b) => {
+    let comparison = 0;
+    
+    if (adminSortColumn === 'name') {
+      comparison = (a.name || '').localeCompare(b.name || '');
+    } else if (adminSortColumn === 'position') {
+      const rankA = window.POSITION_HIERARCHY ? (window.POSITION_HIERARCHY[a.position] || 99) : 99;
+      const rankB = window.POSITION_HIERARCHY ? (window.POSITION_HIERARCHY[b.position] || 99) : 99;
+      
+      if (rankA !== rankB) {
+        comparison = rankA - rankB;
+      } else {
+        comparison = (a.name || '').localeCompare(b.name || '');
+      }
+    }
+    
+    return adminSortOrder === 'asc' ? comparison : -comparison;
+  });
 
   const totalRecords = filteredUsers.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / adminPageSize));

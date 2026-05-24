@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="PondoSync Dashboard - Financial Transparency for JPCS">
+  
+  <!-- Open Graph / Social Media Meta Tags -->
+  <meta property="og:title" content="PondoSync — Dashboard">
+  <meta property="og:description" content="Dashboard for JPCS BatStateU Lipa Financial System">
+  <meta property="og:image" content="/assets/images/screenshot.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PondoSync — Dashboard">
+  <meta name="twitter:description" content="Dashboard for JPCS BatStateU Lipa Financial System">
+  <meta name="twitter:image" content="/assets/images/screenshot.png">
+
   <title>PondoSync — Dashboard</title>
   <link rel="icon" type="image/png" href="assets/logos/web-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -385,15 +396,17 @@
             <h2>Add Transaction</h2>
             <p>Record a new income or expense</p>
           </div>
-          <div class="form-card glass-card">
-            <!-- Glass card glow layers -->
-            <div class="glass-glow-bottom"></div>
-            <div class="glass-glow-bright"></div>
-            <div class="glass-glow-top"></div>
-            <div class="glass-sheen"></div>
-            <div class="glass-edge"></div>
+          <div class="form-card glass-card" style="overflow: visible; width: 70rem; left: 15%; position: relative;">
+            <!-- Glass card glow layers with overflow clipping wrapper so dropdowns can escape the main card -->
+            <div style="position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; z-index: 0;">
+              <div class="glass-glow-bottom"></div>
+              <div class="glass-glow-bright"></div>
+              <div class="glass-glow-top"></div>
+              <div class="glass-sheen"></div>
+              <div class="glass-edge"></div>
+            </div>
             <!-- Content -->
-            <div class="glass-card-content">
+            <div class="glass-card-content" style="position: relative; z-index: 1;">
               <form id="transaction-form" autocomplete="off">
                 <div class="form-row">
                   <div class="form-group">
@@ -414,8 +427,38 @@
                     <input type="number" id="tx-amount" step="0.01" min="0.01" placeholder="0.00" required>
                   </div>
                   <div class="form-group">
-                    <label for="tx-date">Date</label>
-                    <input type="date" id="tx-date" required>
+                    <label>Date</label>
+                    <div class="custom-dropdown" id="tx-date-picker-dropdown" style="position: relative; width: 100%;">
+                      <div class="dropdown-trigger" id="tx-date-trigger" style="padding: 10px 14px; font-size: 0.9rem; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; border: 1px solid var(--border-color); background: var(--bg-input);">
+                        <span id="tx-date-display" style="color: var(--text-secondary);">Select Date</span>
+                        <i data-lucide="calendar" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                      </div>
+                      
+                      <!-- Single Date Picker Panel -->
+                      <div class="dropdown-menu" id="tx-date-panel" style="width: 280px; padding: 16px; display: none; flex-direction: column; gap: var(--space-md); background: rgba(18, 18, 18, 0.96); backdrop-filter: blur(30px); border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg), 0 0 20px rgba(212, 175, 55, 0.06); position: absolute; top: calc(100% + 4px); left: 0; z-index: 10000; pointer-events: auto;">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                            <button type="button" class="btn-icon" id="tx-cal-prev" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i></button>
+                            <span id="tx-cal-month-year" style="font-weight: 600; font-size: 0.85rem; color: var(--gold-light);">—</span>
+                            <button type="button" class="btn-icon" id="tx-cal-next" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i></button>
+                          </div>
+                          
+                          <div class="calendar-grid" id="tx-cal-grid">
+                            <!-- Rendered by JS -->
+                          </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 4px;">
+                          <div style="display: flex; gap: 8px; width: 100%; justify-content: center;">
+                            <button type="button" class="btn btn-secondary btn-sm" id="tx-cal-btn-cancel" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; height: 32px; flex: 1;">Cancel</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="tx-cal-btn-today" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; height: 32px; flex: 1;">Today</button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <input type="hidden" id="tx-date">
+                    </div>
                   </div>
                 </div>
                 <!-- Income Fields -->
@@ -425,51 +468,50 @@
                     <input type="text" id="tx-source" placeholder="e.g., Membership Fees, Donation">
                   </div>
                 </div>
-                <!-- Expense Fields -->
-                <div class="form-row expense-fields hidden" id="expense-fields">
-                  <div class="form-group">
-                    <label>Category</label>
-                    <div class="custom-dropdown" id="tx-category-dropdown">
-                      <div class="dropdown-trigger">
-                        <span>Select Category</span>
-                        <i data-lucide="chevron-down"></i>
-                      </div>
-                      <div class="dropdown-menu">
-                        <div class="dropdown-options">
-                          <div class="dropdown-item" data-value="Food & Beverages">Food & Beverages</div>
-                          <div class="dropdown-item" data-value="Transportation">Transportation</div>
-                          <div class="dropdown-item" data-value="Supplies">Supplies</div>
-                          <div class="dropdown-item" data-value="Printing">Printing</div>
-                          <div class="dropdown-item" data-value="Events">Events</div>
-                          <div class="dropdown-item" data-value="Equipment">Equipment</div>
-                          <div class="dropdown-item" data-value="Venue">Venue</div>
-                          <div class="dropdown-item" data-value="Miscellaneous">Miscellaneous</div>
+                <!-- Expense Fields (Two Columns: Details | Receipt) -->
+                <div class="form-row expense-fields hidden two-col" id="expense-fields">
+                  <!-- Left side: Category & Description -->
+                  <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label>Category</label>
+                      <div class="custom-dropdown" id="tx-category-dropdown" style="z-index: 999;">
+                        <div class="dropdown-trigger" style="border: 1px solid var(--border-color); background: var(--bg-input);">
+                          <span>Select Category</span>
+                          <i data-lucide="chevron-down"></i>
                         </div>
+                        <div class="dropdown-menu">
+                          <div class="dropdown-options">
+                            <div class="dropdown-item" data-value="Food & Beverages">Food & Beverages</div>
+                            <div class="dropdown-item" data-value="Transportation">Transportation</div>
+                            <div class="dropdown-item" data-value="Supplies">Supplies</div>
+                            <div class="dropdown-item" data-value="Printing">Printing</div>
+                            <div class="dropdown-item" data-value="Events">Events</div>
+                            <div class="dropdown-item" data-value="Equipment">Equipment</div>
+                            <div class="dropdown-item" data-value="Venue">Venue</div>
+                            <div class="dropdown-item" data-value="Miscellaneous">Miscellaneous</div>
+                          </div>
+                        </div>
+                        <input type="hidden" id="tx-category" required>
                       </div>
-                      <input type="hidden" id="tx-category" required>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; display: flex; flex-direction: column;">
+                      <label for="tx-description">Description</label>
+                      <textarea id="tx-description" placeholder="Brief description of the expense..." style="resize: none; flex: 1; min-height: 80px;"></textarea>
                     </div>
                   </div>
-                </div>
-                <div class="form-row expense-fields hidden">
-                  <div class="form-group">
-                    <label for="tx-description">Description</label>
-                    <textarea id="tx-description" rows="3" placeholder="Brief description of the expense..."></textarea>
-                  </div>
-                </div>
 
-                <!-- Receipt Upload (expense only) -->
-                <div class="form-row expense-fields hidden">
-                  <div class="form-group">
-                    <label>Receipt (Optional)</label>
-                    
-                    <div class="receipt-upload-area" id="receipt-upload-area">
-                      <i data-lucide="upload-cloud"></i>
-                      <p>Click or drag receipt image here</p>
-                      <span>JPG, PNG, WebP — Max 5MB</span>
+                  <!-- Right side: Receipt Upload & Preview -->
+                  <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                    <label style="margin-bottom: var(--space-xs);">Receipt (Optional)</label>
+                    <div class="receipt-upload-area" id="receipt-upload-area" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 12px;">
+                      <i data-lucide="upload-cloud" style="width: 24px; height: 24px; margin-bottom: 8px;"></i>
+                      <p style="margin-bottom: 4px; font-size: 0.85rem;">Click or drag image here</p>
+                      <span style="font-size: 0.7rem;">JPG, PNG — Max 5MB</span>
                       <input type="file" id="receipt-file" accept="image/jpeg,image/png,image/webp" hidden>
                     </div>
-                    <div class="receipt-preview hidden" id="receipt-preview">
-                      <img id="receipt-preview-img" alt="Receipt preview">
+                    <div class="receipt-preview hidden" id="receipt-preview" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                      <img id="receipt-preview-img" alt="Receipt preview" style="max-height: 130px; object-fit: contain;">
                       <button type="button" class="btn-remove-receipt" id="btn-remove-receipt">
                         <i data-lucide="x"></i>
                       </button>
@@ -611,7 +653,7 @@
                     <th class="sortable" data-sort="amount">Amount <i data-lucide="arrow-up-down"></i></th>
                     <th>Category / Source</th>
                     <th>Description</th>
-                    <th>Added By</th>
+                    <th class="sortable" data-sort="user_name">Added By <i data-lucide="arrow-up-down"></i></th>
                     <th>Receipt</th>
                     <th></th>
                   </tr>
@@ -746,7 +788,7 @@
         <!-- Admin Table Wrapper: flex-column keeps pagination anchored at bottom -->
         <div class="admin-table-wrapper">
           <div class="premium-table-container">
-            <table id="admin-users-table">
+            <table id="admin-users-table" class="data-table">
               <colgroup>
                 <col style="width: 20%;">
                 <col style="width: 24%;">
@@ -757,9 +799,9 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th>User</th>
+                  <th class="sortable" data-sort="name">User <i data-lucide="arrow-up-down"></i></th>
                   <th>Email</th>
-                  <th>Position</th>
+                  <th class="sortable" data-sort="position">Position <i data-lucide="arrow-up-down"></i></th>
                   <th>Role</th>
                   <th>Status</th>
                   <th></th>

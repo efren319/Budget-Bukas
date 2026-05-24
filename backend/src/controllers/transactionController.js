@@ -59,9 +59,16 @@ async function getAll(req, res) {
     }
 
     // Sorting
-    const sortCol = ['date', 'amount', 'type', 'created_at'].includes(sort) ? sort : 'date';
+    const allowedSortCols = {
+      date: 't.date',
+      amount: 't.amount',
+      type: 't.type',
+      created_at: 't.created_at',
+      user_name: 'u.name'
+    };
+    const sortSQL = allowedSortCols[sort] || 't.date';
     const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
-    sql += ` ORDER BY t.${sortCol} ${sortOrder}`;
+    sql += ` ORDER BY ${sortSQL} ${sortOrder}`;
 
     // Pagination
     const pageNum = parseInt(page) || 1;
@@ -72,13 +79,38 @@ async function getAll(req, res) {
 
     const [rows] = await pool.query(sql, params);
 
-    // Get total count for pagination
-    let countSql = 'SELECT COUNT(*) AS total FROM transactions t';
+    // Get total count for pagination (matching all filters)
+    let countSql = `
+      SELECT COUNT(*) AS total 
+      FROM transactions t
+      LEFT JOIN income i ON i.transaction_id = t.id
+      LEFT JOIN expenses e ON e.transaction_id = t.id
+      WHERE 1=1
+    `;
     const countParams = [];
+
     if (type) {
-      countSql += ' WHERE t.type = ?';
+      countSql += ' AND t.type = ?';
       countParams.push(type);
     }
+    if (category) {
+      countSql += ' AND e.category = ?';
+      countParams.push(category);
+    }
+    if (startDate) {
+      countSql += ' AND t.date >= ?';
+      countParams.push(startDate);
+    }
+    if (endDate) {
+      countSql += ' AND t.date <= ?';
+      countParams.push(endDate);
+    }
+    if (search) {
+      countSql += ' AND (i.source LIKE ? OR e.description LIKE ? OR e.category LIKE ?)';
+      const searchVal = `%${search}%`;
+      countParams.push(searchVal, searchVal, searchVal);
+    }
+
     const [countResult] = await pool.query(countSql, countParams);
 
     res.json({

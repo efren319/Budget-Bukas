@@ -428,12 +428,56 @@
   function formatResponse(text) {
     if (!text) return '<p>No response.</p>';
 
-    let html = text
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Parse Markdown Tables
+    let lines = text.split('\n');
+    let htmlLines = [];
+    let inTable = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i].trim();
+
+      // Check if line is a table row
+      if (line.startsWith('|') && line.endsWith('|')) {
+        // Extract cells, removing the empty edge artifacts from split
+        let rawCells = line.split('|');
+        rawCells.shift(); // Remove first empty element
+        rawCells.pop();   // Remove last empty element
+        let cells = rawCells.map(c => c.trim());
+
+        // Check if it's a separator line (e.g. |---|---|)
+        if (cells.every(c => /^[-: ]+$/.test(c))) {
+          continue; // Skip rendering the separator
+        }
+
+        if (!inTable) {
+          inTable = true;
+          // Render header
+          htmlLines.push(`<div style="overflow-x: auto; margin: var(--space-md) 0;"><table class="data-table" style="width: 100%;"><thead><tr>${cells.map(c => `<th>${c.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</th>`).join('')}</tr></thead><tbody>`);
+        } else {
+          // Render body row
+          htmlLines.push(`<tr>${cells.map(c => `<td>${c.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</td>`).join('')}</tr>`);
+        }
+      } else {
+        if (inTable) {
+          inTable = false;
+          htmlLines.push('</tbody></table></div>');
+        }
+        htmlLines.push(line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'));
+      }
+    }
+
+    if (inTable) {
+      htmlLines.push('</tbody></table></div>');
+    }
+
+    let finalHtml = htmlLines.join('\n')
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br>');
 
-    return `<p>${html}</p>`;
+    // Clean up `<br>` artifacts immediately after/before tables
+    finalHtml = finalHtml.replace(/<\/div><br>/g, '</div>').replace(/<br><div/g, '<div');
+
+    return `<p>${finalHtml}</p>`;
   }
 
   // ==========================================================

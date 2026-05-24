@@ -8,6 +8,11 @@ let currentEditId = null;
 // TRANSACTION FORM (Add / Edit)
 // =============================================
 function initTransactionForm() {
+  // Initialize the custom single date picker
+  if (typeof initSingleDatePicker !== 'undefined') {
+    initSingleDatePicker();
+  }
+
   // Type selector buttons
   const typeBtns = document.querySelectorAll('.type-btn');
   typeBtns.forEach(btn => {
@@ -21,7 +26,10 @@ function initTransactionForm() {
   // Set default date to today
   const dateInput = document.getElementById('tx-date');
   if (dateInput) {
-    dateInput.value = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    if(typeof setTxDate !== 'undefined') setTxDate(dateStr);
+    else dateInput.value = dateStr;
   }
 
   // Form submit
@@ -152,7 +160,12 @@ function resetTransactionForm() {
 
   // Reset date to today
   const dateInput = document.getElementById('tx-date');
-  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  if (dateInput) {
+    const now = new Date();
+    const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    if(typeof setTxDate !== 'undefined') setTxDate(dateStr);
+    else dateInput.value = dateStr;
+  }
 
   // Reset custom category dropdown
   setCustomDropdownValue('tx-category-dropdown', '');
@@ -187,7 +200,10 @@ function editTransaction(id) {
 
     // Set fields
     document.getElementById('tx-amount').value = tx.amount;
-    document.getElementById('tx-date').value = tx.date ? tx.date.split('T')[0] : '';
+    
+    const dateStr = tx.date ? tx.date.split('T')[0] : '';
+    if(typeof setTxDate !== 'undefined') setTxDate(dateStr);
+    else document.getElementById('tx-date').value = dateStr;
 
     if (tx.type === 'income') {
       document.getElementById('tx-source').value = tx.source || '';
@@ -700,3 +716,177 @@ function updateCalFooter() {
 
 // Attach event handler to global window scope so it can be called via inline onclick
 window.handleCalDayClick = handleCalDayClick;
+
+// --- SINGLE DATE PICKER FOR TRANSACTION FORM ---
+let txCalYear = new Date().getFullYear();
+let txCalMonth = new Date().getMonth();
+
+function setTxDate(dateStr) {
+  const hiddenInput = document.getElementById('tx-date');
+  if (hiddenInput) hiddenInput.value = dateStr;
+
+  const display = document.getElementById('tx-date-display');
+  if (!display) return;
+
+  if (dateStr) {
+    // Expected dateStr is YYYY-MM-DD
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      display.textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      display.style.color = 'var(--text-primary)';
+    }
+  } else {
+    display.textContent = 'Select Date';
+    display.style.color = 'var(--text-secondary)';
+  }
+}
+
+function initSingleDatePicker() {
+  const trigger = document.getElementById('tx-date-trigger');
+  const panel = document.getElementById('tx-date-panel');
+  if (!trigger || !panel) return;
+
+  // Toggle panel
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isVisible = panel.style.display === 'flex';
+    
+    // Close standard custom dropdowns properly without overriding inline styles
+    document.querySelectorAll('.custom-dropdown').forEach(d => {
+      d.classList.remove('active');
+    });
+
+    if (isVisible) {
+      panel.style.display = 'none';
+      trigger.style.border = '1px solid var(--border-color)';
+      trigger.style.boxShadow = 'none';
+    } else {
+      panel.style.display = 'flex';
+      trigger.style.border = '1px solid var(--gold)';
+      trigger.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.1)';
+      
+      const hiddenVal = document.getElementById('tx-date').value;
+      if (hiddenVal) {
+        const parts = hiddenVal.split('-');
+        if (parts.length === 3) {
+          txCalYear = parseInt(parts[0]);
+          txCalMonth = parseInt(parts[1]) - 1;
+        }
+      } else {
+        const now = new Date();
+        txCalYear = now.getFullYear();
+        txCalMonth = now.getMonth();
+      }
+      renderTxCalendar();
+    }
+  });
+
+  // Close panel on outside click
+  document.addEventListener('click', (e) => {
+    if (!trigger.contains(e.target) && !panel.contains(e.target)) {
+      panel.style.display = 'none';
+      trigger.style.border = '1px solid var(--border-color)';
+      trigger.style.boxShadow = 'none';
+    }
+  });
+
+  // Calendar Navigation
+  const prevBtn = document.getElementById('tx-cal-prev');
+  if(prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      txCalMonth--;
+      if (txCalMonth < 0) { txCalMonth = 11; txCalYear--; }
+      renderTxCalendar();
+    });
+  }
+
+  const nextBtn = document.getElementById('tx-cal-next');
+  if(nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      txCalMonth++;
+      if (txCalMonth > 11) { txCalMonth = 0; txCalYear++; }
+      renderTxCalendar();
+    });
+  }
+
+  // Footer Buttons
+  const cancelBtn = document.getElementById('tx-cal-btn-cancel');
+  if(cancelBtn) {
+    cancelBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.style.display = 'none';
+      trigger.style.border = '1px solid var(--border-color)';
+      trigger.style.boxShadow = 'none';
+    });
+  }
+
+  const todayBtn = document.getElementById('tx-cal-btn-today');
+  if(todayBtn) {
+    todayBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const now = new Date();
+      const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      setTxDate(dateStr);
+      panel.style.display = 'none';
+      trigger.style.border = '1px solid var(--border-color)';
+      trigger.style.boxShadow = 'none';
+    });
+  }
+}
+
+function renderTxCalendar() {
+  const grid = document.getElementById('tx-cal-grid');
+  const monthYearSpan = document.getElementById('tx-cal-month-year');
+  if (!grid) return;
+
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  monthYearSpan.textContent = `${months[txCalMonth]} ${txCalYear}`;
+
+  const daysOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  let html = daysOfWeek.map(d => `<div class="calendar-header-day">${d}</div>`).join('');
+  
+  const firstDayIndex = new Date(txCalYear, txCalMonth, 1).getDay();
+  const numDays = new Date(txCalYear, txCalMonth + 1, 0).getDate();
+  
+  for (let i = 0; i < firstDayIndex; i++) {
+    html += `<div class="calendar-day-btn empty"></div>`;
+  }
+
+  const today = new Date();
+  const hiddenVal = document.getElementById('tx-date').value;
+  let selectedDate = null;
+  if (hiddenVal) {
+    const parts = hiddenVal.split('-');
+    if (parts.length === 3) {
+      selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+  }
+
+  for (let d = 1; d <= numDays; d++) {
+    const curDate = new Date(txCalYear, txCalMonth, d);
+    let classes = 'calendar-day-btn';
+    
+    if (isSameDay(curDate, today)) classes += ' today';
+    if (selectedDate && isSameDay(curDate, selectedDate)) classes += ' selected';
+    
+    html += `<button type="button" class="${classes}" onclick="handleTxDayClick(${txCalYear}, ${txCalMonth}, ${d})">${d}</button>`;
+  }
+  
+  grid.innerHTML = html;
+}
+
+function handleTxDayClick(year, month, day) {
+  const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  setTxDate(dateStr);
+  const panel = document.getElementById('tx-date-panel');
+  const trigger = document.getElementById('tx-date-trigger');
+  if(panel) panel.style.display = 'none';
+  if(trigger) {
+    trigger.style.border = '1px solid var(--border-color)';
+    trigger.style.boxShadow = 'none';
+  }
+}
+
+window.handleTxDayClick = handleTxDayClick;
