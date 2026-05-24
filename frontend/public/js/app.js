@@ -120,11 +120,16 @@ function initNavigation() {
   });
 
   // Restore last visited page
-  const lastPage = localStorage.getItem('bb_last_page');
-  if (lastPage && document.getElementById(`page-${lastPage}`)) {
-    // Need a tiny timeout to ensure other modules are ready 
-    // and don't overwrite this via hardcoded initializations
-    setTimeout(() => navigateTo(lastPage), 50);
+  const lastPage = localStorage.getItem('bb_last_page') || 'dashboard';
+  
+  // Remove the inline style that prevented flash, as JS now takes over
+  const initialStyle = document.getElementById('initial-page-style');
+  if (initialStyle) initialStyle.remove();
+
+  if (document.getElementById(`page-${lastPage}`)) {
+    navigateTo(lastPage);
+  } else {
+    navigateTo('dashboard');
   }
 }
 

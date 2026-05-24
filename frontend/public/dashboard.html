@@ -18,6 +18,19 @@
 
   <title>PondoSync — Dashboard</title>
   <link rel="icon" type="image/png" href="assets/logos/web-icon.png">
+
+  <!-- Setup last page synchronously to prevent dashboard flash -->
+  <script>
+    const lastPage = localStorage.getItem('bb_last_page') || 'dashboard';
+    document.write(`<style id="initial-page-style">
+      .page { display: none; }
+      #page-${lastPage} { display: block !important; }
+      .sidebar-link { opacity: 0.8; }
+      .sidebar-link[data-page="${lastPage}"] { opacity: 1; background: rgba(255, 255, 255, 0.05) !important; color: var(--text-primary) !important; font-weight: 500 !important; }
+      .sidebar-link[data-page="${lastPage}"]::before { opacity: 1 !important; }
+    </style>`);
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -154,7 +167,7 @@
       <!-- CONTENT AREA (SPA pages rendered here) -->
       <div class="content-area" id="content-area">
         <!-- ========== DASHBOARD PAGE ========== -->
-        <section class="page page-dashboard active" id="page-dashboard">
+        <section class="page page-dashboard" id="page-dashboard">
           <div class="dashboard-master-layout">
             <!-- ========== MAIN CONTENT COLUMN ========== -->
             <div class="dashboard-main-content">
