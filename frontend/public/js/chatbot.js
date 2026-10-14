@@ -13,15 +13,15 @@
 
   // ---- Context-Aware Follow-Up Map ----
   const followUpMap = {
-    balance:     ['Expenses this month', 'Income this month', 'Monthly report'],
-    expense:     ['Expenses by category', 'Top expenses', 'Who spent the most'],
-    income:      ['Income sources', 'Total income', 'Monthly report'],
-    category:    ['Top expenses', 'Total expenses', 'Latest transactions'],
-    table:       ['Expenses by category', 'Total balance', 'Monthly report'],
-    report:      ['Expenses by category', 'Income sources', 'Latest transactions'],
-    help:        ['Total balance', 'Expenses this month', 'Top expenses'],
-    suggestions: ['Total balance', 'Expenses this month', 'Top expenses'],
-    text:        ['Total balance', 'Expenses this month', 'Help']
+    balance:     ['Monthly report for October 2025', 'Expenses by category', 'What was our highest expense?'],
+    expense:     ['Expenses by category', 'What was our highest expense?', 'Financial summary of SIKLAB'],
+    income:      ['Total balance', 'Monthly report for October 2025', 'Compare Oct and Nov 2025'],
+    category:    ['Expenses by category', 'What was our highest expense?', 'Monthly report for October 2025'],
+    table:       ['Expenses by category', 'Monthly report for October 2025', 'Compare Oct and Nov 2025'],
+    report:      ['Compare with previous month', 'Expenses by category', 'What was our highest expense?'],
+    help:        ['Monthly report for October 2025', 'Total balance', 'Expenses by category'],
+    suggestions: ['Monthly report for October 2025', 'Compare Oct and Nov 2025', 'Expenses by category'],
+    text:        ['Monthly report for October 2025', 'Expenses by category', 'Total balance']
   };
 
   // ==========================================================
@@ -462,7 +462,15 @@
           inTable = false;
           htmlLines.push('</tbody></table></div>');
         }
-        htmlLines.push(line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'));
+        let formattedLine = line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        if (formattedLine.startsWith('### ')) {
+          formattedLine = `<h3 style="color: var(--gold-light); margin: var(--space-md) 0 var(--space-xs); font-family: var(--font-display);">${formattedLine.slice(4)}</h3>`;
+        } else if (formattedLine.startsWith('#### ')) {
+          formattedLine = `<h4 style="color: var(--text-primary); margin: var(--space-md) 0 var(--space-xs); font-family: var(--font-display);">${formattedLine.slice(5)}</h4>`;
+        } else if (formattedLine.startsWith('> ')) {
+          formattedLine = `<blockquote style="border-left: 3px solid var(--gold); padding: 8px 12px; margin: 8px 0; color: var(--text-secondary); background: rgba(212,175,55,0.05); border-radius: 0 6px 6px 0;">${formattedLine.slice(2)}</blockquote>`;
+        }
+        htmlLines.push(formattedLine);
       }
     }
 

@@ -10,7 +10,7 @@ const pool = require('../config/db');
 const userValidation = [
   body('name').trim().notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
-  body('role').isIn(['admin', 'viewer']).withMessage('Invalid role'),
+  body('role').isIn(['admin', 'viewer', 'user']).withMessage('Invalid role'),
   body('position').notEmpty().withMessage('Position is required')
 ];
 
@@ -32,7 +32,8 @@ async function createUser(req, res) {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { name, email, role, position } = req.body;
+    let { name, email, role, position } = req.body;
+    role = role === 'user' ? 'viewer' : role;
 
     // Check if email already exists
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
@@ -71,7 +72,8 @@ async function updateUser(req, res) {
     }
 
     const userId = req.params.id;
-    const { name, email, role, position } = req.body;
+    let { name, email, role, position } = req.body;
+    role = role === 'user' ? 'viewer' : role;
 
     // Check if user exists
     const [existing] = await pool.query('SELECT id FROM users WHERE id = ?', [userId]);

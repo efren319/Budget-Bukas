@@ -23,6 +23,7 @@ logs/
 npm-debug.log*
 
 # AI / generated debug outputs
+.history/
 /history/
 /logs/
 .gemini/
