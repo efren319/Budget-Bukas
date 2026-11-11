@@ -5,6 +5,7 @@
 // API base URL — uses relative '/api' in production, localhost in dev
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_BASE = window.API_URL || (isLocalhost ? 'http://localhost:3000/api' : '/api');
+window.API_BASE = API_BASE;
 
 /**
  * Make an authenticated API request

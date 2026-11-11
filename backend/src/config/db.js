@@ -2,7 +2,10 @@
 // Database Configuration
 // PostgreSQL (Neon) Pool with MySQL2 Syntax Wrapper
 // ============================================
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+// Keep PostgreSQL DATE (OID 1082) as exact YYYY-MM-DD string to prevent timezone offset shifts
+types.setTypeParser(1082, (val) => val);
 
 if (!process.env.DATABASE_URL) {
   console.error('❌ ERROR: DATABASE_URL is not set in environment variables! Check your Render dashboard.');

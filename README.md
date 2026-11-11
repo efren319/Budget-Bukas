@@ -85,6 +85,11 @@ Open **http://localhost:3000** — Register as **Officer** first for full access
 ### Vercel
 The project includes a `vercel.json` configuration. Set environment variables in the Vercel dashboard.
 
+### Gemini project quota indicator
+The chatbot reads shared Gemini quota from Google Cloud Monitoring for the project attached to `GEMINI_API_KEY`. Configure `GOOGLE_CLOUD_PROJECT` on the backend and provide a Google identity with the **Monitoring Viewer** role on that project. On servers without Google Application Default Credentials, set `GOOGLE_SERVICE_ACCOUNT_JSON` to the service account JSON as a backend-only environment variable. Enable the Gemini API and Cloud Monitoring API for the project, and attach a billing account because Google rejects these Gemini Monitoring quota-series reads for projects without billing.
+
+Google AI Studio rate limits are project-scoped. The indicator displays the remaining amount from current Cloud Monitoring quota metrics; it stays unavailable when project metrics or read permissions are missing instead of estimating a limit from this website's request count.
+
 ### Cloud Database
 Update `.env` for your cloud MySQL provider:
 ```env

@@ -168,6 +168,9 @@ async function loadDashboardData() {
     // Load chart
     loadChartData('week');
     
+    // Fetch organization members to ensure they load with the dashboard
+    fetchMembers();
+
     // Signal that dashboard data is ready
     window.dispatchEvent(new Event('dashboard-data-loaded'));
   } catch (error) {
@@ -386,8 +389,8 @@ async function fetchMembers() {
     }
     let members = data.data;
     
-    // Sort by Hierarchy
-    if (typeof sortUsersByHierarchy === 'function') {
+    // Sort by Hierarchy if available
+    if (typeof sortUsersByHierarchy === 'function' && Array.isArray(members)) {
       members = sortUsersByHierarchy(members);
     }
     
@@ -402,19 +405,46 @@ function renderMembers(members) {
   const container = document.getElementById('members-list');
   if (!container) return;
 
-  // Add fade-in for real content
+  // 1. Remove loading-state class from parent card to stop skeleton shimmer
+  const panel = container.closest('.loading-state') || document.querySelector('.member-card');
+  if (panel) {
+    panel.classList.remove('loading-state');
+  }
+
+  // 2. Remove lingering skeleton rows
+  const skeletons = container.querySelectorAll('.skeleton-flex-row, .skeleton');
+  skeletons.forEach(s => s.remove());
+
+  // 3. Add fade-in for real content
   container.classList.add('content-fade-in');
 
-  if (!members || members.length === 0) {
-    container.innerHTML = '<div class="empty-state-small">No members found</div>';
+  if (!members || !Array.isArray(members) || members.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state-small" style="text-align: center; padding: 24px var(--space-sm); color: var(--text-secondary); font-size: 0.8rem;">
+        <i data-lucide="users" style="width: 24px; height: 24px; margin-bottom: 6px; opacity: 0.4;"></i>
+        <div>No organization members found</div>
+      </div>
+    `;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
     return;
   }
 
+  const base = (window.API_BASE || window.API_URL || (typeof API_BASE !== 'undefined' ? API_BASE : '/api')).replace(/\/+$/, '');
+
   container.innerHTML = members.map(member => {
-    // Always use user ID — backend always returns photo or initials SVG
-    const avatarHtml = `<img src="${API_BASE}/auth/avatar/${member.id}?t=${Date.now()}" class="user-avatar-${member.id}" alt="${member.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    const memberId = member.id || 0;
+    const memberName = member.name || 'Member';
+    const memberRole = member.role || 'viewer';
+    const memberPosition = member.position || '—';
+    const initial = (memberName.trim().charAt(0) || 'M').toUpperCase();
+
+    // Fallback initials SVG if photo fails to load
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="18" fill="#221e1a"/><text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#d4af37" font-family="sans-serif" font-weight="bold" font-size="14">${initial}</text></svg>`;
+    const fallbackSvg = 'data:image/svg+xml;base64,' + btoa(svgContent);
+
+    const avatarHtml = `<img src="${base}/auth/avatar/${memberId}?t=${Date.now()}" class="user-avatar-${memberId}" alt="${memberName}" style="display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src='${fallbackSvg}';">`;
       
-    const roleClass = member.role === 'admin' ? 'badge-primary' : 'badge-secondary';
+    const roleClass = memberRole === 'admin' ? 'badge-primary' : 'badge-secondary';
 
     return `
       <div class="member-item">
@@ -423,10 +453,10 @@ function renderMembers(members) {
         </div>
         <div class="member-info">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-            <span class="member-name">${member.name}</span>
-            <span class="badge ${roleClass}" style="font-size: 0.6rem; padding: 2px 6px;">${member.role}</span>
+            <span class="member-name">${memberName}</span>
+            <span class="badge ${roleClass}" style="font-size: 0.6rem; padding: 2px 6px;">${memberRole}</span>
           </div>
-          <span class="member-role" style="color: var(--text-secondary); font-size: 0.75rem;">${member.position || '—'}</span>
+          <span class="member-role" style="color: var(--text-secondary); font-size: 0.75rem;">${memberPosition}</span>
         </div>
       </div>
     `;

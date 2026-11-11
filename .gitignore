@@ -10,6 +10,11 @@ node_modules/
 .env
 .env.local
 .env.production
+*.json.key
+*-*.json
+*credentials*.json
+*service-account*.json
+backend/gen-lang-client-*.json
 
 # Uploads & runtime
 backend/uploads/receipts/*

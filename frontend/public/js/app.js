@@ -171,6 +171,7 @@ function navigateTo(page) {
   switch (page) {
     case 'dashboard':
       loadDashboardData();
+      if (typeof fetchMembers === 'function') fetchMembers();
       break;
     case 'records':
       loadRecords();

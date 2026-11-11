@@ -6,14 +6,13 @@
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const isRender = window.location.hostname.includes('onrender.com');
 
-// Local dev → localhost backend
-// Render → same-origin /api (backend serves frontend)
-// Vercel/other → full Render backend URL
+// Local dev / Express server → relative /api or localhost:3000/api
+// External hosting → fallback to Render backend
 let API_URL;
-if (isLocal) {
-  API_URL = "http://localhost:3000/api";
-} else if (isRender) {
+if (window.location.port === '3000' || isRender) {
   API_URL = "/api";
+} else if (isLocal) {
+  API_URL = "http://localhost:3000/api";
 } else {
   API_URL = "https://budgetbukas-api.onrender.com/api";
 }
