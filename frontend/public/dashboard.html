@@ -240,100 +240,111 @@
 
 
 
-          <!-- Chart + Right Panel Row -->
-          <div class="dashboard-grid">
-            <div class="chart-panel glass-card loading-state">
-              <!-- Glass card glow layers -->
-              <div class="glass-glow-bottom"></div>
-              <div class="glass-glow-bright"></div>
-              <div class="glass-glow-top"></div>
-              <div class="glass-sheen"></div>
-              <div class="glass-edge"></div>
-              <!-- Content -->
-              <div class="glass-card-content">
-                <div class="panel-header">
-                  <h3>Income vs Expenses</h3>
-                  <div class="chart-options-dropdown" id="chart-options-dropdown">
-                    <button class="options-trigger" id="options-trigger">
-                      <span>This Week</span>
-                      <i data-lucide="chevron-down"></i>
-                    </button>
-                    <div class="options-menu" id="chart-filters">
-                      <button class="pill active" data-period="week">Week</button>
-                      <button class="pill" data-period="month">Month</button>
-                      <button class="pill" data-period="year">Year</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="chart-container" id="main-chart-container">
-                  <div class="skeleton skeleton-chart"></div>
-                  <canvas id="main-chart" style="display: none;"></canvas>
-                </div>
-              </div>
+<!-- ========== FINANCIAL ANALYTICS SECTION ========== -->
+<div class="analytics-section">
+  <!-- Analytics Header with Tabs -->
+  <div class="analytics-header">
+    <div class="analytics-tabs">
+      <button class="analytics-tab active" data-tab="cashflow">Cash Flow</button>
+      <button class="analytics-tab" data-tab="expenses">Expenses</button>
+      <button class="analytics-tab" data-tab="income">Income</button>
+      <button class="analytics-tab" data-tab="reports">Reports</button>
+    </div>
+    <div class="chart-type-selector">
+      <button class="chart-type-btn active" data-chart-type="bar">
+        <i data-lucide="bar-chart-3"></i>
+        <span>Bar</span>
+      </button>
+      <button class="chart-type-btn" data-chart-type="line">
+        <i data-lucide="trending-up"></i>
+        <span>Line</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Analytics Content: Chart + Analysis -->
+  <div class="analytics-content glass-card">
+    <!-- Glass card glow layers -->
+    <div class="glass-glow-bottom"></div>
+    <div class="glass-glow-bright"></div>
+    <div class="glass-glow-top"></div>
+    <div class="glass-sheen"></div>
+    <div class="glass-edge"></div>
+
+    <div class="glass-card-content analytics-grid">
+      <!-- LEFT: Chart Column -->
+      <div class="analytics-chart-col">
+        <div class="analytics-chart-header">
+          <h3 id="analytics-chart-title">Income vs Expenses</h3>
+          <div class="analytics-chart-legend" id="analytics-chart-legend"></div>
+        </div>
+        <div class="analytics-chart-container">
+          <canvas id="analytics-chart"></canvas>
+        </div>
+        <!-- Secondary chart for breakdowns (expenses/income tabs) -->
+        <div class="analytics-breakdown-chart" id="analytics-breakdown-section" style="display:none;">
+          <h4 id="analytics-breakdown-title">Category Breakdown</h4>
+          <div class="analytics-breakdown-container">
+            <canvas id="analytics-breakdown-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Analysis Panel -->
+      <div class="analytics-panel-col">
+        <div class="analysis-panel">
+          <div class="analysis-header">
+            <div class="analysis-header-left">
+              <svg class="analysis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+              <h4>Analysis</h4>
             </div>
+            <a href="#" class="analysis-view-details" id="analysis-view-details">View Details</a>
+          </div>
 
-            <div class="right-panel">
-              <!-- Recent Activity -->
-              <div class="side-card glass-card loading-state">
-                <!-- Glass card glow layers -->
-                <div class="glass-glow-bottom"></div>
-                <div class="glass-glow-bright"></div>
-                <div class="glass-glow-top"></div>
-                <div class="glass-sheen"></div>
-                <div class="glass-edge"></div>
-                <!-- Content -->
-                <div class="glass-card-content">
-                  <div class="side-card-header">
-                    <h4>Recent Activity</h4>
-                    <a href="#" class="see-all" data-goto="records">See all</a>
-                  </div>
-                  <div class="activity-list" id="recent-activity">
-                    <div class="skeleton-flex-row">
-                      <div class="skeleton skeleton-avatar"></div>
-                      <div class="skeleton-flex-col">
-                        <div class="skeleton skeleton-text full"></div>
-                        <div class="skeleton skeleton-text short"></div>
-                      </div>
-                    </div>
-                    <div class="skeleton-flex-row">
-                      <div class="skeleton skeleton-avatar"></div>
-                      <div class="skeleton-flex-col">
-                        <div class="skeleton skeleton-text full"></div>
-                        <div class="skeleton skeleton-text short"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div class="analysis-metrics" id="analysis-metrics">
+            <!-- Metrics will be rendered by JS -->
+            <div class="analysis-metric-skeleton">
+              <div class="skeleton skeleton-text" style="width:60%"></div>
+              <div class="skeleton skeleton-text" style="width:30%"></div>
+            </div>
+            <div class="analysis-metric-skeleton">
+              <div class="skeleton skeleton-text" style="width:60%"></div>
+              <div class="skeleton skeleton-text" style="width:30%"></div>
+            </div>
+          </div>
 
-              <!-- Category Breakdown -->
-              <div class="side-card glass-card loading-state">
-                <!-- Glass card glow layers -->
-                <div class="glass-glow-bottom"></div>
-                <div class="glass-glow-bright"></div>
-                <div class="glass-glow-top"></div>
-                <div class="glass-sheen"></div>
-                <div class="glass-edge"></div>
-                <!-- Content -->
-                <div class="glass-card-content">
-                  <div class="side-card-header">
-                    <h4>Top Categories</h4>
-                  </div>
-                  <div class="category-list" id="category-breakdown">
-                    <div class="skeleton-flex-row">
-                      <div class="skeleton skeleton-text medium" style="width: 60%;"></div>
-                      <div class="skeleton skeleton-text medium" style="width: 30%;"></div>
-                    </div>
-                    <div class="skeleton-flex-row">
-                      <div class="skeleton skeleton-text medium" style="width: 50%;"></div>
-                      <div class="skeleton skeleton-text medium" style="width: 40%;"></div>
-                    </div>
-                  </div>
-                </div>
-              </div> <!-- /side-card (categories) -->
+          <div class="analysis-divider"></div>
 
-            </div> <!-- /right-panel -->
-          </div> <!-- /dashboard-grid -->
+          <div class="analysis-insight" id="analysis-insight">
+            <div class="analysis-insight-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <span>Key Insight</span>
+            </div>
+            <p id="analysis-insight-text" class="analysis-insight-text">Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reports Tab Content (hidden by default) -->
+  <div class="analytics-reports-content" id="analytics-reports-content" style="display:none;">
+    <div class="glass-card">
+      <div class="glass-glow-bottom"></div>
+      <div class="glass-glow-bright"></div>
+      <div class="glass-glow-top"></div>
+      <div class="glass-card-content">
+        <div class="reports-header">
+          <h3>Financial Report</h3>
+          <span class="reports-period" id="reports-period"></span>
+        </div>
+        <div class="reports-body" id="reports-body">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
         </div> <!-- /dashboard-main-content -->
 
@@ -387,6 +398,56 @@
               <div class="pie-chart-container" id="pie-chart-container">
                 <div class="skeleton skeleton-pie"></div>
                 <canvas id="category-pie-chart" style="display: none;"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Date Filter -->
+          <div class="side-card date-filter-card glass-card">
+            <div class="glass-glow-bottom"></div>
+            <div class="glass-glow-bright"></div>
+            <div class="glass-glow-top"></div>
+            <div class="glass-sheen"></div>
+            <div class="glass-edge"></div>
+            <div class="glass-card-content">
+              <div class="side-card-header">
+                <h4><i data-lucide="calendar" style="width:16px;height:16px;display:inline;vertical-align:-2px;margin-right:6px;color:var(--gold);"></i>Date Filter</h4>
+              </div>
+              <div class="date-filter-controls">
+                <div class="date-filter-row">
+                  <label>Start Date</label>
+                  <input type="date" id="filter-start-date" class="date-filter-input">
+                </div>
+                <div class="date-filter-row">
+                  <label>End Date</label>
+                  <input type="date" id="filter-end-date" class="date-filter-input">
+                </div>
+                <div class="date-filter-row">
+                  <label>Quick Select</label>
+                  <select id="filter-quick-select" class="date-filter-select">
+                    <option value="this-month">This Month</option>
+                    <option value="last-month">Last Month</option>
+                    <option value="this-year">This Year</option>
+                    <option value="last-7">Last 7 Days</option>
+                    <option value="last-30">Last 30 Days</option>
+                    <option value="last-90">Last 90 Days</option>
+                    <option value="all">All Time</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                </div>
+                <div class="date-filter-row">
+                  <label>View By</label>
+                  <select id="filter-group-by" class="date-filter-select">
+                    <option value="day">Daily</option>
+                    <option value="week">Weekly</option>
+                    <option value="month" selected>Monthly</option>
+                    <option value="year">Yearly</option>
+                  </select>
+                </div>
+                <button class="date-filter-apply" id="filter-apply-btn">
+                  <i data-lucide="filter" style="width:14px;height:14px;"></i>
+                  Apply Filter
+                </button>
               </div>
             </div>
           </div>

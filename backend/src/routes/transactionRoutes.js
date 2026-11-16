@@ -7,13 +7,14 @@ const auth = require('../middleware/auth');
 const requireRole = require('../middleware/roleCheck');
 const {
   getAll, getOne, create, update, remove,
-  getStats, getChartData, getCategories,
+  getStats, getChartData, getCategories, getAnalyticsData,
   transactionValidation
 } = require('../controllers/transactionController');
 
 // Dashboard endpoints (any authenticated user)
 router.get('/dashboard/stats', auth, getStats);
 router.get('/dashboard/chart', auth, getChartData);
+router.get('/dashboard/analytics', auth, getAnalyticsData);
 
 // Categories list
 router.get('/categories', auth, getCategories);
