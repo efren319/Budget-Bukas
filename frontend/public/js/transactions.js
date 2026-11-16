@@ -13,22 +13,77 @@ function initTransactionForm() {
     initSingleDatePicker();
   }
 
-  // Type selector buttons
+  // Type selector buttons & sliding segmented switch
+  const switchWrap = document.getElementById('tx-type-switch');
   const typeBtns = document.querySelectorAll('.type-btn');
   typeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
       typeBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      toggleTypeFields(btn.dataset.type);
+      if (switchWrap) switchWrap.dataset.active = type;
+      toggleTypeFields(type);
     });
   });
+
+  // Source custom dropdown selection logic
+  const sourceItems = document.querySelectorAll('#tx-source-dropdown .dropdown-item');
+  const sourceHidden = document.getElementById('tx-source');
+  const sourceDisplay = document.getElementById('tx-source-display');
+  const sourceCustomWrap = document.getElementById('tx-source-custom-wrap');
+  const sourceCustomInput = document.getElementById('tx-source-custom');
+
+  sourceItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const val = item.dataset.value;
+      if (val === '__custom__') {
+        if (sourceCustomWrap) sourceCustomWrap.classList.remove('hidden');
+        if (sourceCustomInput) {
+          sourceCustomInput.focus();
+          if (sourceHidden) sourceHidden.value = sourceCustomInput.value.trim();
+        }
+        if (sourceDisplay) sourceDisplay.textContent = 'Custom Source';
+      } else {
+        if (sourceCustomWrap) sourceCustomWrap.classList.add('hidden');
+        if (sourceHidden) sourceHidden.value = val;
+        if (sourceDisplay) sourceDisplay.textContent = item.textContent.trim();
+      }
+    });
+  });
+
+  if (sourceCustomInput) {
+    sourceCustomInput.addEventListener('input', (e) => {
+      if (sourceHidden) sourceHidden.value = e.target.value.trim();
+    });
+  }
+
+  // Category custom dropdown selection logic
+  const catItems = document.querySelectorAll('#tx-category-dropdown .dropdown-item');
+  const catHidden = document.getElementById('tx-category');
+  const catDisplay = document.getElementById('tx-category-display');
+  catItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const val = item.dataset.value;
+      if (catHidden) catHidden.value = val;
+      if (catDisplay) catDisplay.textContent = item.textContent.trim();
+    });
+  });
+
+  // Amount card click focus helper
+  const amountCard = document.getElementById('prominent-amount-card');
+  const amountInput = document.getElementById('tx-amount');
+  if (amountCard && amountInput) {
+    amountCard.addEventListener('click', () => {
+      amountInput.focus();
+    });
+  }
 
   // Set default date to today
   const dateInput = document.getElementById('tx-date');
   if (dateInput) {
     const now = new Date();
     const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-    if(typeof setTxDate !== 'undefined') setTxDate(dateStr);
+    if (typeof setTxDate !== 'undefined') setTxDate(dateStr);
     else dateInput.value = dateStr;
   }
 
@@ -55,15 +110,32 @@ function initTransactionForm() {
 }
 
 function toggleTypeFields(type) {
-  const incomeFields = document.querySelectorAll('.income-fields');
-  const expenseFields = document.querySelectorAll('.expense-fields');
+  const switchWrap = document.getElementById('tx-type-switch');
+  if (switchWrap) switchWrap.dataset.active = type;
+
+  const incomeBtn = document.getElementById('switch-income-btn');
+  const expenseBtn = document.getElementById('switch-expense-btn');
+  const label = document.getElementById('tx-cat-src-label');
+  const srcDropdown = document.getElementById('tx-source-dropdown');
+  const catDropdown = document.getElementById('tx-category-dropdown');
+  const customSrcWrap = document.getElementById('tx-source-custom-wrap');
+  const expenseOnly = document.getElementById('expense-only-fields');
 
   if (type === 'income') {
-    incomeFields.forEach(f => f.classList.remove('hidden'));
-    expenseFields.forEach(f => f.classList.add('hidden'));
+    if (incomeBtn) incomeBtn.classList.add('active');
+    if (expenseBtn) expenseBtn.classList.remove('active');
+    if (label) label.textContent = 'Source';
+    if (srcDropdown) srcDropdown.classList.remove('hidden');
+    if (catDropdown) catDropdown.classList.add('hidden');
+    if (expenseOnly) expenseOnly.classList.add('collapsed');
   } else {
-    incomeFields.forEach(f => f.classList.add('hidden'));
-    expenseFields.forEach(f => f.classList.remove('hidden'));
+    if (expenseBtn) expenseBtn.classList.add('active');
+    if (incomeBtn) incomeBtn.classList.remove('active');
+    if (label) label.textContent = 'Category';
+    if (catDropdown) catDropdown.classList.remove('hidden');
+    if (srcDropdown) srcDropdown.classList.add('hidden');
+    if (customSrcWrap) customSrcWrap.classList.add('hidden');
+    if (expenseOnly) expenseOnly.classList.remove('collapsed');
   }
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -72,32 +144,59 @@ function toggleTypeFields(type) {
 async function handleTransactionSubmit(e) {
   e.preventDefault();
   const btn = document.getElementById('btn-save-transaction');
+  if (btn && btn.disabled) return;
 
+  const switchWrap = document.getElementById('tx-type-switch');
   const activeType = document.querySelector('.type-btn.active');
-  const type = activeType ? activeType.dataset.type : 'income';
+  const type = switchWrap ? (switchWrap.dataset.active || 'income') : (activeType ? activeType.dataset.type : 'income');
+
+  const amountVal = parseFloat(document.getElementById('tx-amount').value);
+  if (isNaN(amountVal) || amountVal <= 0) {
+    showToast('Please enter a valid amount greater than ₱0.00', 'error');
+    const amtInput = document.getElementById('tx-amount');
+    if (amtInput) amtInput.focus();
+    return;
+  }
+
+  const dateVal = document.getElementById('tx-date').value;
+  if (!dateVal) {
+    showToast('Please select a transaction date', 'error');
+    return;
+  }
 
   const payload = {
     type,
-    amount: parseFloat(document.getElementById('tx-amount').value),
-    date: document.getElementById('tx-date').value
+    amount: amountVal,
+    date: dateVal
   };
 
   if (type === 'income') {
-    payload.source = document.getElementById('tx-source').value;
-    if (!payload.source) {
-      showToast('Please enter the income source', 'error');
+    const sourceHidden = document.getElementById('tx-source');
+    const customInput = document.getElementById('tx-source-custom');
+    const srcVal = (sourceHidden && sourceHidden.value) ? sourceHidden.value.trim() : (customInput ? customInput.value.trim() : '');
+    if (!srcVal) {
+      showToast('Please select or enter the income source', 'error');
       return;
     }
+    payload.source = srcVal;
   } else {
-    payload.category = document.getElementById('tx-category').value;
-    payload.description = document.getElementById('tx-description').value;
-    if (!payload.category) {
-      showToast('Please select a category', 'error');
+    const catHidden = document.getElementById('tx-category');
+    const catVal = catHidden ? catHidden.value.trim() : '';
+    if (!catVal) {
+      showToast('Please select an expense category', 'error');
       return;
     }
+    payload.category = catVal;
+    const descEl = document.getElementById('tx-description');
+    payload.description = descEl ? descEl.value.trim() : null;
   }
 
-  btn.disabled = true;
+  const origBtnContent = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i><span>Saving...</span>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
 
   try {
     const receiptFile = document.getElementById('receipt-file');
@@ -120,12 +219,16 @@ async function handleTransactionSubmit(e) {
     }
 
     resetTransactionForm();
-    loadDashboardData();
+    if (typeof loadDashboardData === 'function') loadDashboardData();
     if (typeof loadRecords === 'function') loadRecords(1);
   } catch (error) {
-    showToast(error.message, 'error');
+    showToast(error.message || 'Error saving transaction', 'error');
   } finally {
-    btn.disabled = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origBtnContent || '<i data-lucide="save"></i><span>Save Transaction</span>';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
   }
 }
 
@@ -152,10 +255,6 @@ function resetTransactionForm() {
   if (form) form.reset();
 
   // Reset type to income
-  const typeBtns = document.querySelectorAll('.type-btn');
-  typeBtns.forEach(b => b.classList.remove('active'));
-  const incomeBtn = document.querySelector('.type-btn[data-type="income"]');
-  if (incomeBtn) incomeBtn.classList.add('active');
   toggleTypeFields('income');
 
   // Reset date to today
@@ -163,22 +262,43 @@ function resetTransactionForm() {
   if (dateInput) {
     const now = new Date();
     const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-    if(typeof setTxDate !== 'undefined') setTxDate(dateStr);
+    if (typeof setTxDate !== 'undefined') setTxDate(dateStr);
     else dateInput.value = dateStr;
   }
 
   // Reset custom category dropdown
   setCustomDropdownValue('tx-category-dropdown', '');
+  const catDisplay = document.getElementById('tx-category-display');
+  if (catDisplay) catDisplay.textContent = 'Select Category';
+  const catHidden = document.getElementById('tx-category');
+  if (catHidden) catHidden.value = '';
+
+  // Reset custom source dropdown
+  setCustomDropdownValue('tx-source-dropdown', '');
+  const srcDisplay = document.getElementById('tx-source-display');
+  if (srcDisplay) srcDisplay.textContent = 'Select Source';
+  const srcHidden = document.getElementById('tx-source');
+  if (srcHidden) srcHidden.value = '';
+  const customSrcWrap = document.getElementById('tx-source-custom-wrap');
+  if (customSrcWrap) customSrcWrap.classList.add('hidden');
+  const customSrcInput = document.getElementById('tx-source-custom');
+  if (customSrcInput) customSrcInput.value = '';
+
+  // Reset receipt attachment bar
+  const fileInput = document.getElementById('receipt-file');
+  if (fileInput) fileInput.value = '';
+  const titleEl = document.getElementById('receipt-attach-title');
+  if (titleEl) titleEl.textContent = 'Attach Receipt (Optional)';
+  const subEl = document.getElementById('receipt-attach-sub');
+  if (subEl) subEl.textContent = 'JPG, PNG — Max 5MB';
+  const uploadIcon = document.getElementById('receipt-upload-icon');
+  if (uploadIcon) uploadIcon.classList.remove('hidden');
+  const removeBtn = document.getElementById('btn-remove-receipt');
+  if (removeBtn) removeBtn.classList.add('hidden');
 
   // Hide edit banner
   const banner = document.getElementById('edit-mode-banner');
   if (banner) banner.classList.add('hidden');
-
-  // Hide receipt preview
-  const preview = document.getElementById('receipt-preview');
-  if (preview) preview.classList.add('hidden');
-  const uploadArea = document.getElementById('receipt-upload-area');
-  if (uploadArea) uploadArea.classList.remove('hidden');
 }
 
 function editTransaction(id) {
@@ -191,25 +311,52 @@ function editTransaction(id) {
     const tx = data.data;
     currentEditId = id;
 
-    // Set type
-    const typeBtns = document.querySelectorAll('.type-btn');
-    typeBtns.forEach(b => b.classList.remove('active'));
-    const targetBtn = document.querySelector(`.type-btn[data-type="${tx.type}"]`);
-    if (targetBtn) targetBtn.classList.add('active');
+    // Set type and activate correct segmented tab
     toggleTypeFields(tx.type);
 
-    // Set fields
-    document.getElementById('tx-amount').value = tx.amount;
+    // Set amount
+    const amountInput = document.getElementById('tx-amount');
+    if (amountInput) amountInput.value = tx.amount;
     
     const dateStr = tx.date ? tx.date.split('T')[0] : '';
-    if(typeof setTxDate !== 'undefined') setTxDate(dateStr);
-    else document.getElementById('tx-date').value = dateStr;
+    if (typeof setTxDate !== 'undefined') setTxDate(dateStr);
+    else {
+      const dateInput = document.getElementById('tx-date');
+      if (dateInput) dateInput.value = dateStr;
+    }
 
     if (tx.type === 'income') {
-      document.getElementById('tx-source').value = tx.source || '';
+      const srcHidden = document.getElementById('tx-source');
+      if (srcHidden) srcHidden.value = tx.source || '';
+      const srcDisplay = document.getElementById('tx-source-display');
+      
+      let matched = false;
+      document.querySelectorAll('#tx-source-dropdown .dropdown-item').forEach(item => {
+        if (item.dataset.value === tx.source) {
+          matched = true;
+          item.classList.add('selected');
+        } else {
+          item.classList.remove('selected');
+        }
+      });
+
+      if (matched) {
+        if (srcDisplay) srcDisplay.textContent = tx.source;
+        const customWrap = document.getElementById('tx-source-custom-wrap');
+        if (customWrap) customWrap.classList.add('hidden');
+      } else if (tx.source) {
+        if (srcDisplay) srcDisplay.textContent = 'Custom Source';
+        const customWrap = document.getElementById('tx-source-custom-wrap');
+        if (customWrap) customWrap.classList.remove('hidden');
+        const customInput = document.getElementById('tx-source-custom');
+        if (customInput) customInput.value = tx.source;
+      }
     } else {
       setCustomDropdownValue('tx-category-dropdown', tx.category || '');
-      document.getElementById('tx-description').value = tx.description || '';
+      const catDisplay = document.getElementById('tx-category-display');
+      if (catDisplay && tx.category) catDisplay.textContent = tx.category;
+      const descInput = document.getElementById('tx-description');
+      if (descInput) descInput.value = tx.description || '';
     }
 
     // Show edit banner
@@ -236,23 +383,27 @@ async function deleteTransaction(id) {
 }
 
 // =============================================
-// RECEIPT UPLOAD (inline on form)
+// RECEIPT UPLOAD (inline bar on form)
 // =============================================
 function initReceiptUpload() {
   const area = document.getElementById('receipt-upload-area');
   const fileInput = document.getElementById('receipt-file');
-  const preview = document.getElementById('receipt-preview');
-  const previewImg = document.getElementById('receipt-preview-img');
   const removeBtn = document.getElementById('btn-remove-receipt');
+  const uploadIcon = document.getElementById('receipt-upload-icon');
+  const titleEl = document.getElementById('receipt-attach-title');
+  const subEl = document.getElementById('receipt-attach-sub');
 
   if (!area || !fileInput) return;
 
-  area.addEventListener('click', () => fileInput.click());
+  area.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-remove-receipt')) return;
+    fileInput.click();
+  });
 
   area.addEventListener('dragover', (e) => {
     e.preventDefault();
     area.style.borderColor = 'var(--gold)';
-    area.style.background = 'var(--gold-muted)';
+    area.style.background = 'rgba(211, 172, 119, 0.1)';
   });
 
   area.addEventListener('dragleave', () => {
@@ -277,29 +428,28 @@ function initReceiptUpload() {
   });
 
   if (removeBtn) {
-    removeBtn.addEventListener('click', () => {
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       fileInput.value = '';
-      preview.classList.add('hidden');
-      area.classList.remove('hidden');
+      if (titleEl) titleEl.textContent = 'Attach Receipt (Optional)';
+      if (subEl) subEl.textContent = 'JPG, PNG — Max 5MB';
+      if (uploadIcon) uploadIcon.classList.remove('hidden');
+      removeBtn.classList.add('hidden');
     });
   }
 
   function handleReceiptFile(file) {
-    // 5MB limit check (5 * 1024 * 1024 = 5242880 bytes)
     if (file.size > 5242880) {
       showToast('File size must be under 5MB.', 'error');
       fileInput.value = '';
       return;
     }
-
-    // Show preview only — actual upload happens on form submit
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImg.src = e.target.result;
-      preview.classList.remove('hidden');
-      area.classList.add('hidden');
-    };
-    reader.readAsDataURL(file);
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    if (titleEl) titleEl.textContent = file.name;
+    if (subEl) subEl.textContent = `${sizeMb} MB • Click to change`;
+    if (uploadIcon) uploadIcon.classList.add('hidden');
+    if (removeBtn) removeBtn.classList.remove('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 }
 
@@ -732,7 +882,8 @@ function setTxDate(dateStr) {
     // Expected dateStr is YYYY-MM-DD
     const parts = dateStr.split('-');
     if (parts.length === 3) {
-      display.textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      // Format as MM/DD/YYYY matching reference design
+      display.textContent = `${parts[1]}/${parts[2]}/${parts[0]}`;
       display.style.color = 'var(--text-primary)';
     }
   } else {
