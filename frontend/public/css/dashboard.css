@@ -4445,15 +4445,11 @@ canvas {
    Pixel-accurate matching of reference design
    ============================================= */
 
-.page-add-transaction {
-  min-height: calc(100vh - var(--topbar-height) - 40px);
-  display: flex;
-  flex-direction: column;
-}
-
+#page-add-transaction.active,
 .page-add-transaction.active {
   display: flex !important;
   flex-direction: column;
+  min-height: calc(100vh - var(--topbar-height) - 40px);
 }
 
 .add-tx-header {
