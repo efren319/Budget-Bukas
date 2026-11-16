@@ -390,6 +390,66 @@ async function getChartData(req, res) {
   }
 }
 
+// Dynamic grouping for income sources sharing common prefixes or delimiters
+function groupIncomeSources(rows) {
+  const groups = new Map();
+
+  for (const row of rows) {
+    const rawName = (row.name || 'Other').trim();
+    const amount = parseFloat(row.total) || 0;
+    const count = parseInt(row.count) || 1;
+
+    // Detect common delimiter prefixes dynamically:
+    // e.g. "Membership Fee — BSIT-1101", "Membership Fee - BSIT-1102", "Sponsorship: Tech Corp", "Merchandise / Shirts"
+    // Delimiters: em-dash (—), en-dash (–), hyphen (-), colon (:), pipe (|), bullet (•), slash (/)
+    const delimiterMatch = rawName.match(/^([^—–:\-|•/]{3,})\s*[—–:\-|•/]/);
+    let groupKey;
+
+    if (delimiterMatch) {
+      groupKey = delimiterMatch[1].trim();
+    } else {
+      // Check for parenthetical prefix e.g. "Donations (Batch 2024)"
+      const parenMatch = rawName.match(/^([^(]{3,})\s*\(/);
+      if (parenMatch) {
+        groupKey = parenMatch[1].trim();
+      } else {
+        groupKey = rawName;
+      }
+    }
+
+    const cleanKey = groupKey;
+    const lookupKey = cleanKey.toLowerCase();
+
+    // Check if we already have a group with this lookup key
+    let existingKey = null;
+    for (const k of groups.keys()) {
+      if (k.toLowerCase() === lookupKey) {
+        existingKey = k;
+        break;
+      }
+    }
+
+    const targetKey = existingKey || cleanKey;
+    if (!groups.has(targetKey)) {
+      groups.set(targetKey, {
+        name: targetKey,
+        total: 0,
+        count: 0
+      });
+    }
+
+    const g = groups.get(targetKey);
+    g.total += amount;
+    g.count += count;
+  }
+
+  return Array.from(groups.values()).map(g => ({
+    name: g.name,
+    total: Math.round(g.total * 100) / 100,
+    count: g.count
+  })).sort((a, b) => b.total - a.total);
+}
+
 // GET /api/transactions/dashboard/analytics — Financial Analytics endpoint
 async function getAnalyticsData(req, res) {
   try {
@@ -419,37 +479,82 @@ async function getAnalyticsData(req, res) {
     const prevStartDate = prevStart.toISOString().slice(0, 10);
     const prevEndDate = prevEnd.toISOString().slice(0, 10);
 
-    // ── 1. Summary ──
-    const [summaryRows] = await pool.query(`
-      SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS "totalIncome",
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS "totalExpenses"
-      FROM transactions
-      WHERE date >= ? AND date <= ?
-    `, [startDate, endDate]);
+    // ── 1. Chart Expressions ──
+    let chartLabelExpr;
+    let chartGroupExpr;
+    if (groupBy === 'day') {
+      chartLabelExpr = `TO_CHAR(date, 'YYYY-MM-DD')`;
+      chartGroupExpr = `TO_CHAR(date, 'YYYY-MM-DD')`;
+    } else if (groupBy === 'week') {
+      chartLabelExpr = `TO_CHAR(DATE_TRUNC('week', date), 'YYYY-MM-DD')`;
+      chartGroupExpr = `DATE_TRUNC('week', date)`;
+    } else if (groupBy === 'month') {
+      chartLabelExpr = `TO_CHAR(date, 'YYYY-MM')`;
+      chartGroupExpr = `TO_CHAR(date, 'YYYY-MM')`;
+    } else {
+      chartLabelExpr = `TO_CHAR(date, 'YYYY')`;
+      chartGroupExpr = `TO_CHAR(date, 'YYYY')`;
+    }
+
+    // ── 2. Run Database Queries in One Consolidated Parallel Batch ──
+    const [
+      [summaryRows],
+      [remainingRows],
+      [prevRows],
+      [chartRows],
+      [txRows]
+    ] = await Promise.all([
+      // A. Summary for selected period
+      pool.query(`
+        SELECT
+          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS "totalIncome",
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS "totalExpenses"
+        FROM transactions
+        WHERE date >= ? AND date <= ?
+      `, [startDate, endDate]),
+      // B. Cumulative remaining balance up to endDate
+      pool.query(`
+        SELECT
+          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) -
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS "remainingBalance"
+        FROM transactions
+        WHERE date <= ?
+      `, [endDate]),
+      // C. Previous period summary for comparisons
+      pool.query(`
+        SELECT
+          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS "prevTotalIncome",
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS "prevTotalExpenses"
+        FROM transactions
+        WHERE date >= ? AND date <= ?
+      `, [prevStartDate, prevEndDate]),
+      // D. Chart aggregated series
+      pool.query(`
+        SELECT
+          ${chartLabelExpr} AS label,
+          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expenses
+        FROM transactions
+        WHERE date >= ? AND date <= ?
+        GROUP BY ${chartGroupExpr}
+        ORDER BY ${chartGroupExpr}
+      `, [startDate, endDate]),
+      // E. All transaction records within selected period with details
+      pool.query(`
+        SELECT t.id, t.type, t.amount, TO_CHAR(t.date, 'YYYY-MM-DD') AS date,
+               i.source, e.category, e.description
+        FROM transactions t
+        LEFT JOIN income i ON i.transaction_id = t.id
+        LEFT JOIN expenses e ON e.transaction_id = t.id
+        WHERE t.date >= ? AND t.date <= ?
+        ORDER BY t.date ASC, t.id ASC
+      `, [startDate, endDate])
+    ]);
 
     const totalIncome = parseFloat(summaryRows[0].totalIncome);
     const totalExpenses = parseFloat(summaryRows[0].totalExpenses);
     const netBalance = totalIncome - totalExpenses;
-
-    // Remaining balance: cumulative all-time balance up to endDate
-    const [remainingRows] = await pool.query(`
-      SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) -
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS "remainingBalance"
-      FROM transactions
-      WHERE date <= ?
-    `, [endDate]);
     const remainingBalance = parseFloat(remainingRows[0].remainingBalance);
-
-    // ── 2. Comparison (previous period) ──
-    const [prevRows] = await pool.query(`
-      SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS "prevTotalIncome",
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS "prevTotalExpenses"
-      FROM transactions
-      WHERE date >= ? AND date <= ?
-    `, [prevStartDate, prevEndDate]);
 
     const prevTotalIncome = parseFloat(prevRows[0].prevTotalIncome);
     const prevTotalExpenses = parseFloat(prevRows[0].prevTotalExpenses);
@@ -470,141 +575,141 @@ async function getAnalyticsData(req, res) {
       netBalanceChange: safePercentChange(netBalance, prevNetBalance)
     };
 
-    // ── 3. Chart ──
-    let chartLabelExpr;
-    let chartGroupExpr;
-    if (groupBy === 'day') {
-      chartLabelExpr = `TO_CHAR(date, 'YYYY-MM-DD')`;
-      chartGroupExpr = `TO_CHAR(date, 'YYYY-MM-DD')`;
-    } else if (groupBy === 'week') {
-      chartLabelExpr = `TO_CHAR(DATE_TRUNC('week', date), 'YYYY-MM-DD')`;
-      chartGroupExpr = `DATE_TRUNC('week', date)`;
-    } else if (groupBy === 'month') {
-      chartLabelExpr = `TO_CHAR(date, 'YYYY-MM')`;
-      chartGroupExpr = `TO_CHAR(date, 'YYYY-MM')`;
-    } else {
-      chartLabelExpr = `TO_CHAR(date, 'YYYY')`;
-      chartGroupExpr = `TO_CHAR(date, 'YYYY')`;
-    }
-
-    const [chartRows] = await pool.query(`
-      SELECT
-        ${chartLabelExpr} AS label,
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expenses
-      FROM transactions
-      WHERE date >= ? AND date <= ?
-      GROUP BY ${chartGroupExpr}
-      ORDER BY ${chartGroupExpr}
-    `, [startDate, endDate]);
-
     const chart = chartRows.map(r => ({
       label: r.label,
       income: parseFloat(r.income),
       expenses: parseFloat(r.expenses)
     }));
 
-    // ── 4. Breakdown (expenses or income tab only) ──
-    let breakdown = undefined;
-    if (tab === 'expenses') {
-      const [catRows] = await pool.query(`
-        SELECT e.category AS name,
-               COALESCE(SUM(t.amount), 0) AS total,
-               COUNT(*) AS count
-        FROM transactions t
-        JOIN expenses e ON e.transaction_id = t.id
-        WHERE t.type = 'expense' AND t.date >= ? AND t.date <= ?
-        GROUP BY e.category
-        ORDER BY total DESC
-      `, [startDate, endDate]);
-      breakdown = {
-        categories: catRows.map(r => ({ name: r.name, total: parseFloat(r.total), count: parseInt(r.count) }))
-      };
-    } else if (tab === 'income') {
-      const [srcRows] = await pool.query(`
-        SELECT i.source AS name,
-               COALESCE(SUM(t.amount), 0) AS total,
-               COUNT(*) AS count
-        FROM transactions t
-        JOIN income i ON i.transaction_id = t.id
-        WHERE t.type = 'income' AND t.date >= ? AND t.date <= ?
-        GROUP BY i.source
-        ORDER BY total DESC
-      `, [startDate, endDate]);
-      breakdown = {
-        sources: srcRows.map(r => ({ name: r.name, total: parseFloat(r.total), count: parseInt(r.count) }))
-      };
-    }
+    // ── 3. High-Performance In-Memory Derivations (0ms) ──
+    const calendarActivity = txRows.map(r => ({
+      id: r.id,
+      type: r.type,
+      amount: parseFloat(r.amount),
+      date: r.date,
+      source: r.source,
+      category: r.category,
+      description: r.description
+    }));
 
-    // ── 5. Top Record (expenses or income tab only) ──
-    let topRecord = undefined;
-    if (tab === 'expenses') {
-      const [topRows] = await pool.query(`
-        SELECT t.amount, e.category AS label, t.date
-        FROM transactions t
-        JOIN expenses e ON e.transaction_id = t.id
-        WHERE t.type = 'expense' AND t.date >= ? AND t.date <= ?
-        ORDER BY t.amount DESC
-        LIMIT 1
-      `, [startDate, endDate]);
-      if (topRows.length > 0) {
-        topRecord = { amount: parseFloat(topRows[0].amount), label: topRows[0].label, date: topRows[0].date };
-      }
-    } else if (tab === 'income') {
-      const [topRows] = await pool.query(`
-        SELECT t.amount, i.source AS label, t.date
-        FROM transactions t
-        JOIN income i ON i.transaction_id = t.id
-        WHERE t.type = 'income' AND t.date >= ? AND t.date <= ?
-        ORDER BY t.amount DESC
-        LIMIT 1
-      `, [startDate, endDate]);
-      if (topRows.length > 0) {
-        topRecord = { amount: parseFloat(topRows[0].amount), label: topRows[0].label, date: topRows[0].date };
+    // Build breakdown aggregates & top records in a single pass
+    const catMap = new Map();
+    const srcMap = new Map();
+    let topExpense = null;
+    let topIncome = null;
+
+    for (const tx of calendarActivity) {
+      if (tx.type === 'expense') {
+        const cat = tx.category || 'Uncategorized';
+        if (!catMap.has(cat)) catMap.set(cat, { name: cat, total: 0, count: 0 });
+        const c = catMap.get(cat);
+        c.total += tx.amount;
+        c.count += 1;
+
+        if (!topExpense || tx.amount > topExpense.amount) {
+          topExpense = { id: tx.id, amount: tx.amount, label: cat, description: tx.description, date: tx.date };
+        }
+      } else if (tx.type === 'income') {
+        const src = tx.source || 'Other';
+        if (!srcMap.has(src)) srcMap.set(src, { name: src, total: 0, count: 0 });
+        const s = srcMap.get(src);
+        s.total += tx.amount;
+        s.count += 1;
+
+        if (!topIncome || tx.amount > topIncome.amount) {
+          topIncome = { id: tx.id, amount: tx.amount, label: src, date: tx.date };
+        }
       }
     }
 
-    // ── 6. Insight ──
-    let insight = 'No transactions recorded in this period.';
+    const categoriesBreakdown = Array.from(catMap.values())
+      .map(c => ({ name: c.name, total: Math.round(c.total * 100) / 100, count: c.count }))
+      .sort((a, b) => b.total - a.total);
+
+    const rawSources = Array.from(srcMap.values())
+      .map(s => ({ name: s.name, total: Math.round(s.total * 100) / 100, count: s.count }));
+    const sourcesBreakdown = groupIncomeSources(rawSources);
+
+    const breakdown = {
+      categories: categoriesBreakdown,
+      sources: sourcesBreakdown
+    };
+
+    const topRecords = {
+      expense: topExpense,
+      income: topIncome
+    };
+
+    // Recent transactions: sorted newest first
+    const descTx = [...calendarActivity].sort((a, b) => {
+      if (b.date !== a.date) return b.date.localeCompare(a.date);
+      return b.id - a.id;
+    });
+
+    const recentTransactions = {
+      income: descTx
+        .filter(t => t.type === 'income')
+        .slice(0, 4)
+        .map(t => ({ id: t.id, amount: t.amount, date: t.date, label: t.source })),
+      expenses: descTx
+        .filter(t => t.type === 'expense')
+        .slice(0, 4)
+        .map(t => ({ id: t.id, amount: t.amount, date: t.date, label: t.category, description: t.description }))
+    };
+
+    // ── 4. Dynamic Insights per Tab ──
+    const insights = {
+      cashflow: 'No transactions recorded in this period.',
+      expenses: 'No expenses recorded in this period.',
+      income: 'No income recorded in this period.',
+      reports: 'No transactions recorded in this period.'
+    };
+
     if (totalIncome > 0 || totalExpenses > 0) {
-      if (tab === 'expenses' && breakdown && breakdown.categories && breakdown.categories.length > 0) {
-        const topCat = breakdown.categories[0];
+      if (comparison.netBalanceChange !== null && comparison.netBalanceChange !== 0) {
+        const direction = comparison.netBalanceChange > 0 ? 'improved' : 'declined';
+        insights.cashflow = `Net balance ${direction} by ${Math.abs(comparison.netBalanceChange)}% compared to the previous period.`;
+      } else if (netBalance >= 0) {
+        insights.cashflow = `You earned ₱${totalIncome.toLocaleString()} and spent ₱${totalExpenses.toLocaleString()} this period.`;
+      } else {
+        insights.cashflow = `Spending exceeded income by ₱${Math.abs(netBalance).toLocaleString()} this period.`;
+      }
+      insights.reports = insights.cashflow;
+
+      if (categoriesBreakdown.length > 0) {
+        const topCat = categoriesBreakdown[0];
         if (comparison.expensesChange !== null && comparison.expensesChange !== 0) {
           const direction = comparison.expensesChange > 0 ? 'increased' : 'decreased';
-          insight = `Expenses ${direction} by ${Math.abs(comparison.expensesChange)}% compared to the previous period.`;
+          insights.expenses = `Expenses ${direction} by ${Math.abs(comparison.expensesChange)}% compared to the previous period.`;
         } else {
-          insight = `${topCat.name} is the largest expense category at ₱${topCat.total.toLocaleString()}.`;
+          insights.expenses = `${topCat.name} is the largest expense category at ₱${topCat.total.toLocaleString()}.`;
         }
-      } else if (tab === 'income' && breakdown && breakdown.sources && breakdown.sources.length > 0) {
+      }
+
+      if (sourcesBreakdown.length > 0) {
         if (comparison.incomeChange !== null && comparison.incomeChange !== 0) {
           const direction = comparison.incomeChange > 0 ? 'grew' : 'declined';
-          insight = `Income ${direction} by ${Math.abs(comparison.incomeChange)}% this period.`;
+          insights.income = `Income ${direction} by ${Math.abs(comparison.incomeChange)}% this period.`;
         } else {
-          const topSrc = breakdown.sources[0];
-          insight = `${topSrc.name} is the top income source at ₱${topSrc.total.toLocaleString()}.`;
-        }
-      } else {
-        // cashflow / reports tabs
-        if (comparison.netBalanceChange !== null && comparison.netBalanceChange !== 0) {
-          const direction = comparison.netBalanceChange > 0 ? 'improved' : 'declined';
-          insight = `Net balance ${direction} by ${Math.abs(comparison.netBalanceChange)}% compared to the previous period.`;
-        } else if (netBalance >= 0) {
-          insight = `You earned ₱${totalIncome.toLocaleString()} and spent ₱${totalExpenses.toLocaleString()} this period.`;
-        } else {
-          insight = `Spending exceeded income by ₱${Math.abs(netBalance).toLocaleString()} this period.`;
+          const topSrc = sourcesBreakdown[0];
+          insights.income = `${topSrc.name} is the top income source at ₱${topSrc.total.toLocaleString()}.`;
         }
       }
     }
 
-    // ── Build response ──
+    // ── 5. Build Unified Response ──
     const data = {
       summary: { totalIncome, totalExpenses, netBalance, remainingBalance },
       comparison,
       chart,
-      insight
+      breakdown,
+      topRecords,
+      topRecord: tab === 'expenses' ? topExpense : (tab === 'income' ? topIncome : (topExpense || topIncome)),
+      recentTransactions,
+      calendarActivity,
+      insights,
+      insight: insights[tab] || insights.cashflow
     };
-    if (breakdown !== undefined) data.breakdown = breakdown;
-    if (topRecord !== undefined) data.topRecord = topRecord;
 
     res.json({ success: true, data });
   } catch (error) {

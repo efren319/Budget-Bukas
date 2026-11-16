@@ -10,6 +10,11 @@ let pollingInterval = null;
 // ── Analytics State ──
 let analyticsChart = null;
 let breakdownChart = null;
+const analyticsCache = new Map();
+let calIncomeMonth = new Date();
+let calExpenseMonth = new Date();
+let activeDayPopoverKey = null;
+
 let analyticsState = {
   tab: 'cashflow',
   chartType: 'bar',
@@ -18,6 +23,16 @@ let analyticsState = {
   groupBy: 'month',
   data: null
 };
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 /**
  * Smoothly animates a number element from 0 to its target value (Philippine Peso format).
@@ -592,12 +607,15 @@ function initAnalytics() {
   if (startInput) startInput.value = analyticsState.startDate;
   if (endInput) endInput.value = analyticsState.endDate;
 
-  // Tab buttons
+  // Tab buttons — instant switching from cached data
   document.querySelectorAll('.analytics-tab').forEach(btn => {
     btn.addEventListener('click', () => {
+      const newTab = btn.dataset.tab;
+      if (newTab === analyticsState.tab) return; // already on this tab
+
       document.querySelectorAll('.analytics-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      analyticsState.tab = btn.dataset.tab;
+      analyticsState.tab = newTab;
 
       // Toggle visibility: reports vs chart+analysis
       const chartContent = document.querySelector('.analytics-content');
@@ -614,9 +632,52 @@ function initAnalytics() {
         if (chartTypeSelector) chartTypeSelector.style.display = '';
       }
 
+      // ── Instant tab switch: re-render from cached data without API call ──
+      if (analyticsState.data) {
+        // Update insight text for the new tab
+        const data = analyticsState.data;
+        if (data.insights) {
+          data.insight = data.insights[analyticsState.tab] || data.insights.cashflow;
+        }
+
+        if (analyticsState.tab !== 'reports') {
+          renderAnalyticsChart(data);
+          renderAnalysisPanel(data);
+          renderTabDependentSections(data);
+        } else {
+          renderReportsContent(data);
+        }
+        return; // ← no network call
+      }
+
+      // Fallback: no cached data yet, fetch
       loadAnalyticsData();
     });
   });
+
+  // Calendar nav buttons
+  const incCalPrev = document.getElementById('inc-cal-prev');
+  const incCalNext = document.getElementById('inc-cal-next');
+  const expCalPrev = document.getElementById('exp-cal-prev');
+  const expCalNext = document.getElementById('exp-cal-next');
+
+  if (incCalPrev) incCalPrev.addEventListener('click', () => { calIncomeMonth.setMonth(calIncomeMonth.getMonth() - 1); renderCalendarGrid('income'); });
+  if (incCalNext) incCalNext.addEventListener('click', () => { calIncomeMonth.setMonth(calIncomeMonth.getMonth() + 1); renderCalendarGrid('income'); });
+  if (expCalPrev) expCalPrev.addEventListener('click', () => { calExpenseMonth.setMonth(calExpenseMonth.getMonth() - 1); renderCalendarGrid('expense'); });
+  if (expCalNext) expCalNext.addEventListener('click', () => { calExpenseMonth.setMonth(calExpenseMonth.getMonth() + 1); renderCalendarGrid('expense'); });
+
+  // Popover close
+  const popoverClose = document.getElementById('cal-popover-close');
+  if (popoverClose) popoverClose.addEventListener('click', closeDayPopover);
+
+  // Recent transactions "View All" link
+  const recentViewAll = document.getElementById('analysis-recent-view-all');
+  if (recentViewAll) {
+    recentViewAll.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (typeof navigateTo === 'function') navigateTo('records');
+    });
+  }
 
   // Chart type buttons
   document.querySelectorAll('.chart-type-btn').forEach(btn => {
@@ -710,6 +771,29 @@ function initAnalytics() {
 
 async function loadAnalyticsData() {
   try {
+    const cacheKey = `${analyticsState.startDate}_${analyticsState.endDate}_${analyticsState.groupBy}`;
+
+    // Check cache first
+    if (analyticsCache.has(cacheKey)) {
+      const cached = analyticsCache.get(cacheKey);
+      analyticsState.data = cached;
+
+      // Update insight for the current tab
+      if (cached.insights) {
+        cached.insight = cached.insights[analyticsState.tab] || cached.insights.cashflow;
+      }
+
+      updateSummaryCards(cached.summary);
+      if (analyticsState.tab !== 'reports') {
+        renderAnalyticsChart(cached);
+        renderAnalysisPanel(cached);
+        renderTabDependentSections(cached);
+      } else {
+        renderReportsContent(cached);
+      }
+      return;
+    }
+
     const params = new URLSearchParams({
       startDate: analyticsState.startDate,
       endDate: analyticsState.endDate,
@@ -720,6 +804,19 @@ async function loadAnalyticsData() {
     if (!data || !data.success) return;
     analyticsState.data = data.data;
 
+    // Store in cache
+    analyticsCache.set(cacheKey, data.data);
+
+    // Sync calendar months to the end date
+    const endD = new Date(analyticsState.endDate);
+    calIncomeMonth = new Date(endD.getFullYear(), endD.getMonth(), 1);
+    calExpenseMonth = new Date(endD.getFullYear(), endD.getMonth(), 1);
+
+    // Update insight for the current tab
+    if (data.data.insights) {
+      data.data.insight = data.data.insights[analyticsState.tab] || data.data.insights.cashflow;
+    }
+
     // Update top summary cards with filtered data
     updateSummaryCards(data.data.summary);
 
@@ -727,6 +824,7 @@ async function loadAnalyticsData() {
     if (analyticsState.tab !== 'reports') {
       renderAnalyticsChart(data.data);
       renderAnalysisPanel(data.data);
+      renderTabDependentSections(data.data);
     } else {
       renderReportsContent(data.data);
     }
@@ -990,12 +1088,12 @@ function renderBreakdownChart(breakdown) {
 
   const titleEl = document.getElementById('analytics-breakdown-title');
   let items = [];
-  if (breakdown.categories) {
-    items = breakdown.categories;
-    if (titleEl) titleEl.textContent = 'Expense Category Breakdown';
-  } else if (breakdown.sources) {
+  if (analyticsState.tab === 'income' && breakdown.sources) {
     items = breakdown.sources;
     if (titleEl) titleEl.textContent = 'Income Source Breakdown';
+  } else if (breakdown.categories) {
+    items = breakdown.categories;
+    if (titleEl) titleEl.textContent = 'Expense Category Breakdown';
   }
 
   if (items.length === 0) return;
@@ -1191,4 +1289,237 @@ function renderReportsContent(data) {
       <p class="analysis-insight-text">${data.insight || 'No data available.'}</p>
     </div>
   `;
+}
+
+
+// ============================================
+// Tab-Dependent Sections: Calendars, Breakdown, Recent
+// ============================================
+
+function renderTabDependentSections(data) {
+  const calSection = document.getElementById('cashflow-calendars-section');
+  const breakdownSection = document.getElementById('analytics-breakdown-section');
+  const recentCard = document.getElementById('analysis-recent-card');
+
+  // Calendars: only on cashflow tab
+  if (calSection) calSection.style.display = analyticsState.tab === 'cashflow' ? '' : 'none';
+
+  // Breakdown: only on expenses/income tabs
+  if (analyticsState.tab === 'expenses' || analyticsState.tab === 'income') {
+    if (breakdownSection) breakdownSection.style.display = 'block';
+    if (data.breakdown) renderBreakdownChart(data.breakdown);
+  } else {
+    if (breakdownSection) breakdownSection.style.display = 'none';
+  }
+
+  // Recent transactions: only on expenses/income tabs
+  if (analyticsState.tab === 'expenses' || analyticsState.tab === 'income') {
+    renderRecentTransactions(data);
+    if (recentCard) recentCard.style.display = '';
+  } else {
+    if (recentCard) recentCard.style.display = 'none';
+  }
+
+  // Render calendars if on cashflow tab
+  if (analyticsState.tab === 'cashflow' && data.calendarActivity) {
+    renderCalendarGrid('income');
+    renderCalendarGrid('expense');
+  }
+}
+
+// ============================================
+// Mini Activity Calendar
+// ============================================
+
+function renderCalendarGrid(type) {
+  const isIncome = type === 'income';
+  const viewMonth = isIncome ? calIncomeMonth : calExpenseMonth;
+  const daysContainerId = isIncome ? 'inc-cal-days' : 'exp-cal-days';
+  const labelId = isIncome ? 'inc-cal-month-label' : 'exp-cal-month-label';
+
+  const daysContainer = document.getElementById(daysContainerId);
+  const labelEl = document.getElementById(labelId);
+  if (!daysContainer) return;
+
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+
+  // Update month label
+  if (labelEl) {
+    labelEl.textContent = new Date(year, month).toLocaleString('en', { month: 'long', year: 'numeric' });
+  }
+
+  // Build activity map for this month from calendarActivity data
+  const activityMap = {};
+  const calData = analyticsState.data && analyticsState.data.calendarActivity;
+  if (calData) {
+    calData.forEach(item => {
+      // item: { date: 'YYYY-MM-DD', type: 'income'|'expense', count, total }
+      if (item.type !== type) return;
+      const d = new Date(item.date);
+      if (d.getFullYear() === year && d.getMonth() === month) {
+        const dayKey = d.getDate();
+        if (!activityMap[dayKey]) activityMap[dayKey] = [];
+        activityMap[dayKey].push(item);
+      }
+    });
+  }
+
+  // Calendar grid
+  const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 = Sunday
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  let html = '';
+
+  // Leading blanks
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    html += '<div class="mini-cal-day blank"></div>';
+  }
+
+  // Day cells
+  for (let day = 1; day <= daysInMonth; day++) {
+    const hasActivity = activityMap[day] && activityMap[day].length > 0;
+    const markerClass = hasActivity ? (isIncome ? 'has-income' : 'has-expense') : '';
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    if (hasActivity) {
+      html += `<div class="mini-cal-day ${markerClass}" data-date="${dateStr}" data-type="${type}" role="button" tabindex="0" title="View transactions">${day}</div>`;
+    } else {
+      html += `<div class="mini-cal-day">${day}</div>`;
+    }
+  }
+
+  daysContainer.innerHTML = html;
+
+  // Attach click handlers to marked days
+  daysContainer.querySelectorAll('.mini-cal-day[data-date]').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const dateStr = cell.dataset.date;
+      const clickType = cell.dataset.type;
+
+      // Find matching transactions from calendarActivity
+      const allTx = analyticsState.data && analyticsState.data.calendarActivity;
+      const matching = allTx ? allTx.filter(t => {
+        const txDate = t.date.slice(0, 10);
+        return txDate === dateStr && t.type === clickType;
+      }) : [];
+
+      showDayPopover(dateStr, clickType, matching, cell);
+    });
+  });
+}
+
+function showDayPopover(dateStr, type, transactions, anchorEl) {
+  const popover = document.getElementById('cal-day-popover');
+  if (!popover) return;
+
+  const badgeEl = document.getElementById('cal-popover-badge');
+  const dateEl = document.getElementById('cal-popover-date');
+  const listEl = document.getElementById('cal-popover-list');
+  const totalEl = document.getElementById('cal-popover-total');
+
+  // Set badge
+  if (badgeEl) {
+    badgeEl.textContent = type === 'income' ? 'Income' : 'Expense';
+    badgeEl.className = 'cal-popover-badge ' + (type === 'income' ? 'badge-income' : 'badge-expense');
+  }
+
+  // Set date
+  if (dateEl) {
+    const d = new Date(dateStr + 'T00:00:00');
+    dateEl.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // Render transaction items
+  let listHtml = '';
+  let dayTotal = 0;
+
+  if (transactions.length === 0) {
+    listHtml = '<div class="cal-popover-empty">No transactions found</div>';
+  } else {
+    transactions.forEach(tx => {
+      const label = escapeHtml(tx.label || tx.source || tx.category || 'Transaction');
+      const amount = parseFloat(tx.total || tx.amount || 0);
+      dayTotal += amount;
+      listHtml += `
+        <div class="cal-popover-item">
+          <span class="cal-popover-item-label">${label}</span>
+          <span class="cal-popover-item-amount">${formatPeso(amount)}</span>
+        </div>
+      `;
+    });
+  }
+
+  if (listEl) listEl.innerHTML = listHtml;
+  if (totalEl) totalEl.textContent = formatPeso(dayTotal);
+
+  // Position popover near the anchor
+  popover.style.display = '';
+  activeDayPopoverKey = `${dateStr}_${type}`;
+
+  // Position relative to the calendar section
+  if (anchorEl) {
+    const calSection = document.getElementById('cashflow-calendars-section');
+    if (calSection) {
+      const rect = anchorEl.getBoundingClientRect();
+      const sectionRect = calSection.getBoundingClientRect();
+      popover.style.position = 'absolute';
+      popover.style.left = Math.min(rect.left - sectionRect.left, sectionRect.width - 260) + 'px';
+      popover.style.top = (rect.bottom - sectionRect.top + 6) + 'px';
+    }
+  }
+}
+
+function closeDayPopover() {
+  const popover = document.getElementById('cal-day-popover');
+  if (popover) popover.style.display = 'none';
+  activeDayPopoverKey = null;
+}
+
+// ============================================
+// Recent Transactions (Income/Expenses tabs)
+// ============================================
+
+function renderRecentTransactions(data) {
+  const titleEl = document.getElementById('analysis-recent-title');
+  const listEl = document.getElementById('analysis-recent-list');
+  if (!listEl) return;
+
+  let items = [];
+  let title = 'Recent Transactions';
+
+  if (analyticsState.tab === 'income') {
+    title = 'Recent Income';
+    items = (data.recentTransactions && data.recentTransactions.income) || [];
+  } else if (analyticsState.tab === 'expenses') {
+    title = 'Recent Expenses';
+    items = (data.recentTransactions && data.recentTransactions.expenses) || [];
+  }
+
+  if (titleEl) titleEl.textContent = title;
+
+  if (items.length === 0) {
+    listEl.innerHTML = '<div class="analysis-recent-empty" style="color:var(--text-muted);font-size:0.8rem;padding:8px 0;">No recent transactions</div>';
+    return;
+  }
+
+  let html = '';
+  items.forEach(tx => {
+    const label = escapeHtml(tx.label || tx.source || tx.category || tx.description || 'Transaction');
+    const amount = parseFloat(tx.amount || 0);
+    const dateStr = tx.date ? formatDate(tx.date) : '';
+    const colorClass = analyticsState.tab === 'income' ? 'recent-income' : 'recent-expense';
+
+    html += `
+      <div class="analysis-recent-item">
+        <div class="analysis-recent-left">
+          <span class="analysis-recent-label">${label}</span>
+          <span class="analysis-recent-date">${dateStr}</span>
+        </div>
+        <span class="analysis-recent-amount ${colorClass}">${formatPeso(amount)}</span>
+      </div>
+    `;
+  });
+
+  listEl.innerHTML = html;
 }

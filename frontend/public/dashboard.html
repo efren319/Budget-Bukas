@@ -288,6 +288,82 @@
             <canvas id="analytics-breakdown-chart"></canvas>
           </div>
         </div>
+
+        <!-- Cash Flow Minimalist Activity Calendars (Cash Flow tab only) -->
+        <div class="cashflow-calendars-section" id="cashflow-calendars-section">
+          <div class="cashflow-calendars-header">
+            <div class="cashflow-calendars-title-wrap">
+              <h4>Activity Calendars</h4>
+              <span class="cashflow-calendars-hint">Click a marked day to inspect transactions</span>
+            </div>
+          </div>
+
+          <div class="cashflow-calendars-grid">
+            <!-- Income Activity Calendar -->
+            <div class="mini-cal-card" id="cal-card-income">
+              <div class="mini-cal-header">
+                <div class="mini-cal-title">
+                  <span class="mini-cal-dot income-dot"></span>
+                  <span>Income Activity</span>
+                </div>
+                <div class="mini-cal-nav">
+                  <button type="button" class="mini-cal-btn" id="inc-cal-prev" title="Previous month" aria-label="Previous month">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <span class="mini-cal-month-label" id="inc-cal-month-label">May 2026</span>
+                  <button type="button" class="mini-cal-btn" id="inc-cal-next" title="Next month" aria-label="Next month">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mini-cal-weekdays">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div class="mini-cal-days" id="inc-cal-days"></div>
+            </div>
+
+            <!-- Expense Activity Calendar -->
+            <div class="mini-cal-card" id="cal-card-expense">
+              <div class="mini-cal-header">
+                <div class="mini-cal-title">
+                  <span class="mini-cal-dot expense-dot"></span>
+                  <span>Expense Activity</span>
+                </div>
+                <div class="mini-cal-nav">
+                  <button type="button" class="mini-cal-btn" id="exp-cal-prev" title="Previous month" aria-label="Previous month">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <span class="mini-cal-month-label" id="exp-cal-month-label">May 2026</span>
+                  <button type="button" class="mini-cal-btn" id="exp-cal-next" title="Next month" aria-label="Next month">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mini-cal-weekdays">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div class="mini-cal-days" id="exp-cal-days"></div>
+            </div>
+          </div>
+
+          <!-- Calendar Popover for Clicked Day -->
+          <div class="cal-day-popover" id="cal-day-popover" style="display: none;">
+            <div class="cal-popover-header">
+              <div class="cal-popover-badge-group">
+                <span class="cal-popover-badge" id="cal-popover-badge">Income</span>
+                <span class="cal-popover-date" id="cal-popover-date">Nov 14, 2026</span>
+              </div>
+              <button type="button" class="cal-popover-close-btn" id="cal-popover-close" aria-label="Close popover">✕</button>
+            </div>
+            <div class="cal-popover-list" id="cal-popover-list">
+              <!-- Rendered dynamically -->
+            </div>
+            <div class="cal-popover-footer">
+              <span class="cal-popover-total-label">Day Total:</span>
+              <span class="cal-popover-total-val" id="cal-popover-total">₱0.00</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- RIGHT: Analysis Panel -->
@@ -321,6 +397,17 @@
               <span>Key Insight</span>
             </div>
             <p id="analysis-insight-text" class="analysis-insight-text">Loading...</p>
+          </div>
+
+          <!-- Recent Transactions Card below Key Insight (Expenses & Income tabs) -->
+          <div class="analysis-recent-card" id="analysis-recent-card" style="display: none;">
+            <div class="analysis-recent-header">
+              <h5 id="analysis-recent-title">Recent Transactions</h5>
+              <a href="#" class="analysis-recent-view-all" id="analysis-recent-view-all" data-goto="records">View All</a>
+            </div>
+            <div class="analysis-recent-list" id="analysis-recent-list">
+              <!-- Rendered by JS -->
+            </div>
           </div>
         </div>
       </div>
