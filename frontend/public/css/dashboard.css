@@ -29,16 +29,35 @@
 }
 
 .member-card {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
 }
 
-.member-list {
-  flex: 1;
-  overflow-y: auto;
+.member-card .glass-card-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
+  height: 100%;
+}
+
+.member-card .member-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--space-sm);
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--space-xs);
+}
+
+.member-card .member-item {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 48px;
 }
 
 /* =============================================
@@ -512,11 +531,18 @@ canvas {
 }
 
 .member-list::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
+}
+.member-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
 }
 .member-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(211, 172, 119, 0.25);
   border-radius: 4px;
+}
+.member-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(211, 172, 119, 0.45);
 }
 
 .member-item {

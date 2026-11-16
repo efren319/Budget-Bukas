@@ -119,6 +119,17 @@ function initDashboard() {
 
   // Initialize analytics system
   initAnalytics();
+
+  // Keep member list height synced with the card background length
+  window.addEventListener('resize', syncMemberListHeight);
+  if (window.ResizeObserver) {
+    const mainCol = document.querySelector('.dashboard-main-content');
+    if (mainCol) {
+      new ResizeObserver(() => {
+        syncMemberListHeight();
+      }).observe(mainCol);
+    }
+  }
 }
 
 /**
@@ -452,6 +463,26 @@ function renderMembers(members) {
   }).join('');
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
+  requestAnimationFrame(syncMemberListHeight);
+}
+
+function syncMemberListHeight() {
+  const memberCard = document.querySelector('.member-card');
+  const memberList = document.getElementById('members-list');
+  if (!memberCard || !memberList) return;
+
+  if (window.innerWidth > 900) {
+    const cardRect = memberCard.getBoundingClientRect();
+    const header = memberCard.querySelector('.side-card-header');
+    const headerHeight = header ? header.offsetHeight : 30;
+    // Padding: 24px top + 24px bottom (48px) + header margin-bottom (16px) = 64px
+    const available = Math.max(300, Math.floor(cardRect.height - headerHeight - 64));
+    memberList.style.maxHeight = `${available}px`;
+    memberList.style.height = `${available}px`;
+  } else {
+    memberList.style.maxHeight = '';
+    memberList.style.height = '';
+  }
 }
 
 async function loadChartData(period) {
@@ -1333,6 +1364,8 @@ function renderTabDependentSections(data) {
   if (analyticsState.tab === 'cashflow' && data.calendarActivity) {
     renderFinancialHeatmaps(data);
   }
+
+  requestAnimationFrame(syncMemberListHeight);
 }
 
 // ============================================
