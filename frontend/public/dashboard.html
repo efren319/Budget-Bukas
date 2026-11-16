@@ -288,82 +288,6 @@
             <canvas id="analytics-breakdown-chart"></canvas>
           </div>
         </div>
-
-        <!-- Cash Flow Minimalist Activity Calendars (Cash Flow tab only) -->
-        <div class="cashflow-calendars-section" id="cashflow-calendars-section">
-          <div class="cashflow-calendars-header">
-            <div class="cashflow-calendars-title-wrap">
-              <h4>Activity Calendars</h4>
-              <span class="cashflow-calendars-hint">Click a marked day to inspect transactions</span>
-            </div>
-          </div>
-
-          <div class="cashflow-calendars-grid">
-            <!-- Income Activity Calendar -->
-            <div class="mini-cal-card" id="cal-card-income">
-              <div class="mini-cal-header">
-                <div class="mini-cal-title">
-                  <span class="mini-cal-dot income-dot"></span>
-                  <span>Income Activity</span>
-                </div>
-                <div class="mini-cal-nav">
-                  <button type="button" class="mini-cal-btn" id="inc-cal-prev" title="Previous month" aria-label="Previous month">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                  </button>
-                  <span class="mini-cal-month-label" id="inc-cal-month-label">May 2026</span>
-                  <button type="button" class="mini-cal-btn" id="inc-cal-next" title="Next month" aria-label="Next month">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="mini-cal-weekdays">
-                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-              </div>
-              <div class="mini-cal-days" id="inc-cal-days"></div>
-            </div>
-
-            <!-- Expense Activity Calendar -->
-            <div class="mini-cal-card" id="cal-card-expense">
-              <div class="mini-cal-header">
-                <div class="mini-cal-title">
-                  <span class="mini-cal-dot expense-dot"></span>
-                  <span>Expense Activity</span>
-                </div>
-                <div class="mini-cal-nav">
-                  <button type="button" class="mini-cal-btn" id="exp-cal-prev" title="Previous month" aria-label="Previous month">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                  </button>
-                  <span class="mini-cal-month-label" id="exp-cal-month-label">May 2026</span>
-                  <button type="button" class="mini-cal-btn" id="exp-cal-next" title="Next month" aria-label="Next month">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                  </button>
-                </div>
-              </div>
-              <div class="mini-cal-weekdays">
-                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-              </div>
-              <div class="mini-cal-days" id="exp-cal-days"></div>
-            </div>
-          </div>
-
-          <!-- Calendar Popover for Clicked Day -->
-          <div class="cal-day-popover" id="cal-day-popover" style="display: none;">
-            <div class="cal-popover-header">
-              <div class="cal-popover-badge-group">
-                <span class="cal-popover-badge" id="cal-popover-badge">Income</span>
-                <span class="cal-popover-date" id="cal-popover-date">Nov 14, 2026</span>
-              </div>
-              <button type="button" class="cal-popover-close-btn" id="cal-popover-close" aria-label="Close popover">✕</button>
-            </div>
-            <div class="cal-popover-list" id="cal-popover-list">
-              <!-- Rendered dynamically -->
-            </div>
-            <div class="cal-popover-footer">
-              <span class="cal-popover-total-label">Day Total:</span>
-              <span class="cal-popover-total-val" id="cal-popover-total">₱0.00</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- RIGHT: Analysis Panel -->
@@ -411,8 +335,85 @@
           </div>
         </div>
       </div>
+
+      <!-- FULL WIDTH BELOW: GitHub-style Financial Activity Heatmaps -->
+      <div class="financial-heatmaps-section" id="financial-heatmaps-section">
+        <div class="financial-heatmaps-header">
+          <div class="financial-heatmaps-title-wrap">
+            <div class="heatmaps-title-row">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <h4>Financial Activity</h4>
+            </div>
+            <span class="financial-heatmaps-subtitle">Yearly transaction intensity and volume heatmaps</span>
+          </div>
+          <div class="heatmap-year-control">
+            <button type="button" class="heatmap-year-nav-btn" id="heatmap-year-prev" title="Previous year" aria-label="Previous year">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="heatmap-year-display" id="heatmap-year-display">2026</span>
+            <button type="button" class="heatmap-year-nav-btn" id="heatmap-year-next" title="Next year" aria-label="Next year">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="heatmaps-stack">
+          <!-- 1. Income Activity Heatmap -->
+          <div class="heatmap-card" id="heatmap-income-card">
+            <div class="heatmap-card-header">
+              <div class="heatmap-card-title">
+                <span class="heatmap-dot income-dot"></span>
+                <span class="heatmap-card-name">Income Activity</span>
+                <span class="heatmap-summary-badge" id="heatmap-income-summary">0 income transactions</span>
+              </div>
+              <div class="heatmap-legend">
+                <span class="legend-text">Less</span>
+                <div class="legend-cell level-0" title="No income"></div>
+                <div class="legend-cell income-1" title="Low income"></div>
+                <div class="legend-cell income-2" title="Medium-low income"></div>
+                <div class="legend-cell income-3" title="Medium-high income"></div>
+                <div class="legend-cell income-4" title="High income"></div>
+                <span class="legend-text">More</span>
+              </div>
+            </div>
+            <div class="heatmap-scroll-area">
+              <div class="heatmap-grid-wrap" id="heatmap-income-wrap">
+                <!-- Rendered dynamically by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Expense Activity Heatmap -->
+          <div class="heatmap-card" id="heatmap-expense-card">
+            <div class="heatmap-card-header">
+              <div class="heatmap-card-title">
+                <span class="heatmap-dot expense-dot"></span>
+                <span class="heatmap-card-name">Expense Activity</span>
+                <span class="heatmap-summary-badge" id="heatmap-expense-summary">0 expense transactions</span>
+              </div>
+              <div class="heatmap-legend">
+                <span class="legend-text">Less</span>
+                <div class="legend-cell level-0" title="No expenses"></div>
+                <div class="legend-cell expense-1" title="Low expenses"></div>
+                <div class="legend-cell expense-2" title="Medium-low expenses"></div>
+                <div class="legend-cell expense-3" title="Medium-high expenses"></div>
+                <div class="legend-cell expense-4" title="High expenses"></div>
+                <span class="legend-text">More</span>
+              </div>
+            </div>
+            <div class="heatmap-scroll-area">
+              <div class="heatmap-grid-wrap" id="heatmap-expense-wrap">
+                <!-- Rendered dynamically by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- Heatmap Tooltip (Hover & Focus) -->
+  <div class="heatmap-tooltip" id="heatmap-tooltip" style="display: none;"></div>
 
   <!-- Reports Tab Content (hidden by default) -->
   <div class="analytics-reports-content" id="analytics-reports-content" style="display:none;">

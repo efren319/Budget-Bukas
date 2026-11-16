@@ -11,8 +11,7 @@ let pollingInterval = null;
 let analyticsChart = null;
 let breakdownChart = null;
 const analyticsCache = new Map();
-let calIncomeMonth = new Date();
-let calExpenseMonth = new Date();
+let heatmapSelectedYear = new Date().getFullYear();
 let activeDayPopoverKey = null;
 
 let analyticsState = {
@@ -655,20 +654,27 @@ function initAnalytics() {
     });
   });
 
-  // Calendar nav buttons
-  const incCalPrev = document.getElementById('inc-cal-prev');
-  const incCalNext = document.getElementById('inc-cal-next');
-  const expCalPrev = document.getElementById('exp-cal-prev');
-  const expCalNext = document.getElementById('exp-cal-next');
-
-  if (incCalPrev) incCalPrev.addEventListener('click', () => { calIncomeMonth.setMonth(calIncomeMonth.getMonth() - 1); renderCalendarGrid('income'); });
-  if (incCalNext) incCalNext.addEventListener('click', () => { calIncomeMonth.setMonth(calIncomeMonth.getMonth() + 1); renderCalendarGrid('income'); });
-  if (expCalPrev) expCalPrev.addEventListener('click', () => { calExpenseMonth.setMonth(calExpenseMonth.getMonth() - 1); renderCalendarGrid('expense'); });
-  if (expCalNext) expCalNext.addEventListener('click', () => { calExpenseMonth.setMonth(calExpenseMonth.getMonth() + 1); renderCalendarGrid('expense'); });
-
-  // Popover close
-  const popoverClose = document.getElementById('cal-popover-close');
-  if (popoverClose) popoverClose.addEventListener('click', closeDayPopover);
+  // Heatmap year navigation buttons
+  const heatmapPrev = document.getElementById('heatmap-year-prev');
+  const heatmapNext = document.getElementById('heatmap-year-next');
+  if (heatmapPrev) {
+    heatmapPrev.addEventListener('click', () => {
+      heatmapSelectedYear--;
+      updateHeatmapYearDisplay();
+      if (analyticsState.data) {
+        renderFinancialHeatmaps(analyticsState.data);
+      }
+    });
+  }
+  if (heatmapNext) {
+    heatmapNext.addEventListener('click', () => {
+      heatmapSelectedYear++;
+      updateHeatmapYearDisplay();
+      if (analyticsState.data) {
+        renderFinancialHeatmaps(analyticsState.data);
+      }
+    });
+  }
 
   // Recent transactions "View All" link
   const recentViewAll = document.getElementById('analysis-recent-view-all');
@@ -807,10 +813,13 @@ async function loadAnalyticsData() {
     // Store in cache
     analyticsCache.set(cacheKey, data.data);
 
-    // Sync calendar months to the end date
-    const endD = new Date(analyticsState.endDate);
-    calIncomeMonth = new Date(endD.getFullYear(), endD.getMonth(), 1);
-    calExpenseMonth = new Date(endD.getFullYear(), endD.getMonth(), 1);
+    // Sync heatmap year with the end date
+    if (analyticsState.endDate) {
+      const parsedYear = parseInt(analyticsState.endDate.slice(0, 4), 10);
+      if (parsedYear && !isNaN(parsedYear)) {
+        heatmapSelectedYear = parsedYear;
+      }
+    }
 
     // Update insight for the current tab
     if (data.data.insights) {
@@ -1293,16 +1302,16 @@ function renderReportsContent(data) {
 
 
 // ============================================
-// Tab-Dependent Sections: Calendars, Breakdown, Recent
+// Tab-Dependent Sections: Heatmaps, Breakdown, Recent
 // ============================================
 
 function renderTabDependentSections(data) {
-  const calSection = document.getElementById('cashflow-calendars-section');
+  const heatmapsSection = document.getElementById('financial-heatmaps-section');
   const breakdownSection = document.getElementById('analytics-breakdown-section');
   const recentCard = document.getElementById('analysis-recent-card');
 
-  // Calendars: only on cashflow tab
-  if (calSection) calSection.style.display = analyticsState.tab === 'cashflow' ? '' : 'none';
+  // Heatmaps: only on cashflow tab
+  if (heatmapsSection) heatmapsSection.style.display = analyticsState.tab === 'cashflow' ? '' : 'none';
 
   // Breakdown: only on expenses/income tabs
   if (analyticsState.tab === 'expenses' || analyticsState.tab === 'income') {
@@ -1320,160 +1329,244 @@ function renderTabDependentSections(data) {
     if (recentCard) recentCard.style.display = 'none';
   }
 
-  // Render calendars if on cashflow tab
+  // Render heatmaps if on cashflow tab
   if (analyticsState.tab === 'cashflow' && data.calendarActivity) {
-    renderCalendarGrid('income');
-    renderCalendarGrid('expense');
+    renderFinancialHeatmaps(data);
   }
 }
 
 // ============================================
-// Mini Activity Calendar
+// GitHub-Style Yearly Financial Activity Heatmaps
 // ============================================
 
-function renderCalendarGrid(type) {
-  const isIncome = type === 'income';
-  const viewMonth = isIncome ? calIncomeMonth : calExpenseMonth;
-  const daysContainerId = isIncome ? 'inc-cal-days' : 'exp-cal-days';
-  const labelId = isIncome ? 'inc-cal-month-label' : 'exp-cal-month-label';
+function updateHeatmapYearDisplay() {
+  const yearEl = document.getElementById('heatmap-year-display');
+  if (yearEl) yearEl.textContent = heatmapSelectedYear;
+}
 
-  const daysContainer = document.getElementById(daysContainerId);
-  const labelEl = document.getElementById(labelId);
-  if (!daysContainer) return;
+function renderFinancialHeatmaps(data) {
+  updateHeatmapYearDisplay();
 
-  const year = viewMonth.getFullYear();
-  const month = viewMonth.getMonth();
+  const activity = data.calendarActivity || [];
+  renderYearlyHeatmap('income', activity, 'heatmap-income-wrap', heatmapSelectedYear);
+  renderYearlyHeatmap('expense', activity, 'heatmap-expense-wrap', heatmapSelectedYear);
+}
 
-  // Update month label
-  if (labelEl) {
-    labelEl.textContent = new Date(year, month).toLocaleString('en', { month: 'long', year: 'numeric' });
+function renderYearlyHeatmap(type, allActivity, containerId, year) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const summaryEl = document.getElementById(`heatmap-${type}-summary`);
+
+  // Build daily aggregate map for this year
+  const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  const totalDaysInYear = isLeap ? 366 : 365;
+  const jan1 = new Date(year, 0, 1);
+  const startDay = jan1.getDay(); // 0 = Sunday
+
+  const dateMap = {};
+  let yearTotal = 0;
+  let yearCount = 0;
+
+  // Initialize all days of the year
+  for (let offset = 0; offset < totalDaysInYear; offset++) {
+    const curDate = new Date(year, 0, 1 + offset);
+    const dateStr = `${year}-${String(curDate.getMonth() + 1).padStart(2, '0')}-${String(curDate.getDate()).padStart(2, '0')}`;
+    dateMap[dateStr] = { count: 0, total: 0 };
   }
 
-  // Build activity map for this month from calendarActivity data
-  const activityMap = {};
-  const calData = analyticsState.data && analyticsState.data.calendarActivity;
-  if (calData) {
-    calData.forEach(item => {
-      // item: { date: 'YYYY-MM-DD', type: 'income'|'expense', count, total }
-      if (item.type !== type) return;
-      const d = new Date(item.date);
-      if (d.getFullYear() === year && d.getMonth() === month) {
-        const dayKey = d.getDate();
-        if (!activityMap[dayKey]) activityMap[dayKey] = [];
-        activityMap[dayKey].push(item);
-      }
-    });
-  }
+  // Filter transactions for this type and year
+  const yearPrefix = `${year}-`;
+  allActivity.forEach(tx => {
+    if (tx.type !== type) return;
+    const txDate = (tx.date || '').slice(0, 10);
+    if (!txDate.startsWith(yearPrefix)) return;
 
-  // Calendar grid
-  const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 = Sunday
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  let html = '';
-
-  // Leading blanks
-  for (let i = 0; i < firstDayOfWeek; i++) {
-    html += '<div class="mini-cal-day blank"></div>';
-  }
-
-  // Day cells
-  for (let day = 1; day <= daysInMonth; day++) {
-    const hasActivity = activityMap[day] && activityMap[day].length > 0;
-    const markerClass = hasActivity ? (isIncome ? 'has-income' : 'has-expense') : '';
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-    if (hasActivity) {
-      html += `<div class="mini-cal-day ${markerClass}" data-date="${dateStr}" data-type="${type}" role="button" tabindex="0" title="View transactions">${day}</div>`;
+    const amt = parseFloat(tx.amount) || 0;
+    if (dateMap[txDate]) {
+      dateMap[txDate].count++;
+      dateMap[txDate].total += amt;
     } else {
-      html += `<div class="mini-cal-day">${day}</div>`;
+      dateMap[txDate] = { count: 1, total: amt };
+    }
+    yearTotal += amt;
+    yearCount++;
+  });
+
+  // Update summary badge: e.g. "29 income transactions (₱83,582.09)"
+  if (summaryEl) {
+    const word = yearCount === 1 ? 'transaction' : 'transactions';
+    summaryEl.textContent = `${yearCount} ${type} ${word} (${formatPeso(yearTotal)})`;
+  }
+
+  // Find max daily amount for consistent intensity scaling across the year
+  let maxDayTotal = 0;
+  Object.values(dateMap).forEach(d => {
+    if (d.total > maxDayTotal) maxDayTotal = d.total;
+  });
+
+  function getIntensityLevel(dayTotal) {
+    if (!dayTotal || dayTotal <= 0 || maxDayTotal <= 0) return 'level-0';
+    const ratio = dayTotal / maxDayTotal;
+    if (ratio <= 0.25) return `${type}-1`;
+    if (ratio <= 0.50) return `${type}-2`;
+    if (ratio <= 0.75) return `${type}-3`;
+    return `${type}-4`;
+  }
+
+  // 1. Build Month Row Header (53 columns)
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthCols = {};
+  for (let m = 0; m < 12; m++) {
+    const firstDate = new Date(year, m, 1);
+    const diffDays = Math.round((firstDate - jan1) / 86400000);
+    const weekCol = Math.floor((diffDays + startDay) / 7);
+    monthCols[weekCol] = monthNames[m];
+  }
+
+  let monthsHtml = `<div class="heatmap-months-row"><div></div>`; // 1st item is spacer for weekday column
+  for (let col = 0; col < 53; col++) {
+    if (monthCols[col]) {
+      monthsHtml += `<span class="heatmap-month-label" style="grid-column: ${col + 2};">${monthCols[col]}</span>`;
     }
   }
+  monthsHtml += `</div>`;
 
-  daysContainer.innerHTML = html;
+  // 2. Build Weekdays column (Mon, Wed, Fri labeled)
+  const weekdaysHtml = `
+    <div class="heatmap-weekdays-col">
+      <div></div>
+      <div>Mon</div>
+      <div></div>
+      <div>Wed</div>
+      <div></div>
+      <div>Fri</div>
+      <div></div>
+    </div>
+  `;
 
-  // Attach click handlers to marked days
-  daysContainer.querySelectorAll('.mini-cal-day[data-date]').forEach(cell => {
-    cell.addEventListener('click', () => {
-      const dateStr = cell.dataset.date;
-      const clickType = cell.dataset.type;
+  // 3. Build Cells Grid (53 columns x 7 rows)
+  let cellsHtml = `<div class="heatmap-cells-grid">`;
+  for (let col = 0; col < 53; col++) {
+    for (let row = 0; row < 7; row++) {
+      const offset = col * 7 + row - startDay;
+      if (offset < 0 || offset >= totalDaysInYear) {
+        cellsHtml += `<div class="heatmap-cell empty"></div>`;
+      } else {
+        const curDate = new Date(year, 0, 1 + offset);
+        const curDateStr = `${year}-${String(curDate.getMonth() + 1).padStart(2, '0')}-${String(curDate.getDate()).padStart(2, '0')}`;
+        const dayData = dateMap[curDateStr] || { count: 0, total: 0 };
+        const levelClass = getIntensityLevel(dayData.total);
 
-      // Find matching transactions from calendarActivity
-      const allTx = analyticsState.data && analyticsState.data.calendarActivity;
-      const matching = allTx ? allTx.filter(t => {
-        const txDate = t.date.slice(0, 10);
-        return txDate === dateStr && t.type === clickType;
-      }) : [];
+        // Check if date falls outside current dashboard filter range
+        let isOutOfFilter = false;
+        if (analyticsState.startDate && curDateStr < analyticsState.startDate) isOutOfFilter = true;
+        if (analyticsState.endDate && curDateStr > analyticsState.endDate) isOutOfFilter = true;
+        const filterClass = isOutOfFilter ? 'out-of-filter' : '';
 
-      showDayPopover(dateStr, clickType, matching, cell);
-    });
+        cellsHtml += `<div class="heatmap-cell ${levelClass} ${filterClass}" data-date="${curDateStr}" data-type="${type}" data-count="${dayData.count}" data-total="${dayData.total.toFixed(2)}" tabindex="0" role="button" aria-label="${curDateStr}"></div>`;
+      }
+    }
+  }
+  cellsHtml += `</div>`;
+
+  // Assemble full heatmap HTML
+  container.innerHTML = `
+    ${monthsHtml}
+    <div class="heatmap-main-row">
+      ${weekdaysHtml}
+      ${cellsHtml}
+    </div>
+  `;
+
+  // Attach hover & keyboard focus tooltip listeners to all valid cells
+  container.querySelectorAll('.heatmap-cell:not(.empty)').forEach(cell => {
+    cell.addEventListener('mouseenter', e => showHeatmapTooltip(e, cell));
+    cell.addEventListener('mousemove', e => positionHeatmapTooltip(cell));
+    cell.addEventListener('mouseleave', hideHeatmapTooltip);
+    cell.addEventListener('focus', e => showHeatmapTooltip(e, cell));
+    cell.addEventListener('blur', hideHeatmapTooltip);
   });
 }
 
-function showDayPopover(dateStr, type, transactions, anchorEl) {
-  const popover = document.getElementById('cal-day-popover');
-  if (!popover) return;
+// Tooltip helpers
+function showHeatmapTooltip(e, cell) {
+  const tooltip = document.getElementById('heatmap-tooltip');
+  if (!tooltip) return;
 
-  const badgeEl = document.getElementById('cal-popover-badge');
-  const dateEl = document.getElementById('cal-popover-date');
-  const listEl = document.getElementById('cal-popover-list');
-  const totalEl = document.getElementById('cal-popover-total');
+  const dateStr = cell.dataset.date;
+  const type = cell.dataset.type;
+  const count = parseInt(cell.dataset.count, 10) || 0;
+  const total = parseFloat(cell.dataset.total) || 0;
 
-  // Set badge
-  if (badgeEl) {
-    badgeEl.textContent = type === 'income' ? 'Income' : 'Expense';
-    badgeEl.className = 'cal-popover-badge ' + (type === 'income' ? 'badge-income' : 'badge-expense');
-  }
+  // Format date: e.g. "November 16, 2026"
+  const [yr, mo, da] = dateStr.split('-');
+  const d = new Date(parseInt(yr, 10), parseInt(mo, 10) - 1, parseInt(da, 10));
+  const fullDate = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Set date
-  if (dateEl) {
-    const d = new Date(dateStr + 'T00:00:00');
-    dateEl.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
-  // Render transaction items
-  let listHtml = '';
-  let dayTotal = 0;
-
-  if (transactions.length === 0) {
-    listHtml = '<div class="cal-popover-empty">No transactions found</div>';
-  } else {
-    transactions.forEach(tx => {
-      const label = escapeHtml(tx.label || tx.source || tx.category || 'Transaction');
-      const amount = parseFloat(tx.total || tx.amount || 0);
-      dayTotal += amount;
-      listHtml += `
-        <div class="cal-popover-item">
-          <span class="cal-popover-item-label">${label}</span>
-          <span class="cal-popover-item-amount">${formatPeso(amount)}</span>
-        </div>
+  let bodyHtml = '';
+  if (count > 0) {
+    const txWord = count === 1 ? 'transaction' : 'transactions';
+    if (type === 'income') {
+      bodyHtml = `
+        <div class="heatmap-tt-date">${fullDate}</div>
+        <div class="heatmap-tt-count">${count} income ${txWord}</div>
+        <div class="heatmap-tt-amount income">${formatPeso(total)} total income</div>
       `;
-    });
-  }
-
-  if (listEl) listEl.innerHTML = listHtml;
-  if (totalEl) totalEl.textContent = formatPeso(dayTotal);
-
-  // Position popover near the anchor
-  popover.style.display = '';
-  activeDayPopoverKey = `${dateStr}_${type}`;
-
-  // Position relative to the calendar section
-  if (anchorEl) {
-    const calSection = document.getElementById('cashflow-calendars-section');
-    if (calSection) {
-      const rect = anchorEl.getBoundingClientRect();
-      const sectionRect = calSection.getBoundingClientRect();
-      popover.style.position = 'absolute';
-      popover.style.left = Math.min(rect.left - sectionRect.left, sectionRect.width - 260) + 'px';
-      popover.style.top = (rect.bottom - sectionRect.top + 6) + 'px';
+    } else {
+      bodyHtml = `
+        <div class="heatmap-tt-date">${fullDate}</div>
+        <div class="heatmap-tt-count">${count} expense ${txWord}</div>
+        <div class="heatmap-tt-amount expense">${formatPeso(total)} total expenses</div>
+      `;
+    }
+  } else {
+    if (type === 'income') {
+      bodyHtml = `
+        <div class="heatmap-tt-date">${fullDate}</div>
+        <div class="heatmap-tt-empty">No income transactions</div>
+      `;
+    } else {
+      bodyHtml = `
+        <div class="heatmap-tt-date">${fullDate}</div>
+        <div class="heatmap-tt-empty">No expense transactions</div>
+      `;
     }
   }
+
+  tooltip.innerHTML = bodyHtml;
+  tooltip.style.display = 'block';
+  tooltip.classList.add('visible');
+
+  positionHeatmapTooltip(cell);
 }
 
-function closeDayPopover() {
-  const popover = document.getElementById('cal-day-popover');
-  if (popover) popover.style.display = 'none';
-  activeDayPopoverKey = null;
+function positionHeatmapTooltip(cell) {
+  const tooltip = document.getElementById('heatmap-tooltip');
+  if (!tooltip || !tooltip.classList.contains('visible')) return;
+
+  const rect = cell.getBoundingClientRect();
+  const ttRect = tooltip.getBoundingClientRect();
+
+  let left = rect.left + (rect.width / 2) - (ttRect.width / 2);
+  let top = rect.top - ttRect.height - 8;
+
+  // If clipped at top of viewport, flip below cell
+  if (top < 10) {
+    top = rect.bottom + 8;
+  }
+  // Keep horizontally within viewport bounds
+  left = Math.max(10, Math.min(left, window.innerWidth - ttRect.width - 10));
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+function hideHeatmapTooltip() {
+  const tooltip = document.getElementById('heatmap-tooltip');
+  if (!tooltip) return;
+  tooltip.classList.remove('visible');
+  tooltip.style.display = 'none';
 }
 
 // ============================================

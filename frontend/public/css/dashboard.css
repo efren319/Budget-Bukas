@@ -29,7 +29,7 @@
 }
 
 .member-card {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -37,7 +37,7 @@
 }
 
 .member-card .glass-card-content {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -45,14 +45,22 @@
 }
 
 .member-card .member-list {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start; /* Keep member entries at top with natural spacing */
+  align-items: stretch;
   gap: var(--space-sm);
   max-height: none;
   min-height: 0;
   overflow-y: auto;
   padding-right: var(--space-xs);
+}
+
+.member-card .member-item {
+  flex: 0 0 auto !important; /* Retain natural row height; never stretch vertically */
+  height: auto !important;
+  min-height: 48px;
 }
 
 /* =============================================
@@ -4199,101 +4207,69 @@ canvas {
 }
 
 /* =============================================
-   CASH FLOW ACTIVITY CALENDARS
+   GITHUB-STYLE FINANCIAL ACTIVITY HEATMAPS
    ============================================= */
-.cashflow-calendars-section {
-  margin-top: var(--space-lg);
+.financial-heatmaps-section {
+  grid-column: 1 / -1;
+  margin-top: var(--space-xl);
   padding-top: var(--space-lg);
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid rgba(211, 172, 119, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
   position: relative;
 }
 
-.cashflow-calendars-header {
+.financial-heatmaps-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.cashflow-calendars-title-wrap h4 {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.cashflow-calendars-hint {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-.cashflow-calendars-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-md);
-}
-
-@media (max-width: 600px) {
-  .cashflow-calendars-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.mini-cal-card {
-  background: rgba(22, 17, 13, 0.4);
-  border: 1px solid rgba(211, 172, 119, 0.12);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
+.financial-heatmaps-title-wrap {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
 }
 
-.mini-cal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.mini-cal-title {
+.heatmaps-title-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.78rem;
+  color: var(--gold);
+}
+
+.heatmaps-title-row h4 {
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
 }
 
-.mini-cal-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.financial-heatmaps-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
-.mini-cal-dot.income-dot {
-  background: #34C759;
-  box-shadow: 0 0 6px rgba(52, 199, 89, 0.4);
-}
-
-.mini-cal-dot.expense-dot {
-  background: #FF3B5C;
-  box-shadow: 0 0 6px rgba(255, 59, 92, 0.4);
-}
-
-.mini-cal-nav {
-  display: flex;
+.heatmap-year-control {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  background: rgba(22, 17, 13, 0.6);
+  border: 1px solid rgba(211, 172, 119, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
 }
 
-.mini-cal-btn {
+.heatmap-year-nav-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
+  border: none;
   color: var(--text-muted);
   width: 24px;
   height: 24px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4302,224 +4278,301 @@ canvas {
   padding: 0;
 }
 
-.mini-cal-btn:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(211, 172, 119, 0.3);
-}
-
-.mini-cal-month-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  min-width: 68px;
-  text-align: center;
-}
-
-.mini-cal-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.mini-cal-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-}
-
-.mini-cal-day {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  border-radius: 6px;
-  border: 1px solid transparent;
-  transition: all 0.18s ease;
-  user-select: none;
-}
-
-.mini-cal-day.other-month {
-  opacity: 0.22;
-  cursor: default;
-}
-
-.mini-cal-day.has-income {
-  background: rgba(52, 199, 89, 0.12);
-  border-color: rgba(52, 199, 89, 0.3);
-  color: #4ADE80;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.mini-cal-day.has-income:hover {
-  background: rgba(52, 199, 89, 0.24);
-  border-color: #34C759;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.25);
-}
-
-.mini-cal-day.has-expense {
-  background: rgba(255, 59, 92, 0.12);
-  border-color: rgba(255, 59, 92, 0.3);
-  color: #FF6B8B;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.mini-cal-day.has-expense:hover {
-  background: rgba(255, 59, 92, 0.22);
-  border-color: #FF3B5C;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(255, 59, 92, 0.25);
-}
-
-.mini-cal-day.active-day {
-  outline: 1.5px solid var(--gold);
-  outline-offset: 1px;
-}
-
-/* =============================================
-   CALENDAR DAY POPOVER
-   ============================================= */
-.cal-day-popover {
-  margin-top: var(--space-md);
-  background: rgba(18, 14, 11, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(211, 172, 119, 0.3);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
-  animation: popoverFadeIn 0.2s ease-out;
-}
-
-@keyframes popoverFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.cal-popover-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.cal-popover-badge-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cal-popover-badge {
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.cal-popover-badge.income {
-  background: rgba(52, 199, 89, 0.15);
-  color: #4ADE80;
-  border: 1px solid rgba(52, 199, 89, 0.3);
-}
-
-.cal-popover-badge.expense {
-  background: rgba(255, 59, 92, 0.15);
-  color: #FF6B8B;
-  border: 1px solid rgba(255, 59, 92, 0.3);
-}
-
-.cal-popover-date {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.cal-popover-close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: all 0.15s ease;
-}
-
-.cal-popover-close-btn:hover {
-  color: var(--text-primary);
+.heatmap-year-nav-btn:hover {
+  color: var(--gold-light);
   background: rgba(255, 255, 255, 0.08);
 }
 
-.cal-popover-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 180px;
-  overflow-y: auto;
-  margin-bottom: 10px;
+.heatmap-year-display {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 44px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
 }
 
-.cal-popover-item {
+.heatmaps-stack {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 6px;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.heatmap-card {
+  background: rgba(22, 17, 13, 0.45);
+  border: 1px solid rgba(211, 172, 119, 0.12);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.cal-popover-item-label {
-  font-size: 0.74rem;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-.cal-popover-item-amount {
-  font-size: 0.76rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.cal-popover-item-amount.income {
-  color: #34C759;
-}
-
-.cal-popover-item-amount.expense {
-  color: #FF3B5C;
-}
-
-.cal-popover-footer {
+.heatmap-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 0.74rem;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.cal-popover-total-label {
+.heatmap-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.heatmap-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.heatmap-dot.income-dot {
+  background: #34C759;
+  box-shadow: 0 0 8px rgba(52, 199, 89, 0.5);
+}
+
+.heatmap-dot.expense-dot {
+  background: #FF3B5C;
+  box-shadow: 0 0 8px rgba(255, 59, 92, 0.5);
+}
+
+.heatmap-card-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.heatmap-summary-badge {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.legend-text {
+  font-size: 0.66rem;
   color: var(--text-muted);
+  margin: 0 2px;
 }
 
-.cal-popover-total-val {
+.legend-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+}
+
+.heatmap-scroll-area {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 6px;
+}
+
+.heatmap-scroll-area::-webkit-scrollbar {
+  height: 4px;
+}
+
+.heatmap-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(211, 172, 119, 0.2);
+  border-radius: 4px;
+}
+
+.heatmap-grid-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 745px;
+  user-select: none;
+}
+
+/* Month labels header row */
+.heatmap-months-row {
+  display: grid;
+  grid-template-columns: 28px repeat(53, 11px);
+  gap: 3px;
+  font-size: 0.64rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-bottom: 2px;
+  height: 14px;
+}
+
+.heatmap-month-label {
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* Weekday column + Day Cells */
+.heatmap-main-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.heatmap-weekdays-col {
+  display: grid;
+  grid-template-rows: repeat(7, 11px);
+  gap: 3px;
+  width: 28px;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  line-height: 11px;
+  text-align: left;
+}
+
+.heatmap-cells-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 11px);
+  grid-auto-flow: column;
+  grid-auto-columns: 11px;
+  gap: 3px;
+}
+
+/* Individual Cell */
+.heatmap-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 0.12s ease, outline 0.12s ease;
+  outline: 1.5px solid transparent;
+  outline-offset: 1px;
+  position: relative;
+}
+
+.heatmap-cell:hover,
+.heatmap-cell:focus {
+  transform: scale(1.35);
+  outline-color: var(--gold);
+  z-index: 10;
+}
+
+.heatmap-cell.empty {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.heatmap-cell.out-of-filter {
+  opacity: 0.35;
+}
+
+/* Neutral Cells */
+.level-0 {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Income Colors (Green shades) */
+.income-1 {
+  background: #0f3d1f;
+  border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+.income-2 {
+  background: #15803d;
+  border: 1px solid rgba(52, 199, 89, 0.35);
+}
+
+.income-3 {
+  background: #22c55e;
+  border: 1px solid rgba(52, 199, 89, 0.55);
+}
+
+.income-4 {
+  background: #39e75f;
+  border: 1px solid #34C759;
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.45);
+}
+
+/* Expense Colors (Red shades) */
+.expense-1 {
+  background: #451216;
+  border: 1px solid rgba(255, 59, 92, 0.2);
+}
+
+.expense-2 {
+  background: #991b1b;
+  border: 1px solid rgba(255, 59, 92, 0.35);
+}
+
+.expense-3 {
+  background: #ef4444;
+  border: 1px solid rgba(255, 59, 92, 0.55);
+}
+
+.expense-4 {
+  background: #ff4d6d;
+  border: 1px solid #FF3B5C;
+  box-shadow: 0 0 6px rgba(255, 59, 92, 0.45);
+}
+
+/* Floating Tooltip */
+.heatmap-tooltip {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  background: rgba(18, 14, 11, 0.96);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 12px rgba(212, 175, 55, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.heatmap-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.heatmap-tt-date {
+  font-weight: 600;
+  color: var(--gold-light);
+  margin-bottom: 2px;
+}
+
+.heatmap-tt-count {
+  color: #e5e5e5;
+  font-size: 0.7rem;
+}
+
+.heatmap-tt-amount.income {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.heatmap-tt-amount.expense {
+  color: #ff6b8b;
+  font-weight: 600;
+}
+
+.heatmap-tt-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.7rem;
+}
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--gold-light);

@@ -539,16 +539,15 @@ async function getAnalyticsData(req, res) {
         GROUP BY ${chartGroupExpr}
         ORDER BY ${chartGroupExpr}
       `, [startDate, endDate]),
-      // E. All transaction records within selected period with details
+      // E. All transaction records with details (for breakdowns, recent, and yearly heatmaps)
       pool.query(`
         SELECT t.id, t.type, t.amount, TO_CHAR(t.date, 'YYYY-MM-DD') AS date,
                i.source, e.category, e.description
         FROM transactions t
         LEFT JOIN income i ON i.transaction_id = t.id
         LEFT JOIN expenses e ON e.transaction_id = t.id
-        WHERE t.date >= ? AND t.date <= ?
         ORDER BY t.date ASC, t.id ASC
-      `, [startDate, endDate])
+      `)
     ]);
 
     const totalIncome = parseFloat(summaryRows[0].totalIncome);
@@ -582,6 +581,7 @@ async function getAnalyticsData(req, res) {
     }));
 
     // ── 3. High-Performance In-Memory Derivations (0ms) ──
+    // Complete activity records across all years for GitHub-style yearly heatmaps
     const calendarActivity = txRows.map(r => ({
       id: r.id,
       type: r.type,
@@ -592,32 +592,36 @@ async function getAnalyticsData(req, res) {
       description: r.description
     }));
 
-    // Build breakdown aggregates & top records in a single pass
+    // Filter transactions for the selected period (startDate to endDate)
+    const periodTx = txRows.filter(r => r.date >= startDate && r.date <= endDate);
+
+    // Build breakdown aggregates & top records in a single pass from periodTx
     const catMap = new Map();
     const srcMap = new Map();
     let topExpense = null;
     let topIncome = null;
 
-    for (const tx of calendarActivity) {
+    for (const tx of periodTx) {
+      const amt = parseFloat(tx.amount);
       if (tx.type === 'expense') {
         const cat = tx.category || 'Uncategorized';
         if (!catMap.has(cat)) catMap.set(cat, { name: cat, total: 0, count: 0 });
         const c = catMap.get(cat);
-        c.total += tx.amount;
+        c.total += amt;
         c.count += 1;
 
-        if (!topExpense || tx.amount > topExpense.amount) {
-          topExpense = { id: tx.id, amount: tx.amount, label: cat, description: tx.description, date: tx.date };
+        if (!topExpense || amt > topExpense.amount) {
+          topExpense = { id: tx.id, amount: amt, label: cat, description: tx.description, date: tx.date };
         }
       } else if (tx.type === 'income') {
         const src = tx.source || 'Other';
         if (!srcMap.has(src)) srcMap.set(src, { name: src, total: 0, count: 0 });
         const s = srcMap.get(src);
-        s.total += tx.amount;
+        s.total += amt;
         s.count += 1;
 
-        if (!topIncome || tx.amount > topIncome.amount) {
-          topIncome = { id: tx.id, amount: tx.amount, label: src, date: tx.date };
+        if (!topIncome || amt > topIncome.amount) {
+          topIncome = { id: tx.id, amount: amt, label: src, date: tx.date };
         }
       }
     }
@@ -640,8 +644,8 @@ async function getAnalyticsData(req, res) {
       income: topIncome
     };
 
-    // Recent transactions: sorted newest first
-    const descTx = [...calendarActivity].sort((a, b) => {
+    // Recent transactions for the selected period: sorted newest first
+    const descTx = [...periodTx].sort((a, b) => {
       if (b.date !== a.date) return b.date.localeCompare(a.date);
       return b.id - a.id;
     });
@@ -650,11 +654,11 @@ async function getAnalyticsData(req, res) {
       income: descTx
         .filter(t => t.type === 'income')
         .slice(0, 4)
-        .map(t => ({ id: t.id, amount: t.amount, date: t.date, label: t.source })),
+        .map(t => ({ id: t.id, amount: parseFloat(t.amount), date: t.date, label: t.source })),
       expenses: descTx
         .filter(t => t.type === 'expense')
         .slice(0, 4)
-        .map(t => ({ id: t.id, amount: t.amount, date: t.date, label: t.category, description: t.description }))
+        .map(t => ({ id: t.id, amount: parseFloat(t.amount), date: t.date, label: t.category, description: t.description }))
     };
 
     // ── 4. Dynamic Insights per Tab ──
