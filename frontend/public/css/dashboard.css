@@ -3938,28 +3938,78 @@ canvas {
 }
 
 /* Analytics Content Card Grid */
-.analytics-content {
+.analytics-cards-row {
   min-width: 0;
-  /* Now a row of separate cards */
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: var(--space-md);
-  align-items: start;
-  margin-bottom: var(--space-md);
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Individual card wrappers inside analytics-content */
+.analytics-content {
+  margin-bottom: 0;
+}
+
+.analytics-breakdown-row {
+  margin-bottom: 0;
+}
+
+/* Individual card wrappers inside analytics-content & analytics-breakdown-row */
 .analytics-chart-card,
-.analytics-analysis-card {
+.analytics-analysis-card,
+.analytics-breakdown-card,
+.analytics-recent-card {
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
 .analytics-chart-card .glass-card-content,
-.analytics-analysis-card .glass-card-content {
+.analytics-analysis-card .glass-card-content,
+.analytics-breakdown-card .glass-card-content,
+.analytics-recent-card .glass-card-content {
   padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  box-sizing: border-box;
+}
+
+.analytics-analysis-card .glass-card-content {
+  justify-content: space-between;
+}
+
+.analysis-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.analysis-insight {
+  margin-top: auto;
+}
+
+/* Breakdown Card */
+.analytics-breakdown-card .analytics-chart-header {
+  margin-bottom: var(--space-md);
+}
+
+.analytics-breakdown-card .analytics-chart-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.analytics-breakdown-container {
+  position: relative;
+  height: 240px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Heatmaps outer card */
@@ -4027,25 +4077,6 @@ canvas {
 
 .analytics-chart-container canvas {
   max-width: 100%;
-}
-
-/* Breakdown Chart (secondary) */
-.analytics-breakdown-chart {
-  margin-top: var(--space-lg);
-  padding-top: var(--space-lg);
-  border-top: 1px solid var(--border-color);
-}
-
-.analytics-breakdown-chart h4 {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--space-md);
-}
-
-.analytics-breakdown-container {
-  position: relative;
-  height: 200px;
 }
 
 /* Analysis Panel */
@@ -4660,34 +4691,24 @@ canvas {
 }
 
 /* =============================================
-   RECENT TRANSACTIONS IN ANALYSIS PANEL
+   RECENT TRANSACTIONS CARD (Expenses & Income tabs)
    ============================================= */
-.analysis-recent-card {
-  margin-top: var(--space-md);
-  padding: var(--space-md);
-  background: rgba(22, 17, 13, 0.45);
-  border: 1px solid rgba(211, 172, 119, 0.12);
-  border-radius: var(--radius-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .analysis-recent-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: var(--space-md);
 }
 
-.analysis-recent-header h5 {
-  font-size: 0.78rem;
+.analysis-recent-header h4 {
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
 
 .analysis-recent-view-all {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--gold);
   font-weight: 500;
   text-decoration: none;
@@ -4702,22 +4723,45 @@ canvas {
 .analysis-recent-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+  flex: 1;
+}
+
+.analysis-recent-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.analysis-recent-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.analysis-recent-list::-webkit-scrollbar-thumb {
+  background: rgba(211, 172, 119, 0.2);
+  border-radius: 4px;
+}
+
+.analysis-recent-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(211, 172, 119, 0.4);
 }
 
 .analysis-recent-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 9px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 6px;
-  transition: background 0.18s ease;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(211, 172, 119, 0.08);
+  border-radius: var(--radius-sm);
+  transition: background 0.18s ease, border-color 0.18s ease;
 }
 
 .analysis-recent-item:hover {
-  background: rgba(211, 172, 119, 0.06);
+  background: rgba(211, 172, 119, 0.08);
+  border-color: rgba(211, 172, 119, 0.2);
 }
 
 .analysis-recent-left {
@@ -4728,39 +4772,42 @@ canvas {
 }
 
 .analysis-recent-label {
-  font-size: 0.73rem;
+  font-size: 0.78rem;
   color: var(--text-primary);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 145px;
+  max-width: 150px;
 }
 
 .analysis-recent-date {
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
 }
 
 .analysis-recent-amount {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 600;
   white-space: nowrap;
+  font-family: var(--font-display);
 }
 
-.analysis-recent-amount.income {
+.analysis-recent-amount.income,
+.analysis-recent-amount.recent-income {
   color: #34C759;
 }
 
-.analysis-recent-amount.expense {
+.analysis-recent-amount.expense,
+.analysis-recent-amount.recent-expense {
   color: #FF3B5C;
 }
 
 .analysis-recent-empty {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   text-align: center;
-  padding: 8px 0;
+  padding: 28px 0;
 }
 
 /* =============================================
@@ -4960,13 +5007,9 @@ canvas {
    RESPONSIVE — ANALYTICS
    ============================================= */
 @media (max-width: 1400px) {
-  .analytics-content {
+  .analytics-cards-row {
     grid-template-columns: 1fr 280px;
     gap: var(--space-md);
-  }
-  .analytics-grid {
-    grid-template-columns: 1fr 280px;
-    gap: var(--space-lg);
   }
 }
 
@@ -4986,18 +5029,8 @@ canvas {
 }
 
 @media (max-width: 1024px) {
-  .analytics-content {
+  .analytics-cards-row {
     grid-template-columns: 1fr;
-  }
-  .analytics-analysis-card {
-    border-top: 1px solid var(--border-color);
-  }
-  .analytics-grid {
-    grid-template-columns: 1fr;
-  }
-  .analytics-panel-col {
-    border-top: 1px solid var(--border-color);
-    padding-top: var(--space-lg);
   }
 }
 

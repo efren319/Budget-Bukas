@@ -262,7 +262,7 @@
     </div>
   </div>
 
-  <!-- Analytics Content: Chart + Analysis as separate cards -->
+  <!-- Analytics Content: Row 1 (Chart + Analysis as separate cards) -->
   <div class="analytics-content analytics-cards-row">
 
     <!-- CARD 1: Financial Analytics Chart -->
@@ -279,13 +279,6 @@
         </div>
         <div class="analytics-chart-container">
           <canvas id="analytics-chart"></canvas>
-        </div>
-        <!-- Secondary chart for breakdowns (expenses/income tabs) -->
-        <div class="analytics-breakdown-chart" id="analytics-breakdown-section" style="display:none;">
-          <h4 id="analytics-breakdown-title">Category Breakdown</h4>
-          <div class="analytics-breakdown-container">
-            <canvas id="analytics-breakdown-chart"></canvas>
-          </div>
         </div>
       </div>
     </div>
@@ -328,25 +321,52 @@
             </div>
             <p id="analysis-insight-text" class="analysis-insight-text">Loading...</p>
           </div>
-
-          <!-- Recent Transactions Card below Key Insight (Expenses & Income tabs) -->
-          <div class="analysis-recent-card" id="analysis-recent-card" style="display: none;">
-            <div class="analysis-recent-header">
-              <h5 id="analysis-recent-title">Recent Transactions</h5>
-              <a href="#" class="analysis-recent-view-all" id="analysis-recent-view-all" data-goto="records">View All</a>
-            </div>
-            <div class="analysis-recent-list" id="analysis-recent-list">
-              <!-- Rendered by JS -->
-            </div>
-          </div>
         </div>
       </div>
     </div>
 
-  </div><!-- /analytics-cards-row -->
+  </div><!-- /analytics-cards-row (Row 1) -->
 
-  <!-- CARD 3: Financial Activity Heatmaps (shared card) -->
-  <div class="heatmaps-outer-card glass-card">
+  <!-- ROW 2 (Expenses & Income tabs): Category/Source Breakdown Pie Chart + Recent Transactions -->
+  <div class="analytics-cards-row analytics-breakdown-row" id="analytics-breakdown-row" style="display: none;">
+    <!-- CARD 3: Expense Category Breakdown / Income Source Breakdown -->
+    <div class="analytics-breakdown-card glass-card" id="analytics-breakdown-card">
+      <div class="glass-glow-bottom"></div>
+      <div class="glass-glow-bright"></div>
+      <div class="glass-glow-top"></div>
+      <div class="glass-sheen"></div>
+      <div class="glass-edge"></div>
+      <div class="glass-card-content">
+        <div class="analytics-chart-header">
+          <h3 id="analytics-breakdown-title">Expense Category Breakdown</h3>
+        </div>
+        <div class="analytics-breakdown-container" id="analytics-breakdown-section">
+          <canvas id="analytics-breakdown-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 4: Recent Expenses / Recent Income -->
+    <div class="analytics-recent-card glass-card" id="analysis-recent-card">
+      <div class="glass-glow-bottom"></div>
+      <div class="glass-glow-bright"></div>
+      <div class="glass-glow-top"></div>
+      <div class="glass-sheen"></div>
+      <div class="glass-edge"></div>
+      <div class="glass-card-content">
+        <div class="analysis-recent-header">
+          <h4 id="analysis-recent-title">Recent Transactions</h4>
+          <a href="#" class="analysis-recent-view-all" id="analysis-recent-view-all" data-goto="records">View All</a>
+        </div>
+        <div class="analysis-recent-list" id="analysis-recent-list">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div><!-- /analytics-breakdown-row (Row 2) -->
+
+  <!-- CARD 5: Financial Activity Heatmaps (only on Cash Flow tab) -->
+  <div class="heatmaps-outer-card glass-card" id="heatmaps-outer-card">
     <div class="glass-glow-bottom"></div>
     <div class="glass-glow-bright"></div>
     <div class="glass-glow-top"></div>
