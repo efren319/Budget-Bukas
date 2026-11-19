@@ -3851,7 +3851,7 @@ canvas {
   margin-bottom: var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-lg);
 }
 
 /* Analytics Header (Tabs + Chart Type) */
@@ -3941,18 +3941,19 @@ canvas {
 .analytics-cards-row {
   min-width: 0;
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: var(--space-md);
+  gap: var(--space-lg);
   align-items: stretch;
   width: 100%;
   box-sizing: border-box;
 }
 
 .analytics-content {
+  grid-template-columns: 1fr 320px;
   margin-bottom: 0;
 }
 
 .analytics-breakdown-row {
+  grid-template-columns: 1fr 1.25fr;
   margin-bottom: 0;
 }
 
@@ -4005,7 +4006,7 @@ canvas {
 
 .analytics-breakdown-container {
   position: relative;
-  height: 240px;
+  height: 250px;
   width: 100%;
   display: flex;
   align-items: center;
@@ -4723,10 +4724,10 @@ canvas {
 .analysis-recent-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 240px;
+  gap: 0;
+  max-height: 250px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 6px;
   flex: 1;
 }
 
@@ -4752,16 +4753,18 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(211, 172, 119, 0.08);
-  border-radius: var(--radius-sm);
-  transition: background 0.18s ease, border-color 0.18s ease;
+  padding: 10px 4px;
+  background: transparent;
+  border-bottom: 1px solid rgba(211, 172, 119, 0.12);
+  transition: background 0.18s ease;
+}
+
+.analysis-recent-item:last-child {
+  border-bottom: none;
 }
 
 .analysis-recent-item:hover {
-  background: rgba(211, 172, 119, 0.08);
-  border-color: rgba(211, 172, 119, 0.2);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .analysis-recent-left {
@@ -4772,22 +4775,22 @@ canvas {
 }
 
 .analysis-recent-label {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--text-primary);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px;
+  max-width: 320px;
 }
 
 .analysis-recent-date {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
 }
 
 .analysis-recent-amount {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   white-space: nowrap;
   font-family: var(--font-display);
@@ -5008,8 +5011,13 @@ canvas {
    ============================================= */
 @media (max-width: 1400px) {
   .analytics-cards-row {
+    gap: var(--space-lg);
+  }
+  .analytics-content {
     grid-template-columns: 1fr 280px;
-    gap: var(--space-md);
+  }
+  .analytics-breakdown-row {
+    grid-template-columns: 1fr 1.15fr;
   }
 }
 
@@ -5029,7 +5037,9 @@ canvas {
 }
 
 @media (max-width: 1024px) {
-  .analytics-cards-row {
+  .analytics-cards-row,
+  .analytics-content,
+  .analytics-breakdown-row {
     grid-template-columns: 1fr;
   }
 }
