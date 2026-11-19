@@ -467,22 +467,11 @@ function renderMembers(members) {
 }
 
 function syncMemberListHeight() {
-  const memberCard = document.querySelector('.member-card');
   const memberList = document.getElementById('members-list');
-  if (!memberCard || !memberList) return;
-
-  if (window.innerWidth > 900) {
-    const cardRect = memberCard.getBoundingClientRect();
-    const header = memberCard.querySelector('.side-card-header');
-    const headerHeight = header ? header.offsetHeight : 30;
-    // Padding: 24px top + 24px bottom (48px) + header margin-bottom (16px) = 64px
-    const available = Math.max(300, Math.floor(cardRect.height - headerHeight - 64));
-    memberList.style.maxHeight = `${available}px`;
-    memberList.style.height = `${available}px`;
-  } else {
-    memberList.style.maxHeight = '';
-    memberList.style.height = '';
-  }
+  if (!memberList) return;
+  // Let CSS Flexbox dynamically stretch and manage the member list height
+  memberList.style.maxHeight = '';
+  memberList.style.height = '';
 }
 
 async function loadChartData(period) {
@@ -1457,13 +1446,18 @@ function renderYearlyHeatmap(type, allActivity, containerId, year) {
     monthCols[weekCol] = monthNames[m];
   }
 
-  let monthsHtml = `<div class="heatmap-months-row"><div></div>`; // 1st item is spacer for weekday column
+  let monthsHtml = `
+    <div class="heatmap-months-row">
+      <div class="heatmap-months-spacer"></div>
+      <div class="heatmap-months-track">`;
   for (let col = 0; col < 53; col++) {
     if (monthCols[col]) {
-      monthsHtml += `<span class="heatmap-month-label" style="grid-column: ${col + 2};">${monthCols[col]}</span>`;
+      monthsHtml += `<span class="heatmap-month-label" style="grid-column: ${col + 1};">${monthCols[col]}</span>`;
     }
   }
-  monthsHtml += `</div>`;
+  monthsHtml += `
+      </div>
+    </div>`;
 
   // 2. Build Weekdays column (Mon, Wed, Fri labeled)
   const weekdaysHtml = `
