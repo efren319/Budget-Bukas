@@ -120,14 +120,14 @@ function initDashboard() {
   // Initialize analytics system
   initAnalytics();
 
-  // Keep member list height synced with the card background length
+  // Keep member card height synced with the analytics content card
   window.addEventListener('resize', syncMemberListHeight);
   if (window.ResizeObserver) {
-    const mainCol = document.querySelector('.dashboard-main-content');
-    if (mainCol) {
+    const analyticsContent = document.querySelector('.analytics-content');
+    if (analyticsContent) {
       new ResizeObserver(() => {
         syncMemberListHeight();
-      }).observe(mainCol);
+      }).observe(analyticsContent);
     }
   }
 }
@@ -467,11 +467,31 @@ function renderMembers(members) {
 }
 
 function syncMemberListHeight() {
+  const memberCard = document.querySelector('.member-card');
   const memberList = document.getElementById('members-list');
-  if (!memberList) return;
-  // Let CSS Flexbox dynamically stretch and manage the member list height
-  memberList.style.maxHeight = '';
-  memberList.style.height = '';
+  const analyticsContent = document.querySelector('.analytics-content');
+  if (!memberCard || !memberList || !analyticsContent) return;
+
+  // Only apply on desktop (side-by-side layout)
+  if (window.innerWidth <= 1200) {
+    memberCard.style.height = '';
+    memberList.style.maxHeight = '';
+    return;
+  }
+
+  const chartH = analyticsContent.getBoundingClientRect().height;
+  if (chartH <= 0) return;
+
+  // Set the card to match the analytics card height exactly
+  memberCard.style.height = `${Math.round(chartH)}px`;
+
+  // The list scrolls within the card; cap its max-height so natural rows don't stretch
+  const header = memberCard.querySelector('.side-card-header');
+  const headerH = header ? header.getBoundingClientRect().height : 46;
+  // Approximate glass-card padding (top + bottom): 24px each = 48px
+  const cardPadding = 48;
+  const listMaxH = Math.max(80, Math.floor(chartH - headerH - cardPadding - 8));
+  memberList.style.maxHeight = `${listMaxH}px`;
 }
 
 async function loadChartData(period) {
@@ -1095,6 +1115,9 @@ function renderAnalyticsChart(data) {
     }
   });
 
+  // Sync member panel height now that the chart has rendered
+  requestAnimationFrame(syncMemberListHeight);
+
   // Handle breakdown chart (expenses/income tabs)
   const breakdownSection = document.getElementById('analytics-breakdown-section');
   if ((analyticsState.tab === 'expenses' || analyticsState.tab === 'income') && data.breakdown) {
@@ -1448,7 +1471,6 @@ function renderYearlyHeatmap(type, allActivity, containerId, year) {
 
   let monthsHtml = `
     <div class="heatmap-months-row">
-      <div class="heatmap-months-spacer"></div>
       <div class="heatmap-months-track">`;
   for (let col = 0; col < 53; col++) {
     if (monthCols[col]) {
@@ -1459,18 +1481,7 @@ function renderYearlyHeatmap(type, allActivity, containerId, year) {
       </div>
     </div>`;
 
-  // 2. Build Weekdays column (Mon, Wed, Fri labeled)
-  const weekdaysHtml = `
-    <div class="heatmap-weekdays-col">
-      <div></div>
-      <div>Mon</div>
-      <div></div>
-      <div>Wed</div>
-      <div></div>
-      <div>Fri</div>
-      <div></div>
-    </div>
-  `;
+  // Weekday labels removed per design requirement
 
   // 3. Build Cells Grid (53 columns x 7 rows)
   let cellsHtml = `<div class="heatmap-cells-grid">`;
@@ -1501,7 +1512,6 @@ function renderYearlyHeatmap(type, allActivity, containerId, year) {
   container.innerHTML = `
     ${monthsHtml}
     <div class="heatmap-main-row">
-      ${weekdaysHtml}
       ${cellsHtml}
     </div>
   `;
