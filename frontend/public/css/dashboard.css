@@ -3849,6 +3849,9 @@ canvas {
 /* Analytics Section Container */
 .analytics-section {
   margin-bottom: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
 /* Analytics Header (Tabs + Chart Type) */
@@ -3856,7 +3859,7 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-md);
+  margin-bottom: 0;
   gap: var(--space-md);
   flex-wrap: wrap;
 }
@@ -3936,10 +3939,40 @@ canvas {
 
 /* Analytics Content Card Grid */
 .analytics-content {
-  padding: var(--space-lg);
   min-width: 0;
+  /* Now a row of separate cards */
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--space-md);
+  align-items: start;
+  margin-bottom: var(--space-md);
 }
 
+/* Individual card wrappers inside analytics-content */
+.analytics-chart-card,
+.analytics-analysis-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.analytics-chart-card .glass-card-content,
+.analytics-analysis-card .glass-card-content {
+  padding: var(--space-lg);
+  flex: 1;
+}
+
+/* Heatmaps outer card */
+.heatmaps-outer-card {
+  min-width: 0;
+  margin-top: 0;
+}
+
+.heatmaps-outer-card .glass-card-content {
+  padding: var(--space-lg);
+}
+
+/* Remove old grid from analytics-grid since we no longer use it */
 .analytics-grid {
   display: grid;
   grid-template-columns: 1fr 320px;
@@ -4018,11 +4051,13 @@ canvas {
 /* Analysis Panel */
 .analytics-panel-col {
   min-width: 0;
+  flex: 1;
 }
 
 .analysis-panel {
-  position: sticky;
-  top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .analysis-header {
@@ -4215,10 +4250,9 @@ canvas {
    GITHUB-STYLE FINANCIAL ACTIVITY HEATMAPS
    ============================================= */
 .financial-heatmaps-section {
-  grid-column: 1 / -1;
-  margin-top: var(--space-xl);
-  padding-top: var(--space-lg);
-  border-top: 1px solid rgba(211, 172, 119, 0.12);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
@@ -4926,6 +4960,10 @@ canvas {
    RESPONSIVE — ANALYTICS
    ============================================= */
 @media (max-width: 1400px) {
+  .analytics-content {
+    grid-template-columns: 1fr 280px;
+    gap: var(--space-md);
+  }
   .analytics-grid {
     grid-template-columns: 1fr 280px;
     gap: var(--space-lg);
@@ -4948,6 +4986,12 @@ canvas {
 }
 
 @media (max-width: 1024px) {
+  .analytics-content {
+    grid-template-columns: 1fr;
+  }
+  .analytics-analysis-card {
+    border-top: 1px solid var(--border-color);
+  }
   .analytics-grid {
     grid-template-columns: 1fr;
   }

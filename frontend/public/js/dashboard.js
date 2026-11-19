@@ -123,7 +123,7 @@ function initDashboard() {
   // Keep member card height synced with the analytics content card
   window.addEventListener('resize', syncMemberListHeight);
   if (window.ResizeObserver) {
-    const analyticsContent = document.querySelector('.analytics-content');
+    const analyticsContent = document.querySelector('.analytics-chart-card') || document.querySelector('.analytics-content');
     if (analyticsContent) {
       new ResizeObserver(() => {
         syncMemberListHeight();
@@ -469,8 +469,9 @@ function renderMembers(members) {
 function syncMemberListHeight() {
   const memberCard = document.querySelector('.member-card');
   const memberList = document.getElementById('members-list');
-  const analyticsContent = document.querySelector('.analytics-content');
-  if (!memberCard || !memberList || !analyticsContent) return;
+  // Track the analytics chart card (first sub-card in the analytics row)
+  const analyticsChartCard = document.querySelector('.analytics-chart-card') || document.querySelector('.analytics-content');
+  if (!memberCard || !memberList || !analyticsChartCard) return;
 
   // Only apply on desktop (side-by-side layout)
   if (window.innerWidth <= 1200) {
@@ -479,7 +480,7 @@ function syncMemberListHeight() {
     return;
   }
 
-  const chartH = analyticsContent.getBoundingClientRect().height;
+  const chartH = analyticsChartCard.getBoundingClientRect().height;
   if (chartH <= 0) return;
 
   // Set the card to match the analytics card height exactly

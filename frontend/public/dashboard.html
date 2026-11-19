@@ -262,18 +262,17 @@
     </div>
   </div>
 
-  <!-- Analytics Content: Chart + Analysis -->
-  <div class="analytics-content glass-card">
-    <!-- Glass card glow layers -->
-    <div class="glass-glow-bottom"></div>
-    <div class="glass-glow-bright"></div>
-    <div class="glass-glow-top"></div>
-    <div class="glass-sheen"></div>
-    <div class="glass-edge"></div>
+  <!-- Analytics Content: Chart + Analysis as separate cards -->
+  <div class="analytics-content analytics-cards-row">
 
-    <div class="glass-card-content analytics-grid">
-      <!-- LEFT: Chart Column -->
-      <div class="analytics-chart-col">
+    <!-- CARD 1: Financial Analytics Chart -->
+    <div class="analytics-chart-card glass-card">
+      <div class="glass-glow-bottom"></div>
+      <div class="glass-glow-bright"></div>
+      <div class="glass-glow-top"></div>
+      <div class="glass-sheen"></div>
+      <div class="glass-edge"></div>
+      <div class="glass-card-content analytics-chart-col">
         <div class="analytics-chart-header">
           <h3 id="analytics-chart-title">Income vs Expenses</h3>
           <div class="analytics-chart-legend" id="analytics-chart-legend"></div>
@@ -289,9 +288,16 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- RIGHT: Analysis Panel -->
-      <div class="analytics-panel-col">
+    <!-- CARD 2: Financial Analysis / Insights -->
+    <div class="analytics-analysis-card glass-card">
+      <div class="glass-glow-bottom"></div>
+      <div class="glass-glow-bright"></div>
+      <div class="glass-glow-top"></div>
+      <div class="glass-sheen"></div>
+      <div class="glass-edge"></div>
+      <div class="glass-card-content analytics-panel-col">
         <div class="analysis-panel">
           <div class="analysis-header">
             <div class="analysis-header-left">
@@ -335,8 +341,18 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- FULL WIDTH BELOW: GitHub-style Financial Activity Heatmaps -->
+  </div><!-- /analytics-cards-row -->
+
+  <!-- CARD 3: Financial Activity Heatmaps (shared card) -->
+  <div class="heatmaps-outer-card glass-card">
+    <div class="glass-glow-bottom"></div>
+    <div class="glass-glow-bright"></div>
+    <div class="glass-glow-top"></div>
+    <div class="glass-sheen"></div>
+    <div class="glass-edge"></div>
+    <div class="glass-card-content">
       <div class="financial-heatmaps-section" id="financial-heatmaps-section">
         <div class="financial-heatmaps-header">
           <div class="financial-heatmaps-title-wrap">
@@ -410,7 +426,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </div><!-- /heatmaps-outer-card -->
 
   <!-- Heatmap Tooltip (Hover & Focus) -->
   <div class="heatmap-tooltip" id="heatmap-tooltip" style="display: none;"></div>
