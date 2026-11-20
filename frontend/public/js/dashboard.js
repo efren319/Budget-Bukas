@@ -14,6 +14,13 @@ const analyticsCache = new Map();
 let heatmapSelectedYear = new Date().getFullYear();
 let activeDayPopoverKey = null;
 
+// ── Interactive Financial Date Range Calendar State ──
+let calViewYear = new Date().getFullYear();
+let calViewMonth = new Date().getMonth();
+let calSelectedStart = null;
+let calSelectedEnd = null;
+const calendarActivityMap = new Map();
+
 let analyticsState = {
   tab: 'cashflow',
   chartType: 'bar',
@@ -638,6 +645,27 @@ function renderChart(chartData, period) {
 // FINANCIAL ANALYTICS SYSTEM
 // =============================================
 
+function dateToYMD(d) {
+  if (!d || !(d instanceof Date) || isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function formatCalDisplayDate(ymdStr) {
+  if (!ymdStr) return '';
+  const parts = ymdStr.split('-');
+  if (parts.length < 3) return ymdStr;
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  const date = new Date(y, m, d);
+  const monthShort = date.toLocaleString('en-US', { month: 'short' });
+  const dayStr = String(d).padStart(2, '0');
+  return `${monthShort} ${dayStr}, ${y}`;
+}
+
 function initAnalytics() {
   // Set default dates (current month)
   const now = new Date();
@@ -652,6 +680,13 @@ function initAnalytics() {
   const endInput = document.getElementById('filter-end-date');
   if (startInput) startInput.value = analyticsState.startDate;
   if (endInput) endInput.value = analyticsState.endDate;
+
+  // Initialize interactive financial date range calendar state
+  calSelectedStart = analyticsState.startDate;
+  calSelectedEnd = analyticsState.endDate;
+  calViewYear = y;
+  calViewMonth = now.getMonth();
+  initFinancialCalendar();
 
   // Tab buttons — instant switching from cached data
   document.querySelectorAll('.analytics-tab').forEach(btn => {
@@ -793,9 +828,19 @@ function initAnalytics() {
       }
 
       if (start && end) {
-        const fmt = d => d.toISOString().slice(0, 10);
-        if (startInput) startInput.value = fmt(start);
-        if (endInput) endInput.value = fmt(end);
+        const sStr = dateToYMD(start);
+        const eStr = dateToYMD(end);
+        if (startInput) startInput.value = sStr;
+        if (endInput) endInput.value = eStr;
+        calSelectedStart = sStr;
+        calSelectedEnd = eStr;
+        const [eY, eM] = eStr.split('-').map(Number);
+        calViewYear = eY;
+        calViewMonth = eM - 1;
+        analyticsState.startDate = sStr;
+        analyticsState.endDate = eStr;
+        renderFinancialCalendar();
+        loadAnalyticsData();
       }
     });
   }
@@ -804,11 +849,25 @@ function initAnalytics() {
   if (startInput) {
     startInput.addEventListener('change', () => {
       if (quickSelect) quickSelect.value = 'custom';
+      if (startInput.value) {
+        calSelectedStart = startInput.value;
+        if (calSelectedStart > calSelectedEnd) calSelectedEnd = calSelectedStart;
+        analyticsState.startDate = calSelectedStart;
+        analyticsState.endDate = calSelectedEnd;
+        renderFinancialCalendar();
+      }
     });
   }
   if (endInput) {
     endInput.addEventListener('change', () => {
       if (quickSelect) quickSelect.value = 'custom';
+      if (endInput.value) {
+        calSelectedEnd = endInput.value;
+        if (calSelectedStart > calSelectedEnd) calSelectedStart = calSelectedEnd;
+        analyticsState.startDate = calSelectedStart;
+        analyticsState.endDate = calSelectedEnd;
+        renderFinancialCalendar();
+      }
     });
   }
 
@@ -816,8 +875,12 @@ function initAnalytics() {
   const applyBtn = document.getElementById('filter-apply-btn');
   if (applyBtn) {
     applyBtn.addEventListener('click', () => {
-      if (startInput) analyticsState.startDate = startInput.value;
-      if (endInput) analyticsState.endDate = endInput.value;
+      if (calSelectedStart) analyticsState.startDate = calSelectedStart;
+      else if (startInput && startInput.value) analyticsState.startDate = startInput.value;
+
+      if (calSelectedEnd) analyticsState.endDate = calSelectedEnd;
+      else if (endInput && endInput.value) analyticsState.endDate = endInput.value;
+
       const groupBySelect = document.getElementById('filter-group-by');
       if (groupBySelect) analyticsState.groupBy = groupBySelect.value;
       loadAnalyticsData();
@@ -828,6 +891,331 @@ function initAnalytics() {
   loadAnalyticsData();
 }
 
+// =============================================
+// INTERACTIVE FINANCIAL DATE RANGE CALENDAR
+// =============================================
+
+function initFinancialCalendar() {
+  const prevMonthBtn = document.getElementById('fin-cal-prev-month');
+  const nextMonthBtn = document.getElementById('fin-cal-next-month');
+  const prevYearBtn = document.getElementById('fin-cal-prev-year');
+  const nextYearBtn = document.getElementById('fin-cal-next-year');
+
+  if (prevMonthBtn) {
+    prevMonthBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      calViewMonth--;
+      if (calViewMonth < 0) {
+        calViewMonth = 11;
+        calViewYear--;
+      }
+      renderFinancialCalendar();
+    });
+  }
+
+  if (nextMonthBtn) {
+    nextMonthBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      calViewMonth++;
+      if (calViewMonth > 11) {
+        calViewMonth = 0;
+        calViewYear++;
+      }
+      renderFinancialCalendar();
+    });
+  }
+
+  if (prevYearBtn) {
+    prevYearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      calViewYear--;
+      renderFinancialCalendar();
+    });
+  }
+
+  if (nextYearBtn) {
+    nextYearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      calViewYear++;
+      renderFinancialCalendar();
+    });
+  }
+
+  // Hide tooltip on scroll or clicking elsewhere
+  window.addEventListener('scroll', hideCalendarTooltip, true);
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.fin-cal-day-cell')) {
+      hideCalendarTooltip();
+    }
+  });
+
+  renderFinancialCalendar();
+}
+
+function updateCalendarActivityMap(transactions) {
+  calendarActivityMap.clear();
+  if (!Array.isArray(transactions)) return;
+
+  transactions.forEach(tx => {
+    if (!tx || !tx.date) return;
+    const dateStr = String(tx.date).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+
+    let entry = calendarActivityMap.get(dateStr);
+    if (!entry) {
+      entry = { incomeCount: 0, expenseCount: 0 };
+      calendarActivityMap.set(dateStr, entry);
+    }
+
+    if (tx.type === 'income') {
+      entry.incomeCount++;
+    } else if (tx.type === 'expense') {
+      entry.expenseCount++;
+    }
+  });
+}
+
+function renderFinancialCalendar() {
+  const monthDisplay = document.getElementById('fin-cal-month-display');
+  const yearDisplay = document.getElementById('fin-cal-year-display');
+  const rangeDisplay = document.getElementById('fin-cal-range-display');
+  const gridEl = document.getElementById('fin-cal-grid');
+
+  if (!gridEl) return;
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  if (monthDisplay) monthDisplay.textContent = monthNames[calViewMonth] || '';
+  if (yearDisplay) yearDisplay.textContent = String(calViewYear);
+
+  if (rangeDisplay) {
+    if (calSelectedStart && calSelectedEnd) {
+      if (calSelectedStart === calSelectedEnd) {
+        rangeDisplay.textContent = `${formatCalDisplayDate(calSelectedStart)} (Single Day)`;
+      } else {
+        rangeDisplay.textContent = `${formatCalDisplayDate(calSelectedStart)} – ${formatCalDisplayDate(calSelectedEnd)}`;
+      }
+    } else {
+      rangeDisplay.textContent = 'Select date range';
+    }
+  }
+
+  gridEl.innerHTML = '';
+
+  const firstDayIndex = new Date(calViewYear, calViewMonth, 1).getDay(); // 0 = Sun
+  const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(calViewYear, calViewMonth, 0).getDate();
+
+  const todayStr = dateToYMD(new Date());
+
+  // Leading days from previous month
+  const prevMonthIdx = calViewMonth === 0 ? 11 : calViewMonth - 1;
+  const prevYear = calViewMonth === 0 ? calViewYear - 1 : calViewYear;
+  for (let i = firstDayIndex - 1; i >= 0; i--) {
+    const dayNum = daysInPrevMonth - i;
+    const dateStr = `${prevYear}-${String(prevMonthIdx + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    const cell = createCalendarDayCell(dayNum, dateStr, true, todayStr);
+    gridEl.appendChild(cell);
+  }
+
+  // Days in current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calViewYear}-${String(calViewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const cell = createCalendarDayCell(d, dateStr, false, todayStr);
+    gridEl.appendChild(cell);
+  }
+
+  // Trailing days from next month to complete the row
+  const totalRendered = firstDayIndex + daysInMonth;
+  const remaining = (7 - (totalRendered % 7)) % 7;
+  const nextMonthIdx = calViewMonth === 11 ? 0 : calViewMonth + 1;
+  const nextYear = calViewMonth === 11 ? calViewYear + 1 : calViewYear;
+  for (let d = 1; d <= remaining; d++) {
+    const dateStr = `${nextYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const cell = createCalendarDayCell(d, dateStr, true, todayStr);
+    gridEl.appendChild(cell);
+  }
+}
+
+function createCalendarDayCell(dayNum, dateStr, isOtherMonth, todayStr) {
+  const cell = document.createElement('div');
+  cell.className = 'fin-cal-day-cell';
+  cell.dataset.date = dateStr;
+
+  if (isOtherMonth) {
+    cell.classList.add('other-month');
+  }
+
+  if (dateStr === todayStr) {
+    cell.classList.add('today');
+  }
+
+  // Selection styling
+  if (calSelectedStart && calSelectedEnd) {
+    if (calSelectedStart === calSelectedEnd && dateStr === calSelectedStart) {
+      cell.classList.add('selected-single');
+    } else if (dateStr === calSelectedStart) {
+      cell.classList.add('selected-start');
+    } else if (dateStr === calSelectedEnd) {
+      cell.classList.add('selected-end');
+    } else if (dateStr > calSelectedStart && dateStr < calSelectedEnd) {
+      cell.classList.add('in-range');
+    }
+  }
+
+  // Day number
+  const numSpan = document.createElement('span');
+  numSpan.className = 'fin-cal-day-num';
+  numSpan.textContent = String(dayNum);
+  cell.appendChild(numSpan);
+
+  // Activity indicator dots
+  const act = calendarActivityMap.get(dateStr);
+  const hasIncome = act && act.incomeCount > 0;
+  const hasExpense = act && act.expenseCount > 0;
+
+  const dotsWrap = document.createElement('div');
+  dotsWrap.className = 'fin-cal-dots-wrap';
+
+  if (hasIncome) {
+    const dotInc = document.createElement('span');
+    dotInc.className = 'fin-cal-dot fin-cal-dot-income';
+    dotsWrap.appendChild(dotInc);
+  }
+  if (hasExpense) {
+    const dotExp = document.createElement('span');
+    dotExp.className = 'fin-cal-dot fin-cal-dot-expense';
+    dotsWrap.appendChild(dotExp);
+  }
+  cell.appendChild(dotsWrap);
+
+  // Event listeners
+  cell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleCalendarDateClick(dateStr);
+  });
+
+  cell.addEventListener('mouseenter', (e) => {
+    showCalendarTooltip(e, dateStr);
+  });
+
+  cell.addEventListener('mousemove', (e) => {
+    positionCalendarTooltip(e);
+  });
+
+  cell.addEventListener('mouseleave', () => {
+    hideCalendarTooltip();
+  });
+
+  return cell;
+}
+
+function handleCalendarDateClick(clickedDateStr) {
+  // If clicked date belongs to another month/year, automatically navigate there
+  const parts = clickedDateStr.split('-');
+  const clickedY = parseInt(parts[0], 10);
+  const clickedM = parseInt(parts[1], 10);
+  if (clickedY !== calViewYear || clickedM - 1 !== calViewMonth) {
+    calViewYear = clickedY;
+    calViewMonth = clickedM - 1;
+  }
+
+  if (!calSelectedStart || !calSelectedEnd || calSelectedStart === calSelectedEnd) {
+    if (!calSelectedStart) {
+      calSelectedStart = clickedDateStr;
+      calSelectedEnd = clickedDateStr;
+    } else {
+      // Second click: establish the other endpoint
+      if (clickedDateStr < calSelectedStart) {
+        calSelectedStart = clickedDateStr;
+      } else {
+        calSelectedEnd = clickedDateStr;
+      }
+    }
+  } else {
+    // Subsequent click: closest-endpoint replacement rule
+    const clickedTime = new Date(clickedDateStr + 'T00:00:00').getTime();
+    const startTime = new Date(calSelectedStart + 'T00:00:00').getTime();
+    const endTime = new Date(calSelectedEnd + 'T00:00:00').getTime();
+
+    const distToStart = Math.abs(clickedTime - startTime);
+    const distToEnd = Math.abs(clickedTime - endTime);
+
+    if (distToStart <= distToEnd) {
+      calSelectedStart = clickedDateStr;
+    } else {
+      calSelectedEnd = clickedDateStr;
+    }
+
+    // Chronological sort
+    if (calSelectedStart > calSelectedEnd) {
+      const temp = calSelectedStart;
+      calSelectedStart = calSelectedEnd;
+      calSelectedEnd = temp;
+    }
+  }
+
+  // Update hidden inputs for backward compatibility
+  const startInput = document.getElementById('filter-start-date');
+  const endInput = document.getElementById('filter-end-date');
+  if (startInput) startInput.value = calSelectedStart;
+  if (endInput) endInput.value = calSelectedEnd;
+
+  // Set quick select dropdown to 'custom'
+  const quickSelect = document.getElementById('filter-quick-select');
+  if (quickSelect) quickSelect.value = 'custom';
+
+  // Update analyticsState
+  analyticsState.startDate = calSelectedStart;
+  analyticsState.endDate = calSelectedEnd;
+
+  // Re-render calendar UI
+  renderFinancialCalendar();
+
+  // Load analytics data for the new date range immediately
+  loadAnalyticsData();
+}
+
+function showCalendarTooltip(e, dateStr) {
+  const act = calendarActivityMap.get(dateStr);
+  const tooltipEl = document.getElementById('fin-cal-tooltip');
+  if (!tooltipEl) return;
+
+  if (!act || (act.incomeCount === 0 && act.expenseCount === 0)) {
+    tooltipEl.style.display = 'none';
+    return;
+  }
+
+  let lines = [];
+  if (act.incomeCount > 0) {
+    const pl = act.incomeCount === 1 ? 'transaction' : 'transactions';
+    lines.push(`<div class="fin-cal-tt-line income"><span class="fin-cal-dot fin-cal-dot-income"></span>Income: ${act.incomeCount} ${pl}</div>`);
+  }
+  if (act.expenseCount > 0) {
+    const pl = act.expenseCount === 1 ? 'transaction' : 'transactions';
+    lines.push(`<div class="fin-cal-tt-line expense"><span class="fin-cal-dot fin-cal-dot-expense"></span>Expenses: ${act.expenseCount} ${pl}</div>`);
+  }
+
+  tooltipEl.innerHTML = lines.join('');
+  tooltipEl.style.display = 'block';
+  positionCalendarTooltip(e);
+}
+
+function positionCalendarTooltip(e) {
+  const tooltipEl = document.getElementById('fin-cal-tooltip');
+  if (!tooltipEl || tooltipEl.style.display === 'none') return;
+  tooltipEl.style.left = `${e.clientX}px`;
+  tooltipEl.style.top = `${e.clientY - 12}px`;
+}
+
+function hideCalendarTooltip() {
+  const tooltipEl = document.getElementById('fin-cal-tooltip');
+  if (tooltipEl) tooltipEl.style.display = 'none';
+}
+
 async function loadAnalyticsData() {
   try {
     const cacheKey = `${analyticsState.startDate}_${analyticsState.endDate}_${analyticsState.groupBy}`;
@@ -836,6 +1224,12 @@ async function loadAnalyticsData() {
     if (analyticsCache.has(cacheKey)) {
       const cached = analyticsCache.get(cacheKey);
       analyticsState.data = cached;
+
+      // Update calendar activity dots with actual database records
+      if (cached.calendarActivity) {
+        updateCalendarActivityMap(cached.calendarActivity);
+        renderFinancialCalendar();
+      }
 
       // Update insight for the current tab
       if (cached.insights) {
@@ -869,6 +1263,12 @@ async function loadAnalyticsData() {
 
     // Store in cache
     analyticsCache.set(cacheKey, data.data);
+
+    // Update calendar activity dots with actual database records
+    if (data.data.calendarActivity) {
+      updateCalendarActivityMap(data.data.calendarActivity);
+      renderFinancialCalendar();
+    }
 
     // Sync heatmap year with the end date
     if (analyticsState.endDate) {

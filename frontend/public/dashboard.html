@@ -515,38 +515,83 @@
             <div class="glass-edge"></div>
             <div class="glass-card-content">
               <div class="side-card-header">
-                <h4><i data-lucide="calendar" style="width:16px;height:16px;display:inline;vertical-align:-2px;margin-right:6px;color:var(--gold);"></i>Date Filter</h4>
+                <h4><i data-lucide="calendar" style="width:16px;height:16px;display:inline;vertical-align:-2px;margin-right:6px;color:var(--gold);"></i>Financial Date Filter</h4>
               </div>
+
+              <!-- Hidden inputs to preserve element references -->
+              <input type="hidden" id="filter-start-date">
+              <input type="hidden" id="filter-end-date">
+
+              <!-- Interactive Financial Date Range Calendar -->
+              <div class="fin-cal-widget" id="fin-cal-widget">
+                <!-- Selected Date Range Display -->
+                <div class="fin-cal-range-wrap">
+                  <div class="fin-cal-range-pill">
+                    <span class="fin-cal-range-title">Range:</span>
+                    <span class="fin-cal-range-dates" id="fin-cal-range-display">Loading...</span>
+                  </div>
+                </div>
+
+                <!-- Navigation Header: [<] Month [>]    [<] Year [>] -->
+                <div class="fin-cal-nav-bar">
+                  <div class="fin-cal-nav-cluster">
+                    <button type="button" class="fin-cal-nav-btn" id="fin-cal-prev-month" title="Previous Month" aria-label="Previous Month">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <span class="fin-cal-label" id="fin-cal-month-display">November</span>
+                    <button type="button" class="fin-cal-nav-btn" id="fin-cal-next-month" title="Next Month" aria-label="Next Month">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                  </div>
+                  <div class="fin-cal-nav-cluster">
+                    <button type="button" class="fin-cal-nav-btn" id="fin-cal-prev-year" title="Previous Year" aria-label="Previous Year">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <span class="fin-cal-label fin-cal-year-label" id="fin-cal-year-display">2026</span>
+                    <button type="button" class="fin-cal-nav-btn" id="fin-cal-next-year" title="Next Year" aria-label="Next Year">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Weekday Column Headers -->
+                <div class="fin-cal-weekdays">
+                  <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                </div>
+
+                <!-- Interactive Days Grid -->
+                <div class="fin-cal-grid" id="fin-cal-grid">
+                  <!-- Rendered dynamically by JS -->
+                </div>
+              </div>
+
+              <!-- Floating Tooltip for Hovered Date Activities -->
+              <div class="fin-cal-tooltip" id="fin-cal-tooltip" style="display: none;"></div>
+
               <div class="date-filter-controls">
-                <div class="date-filter-row">
-                  <label>Start Date</label>
-                  <input type="date" id="filter-start-date" class="date-filter-input">
-                </div>
-                <div class="date-filter-row">
-                  <label>End Date</label>
-                  <input type="date" id="filter-end-date" class="date-filter-input">
-                </div>
-                <div class="date-filter-row">
-                  <label>Quick Select</label>
-                  <select id="filter-quick-select" class="date-filter-select">
-                    <option value="this-month">This Month</option>
-                    <option value="last-month">Last Month</option>
-                    <option value="this-year">This Year</option>
-                    <option value="last-7">Last 7 Days</option>
-                    <option value="last-30">Last 30 Days</option>
-                    <option value="last-90">Last 90 Days</option>
-                    <option value="all">All Time</option>
-                    <option value="custom">Custom Range</option>
-                  </select>
-                </div>
-                <div class="date-filter-row">
-                  <label>View By</label>
-                  <select id="filter-group-by" class="date-filter-select">
-                    <option value="day">Daily</option>
-                    <option value="week">Weekly</option>
-                    <option value="month" selected>Monthly</option>
-                    <option value="year">Yearly</option>
-                  </select>
+                <div class="date-filter-row-inline">
+                  <div class="date-filter-col">
+                    <label>Quick Select</label>
+                    <select id="filter-quick-select" class="date-filter-select">
+                      <option value="this-month">This Month</option>
+                      <option value="last-month">Last Month</option>
+                      <option value="this-year">This Year</option>
+                      <option value="last-7">Last 7 Days</option>
+                      <option value="last-30">Last 30 Days</option>
+                      <option value="last-90">Last 90 Days</option>
+                      <option value="all">All Time</option>
+                      <option value="custom" selected>Custom Range</option>
+                    </select>
+                  </div>
+                  <div class="date-filter-col">
+                    <label>View By</label>
+                    <select id="filter-group-by" class="date-filter-select">
+                      <option value="day">Daily</option>
+                      <option value="week">Weekly</option>
+                      <option value="month" selected>Monthly</option>
+                      <option value="year">Yearly</option>
+                    </select>
+                  </div>
                 </div>
                 <button class="date-filter-apply" id="filter-apply-btn">
                   <i data-lucide="filter" style="width:14px;height:14px;"></i>
