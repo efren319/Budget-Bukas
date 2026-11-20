@@ -4919,154 +4919,115 @@ canvas {
 }
 
 /* =============================================
-   DATE FILTER PANEL & INTERACTIVE FINANCIAL CALENDAR
-   (Refined to match Reference Design)
+   SIMPLIFIED FINANCIAL DATE FILTER CARD
    ============================================= */
 .date-filter-card {
   flex-shrink: 0;
 }
 
-.fin-cal-header-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-bottom: 10px;
+.date-filter-card .side-card-header {
+  margin-bottom: var(--space-md);
+  padding-bottom: 0;
 }
 
-.fin-cal-header-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.fin-cal-header-icon {
-  color: var(--gold);
-  flex-shrink: 0;
-}
-
-.fin-cal-header-title-row h4 {
-  font-size: 1rem;
+.date-filter-card .side-card-header h4 {
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.2px;
-}
-
-.fin-cal-range-subtitle {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--gold);
-  padding-left: 28px;
-  letter-spacing: 0.2px;
-  user-select: none;
-}
-
-/* Endpoint Selectors: Clickable Start Date / End Date buttons */
-.fin-cal-endpoint-selectors {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.fin-cal-endpoint-btn {
-  flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-  user-select: none;
+  gap: 8px;
 }
 
-.fin-cal-endpoint-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(211, 172, 119, 0.25);
+/* Start Date & End Date Selectors Row */
+.fin-date-selectors-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: var(--space-md);
 }
 
-.fin-cal-endpoint-btn.active {
-  background: rgba(211, 172, 119, 0.14);
-  border-color: var(--gold);
-  box-shadow: 0 0 10px rgba(211, 172, 119, 0.22);
+.fin-date-selector-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.fin-cal-ep-label {
-  font-size: 0.68rem;
+.fin-date-label {
+  font-size: 0.7rem;
   font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
 
-.fin-cal-endpoint-btn.active .fin-cal-ep-label {
-  color: var(--gold);
-}
-
-.fin-cal-ep-val {
-  font-size: 0.74rem;
-  font-weight: 600;
+.fin-date-btn {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
   color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  user-select: none;
 }
 
-.fin-cal-endpoint-btn.active .fin-cal-ep-val {
-  color: #fff;
-  font-weight: 700;
+.fin-date-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(211, 172, 119, 0.25);
+}
+
+.fin-date-btn.active {
+  background: rgba(211, 172, 119, 0.12);
+  border: 1px solid var(--gold);
+  color: var(--gold-light);
+  font-weight: 600;
+}
+
+.fin-date-arrow {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding-bottom: 8px;
+  user-select: none;
 }
 
 /* Calendar Widget */
 .fin-cal-widget {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: var(--space-md);
   user-select: none;
 }
 
-/* Nav Header: [< November >]  |  [< 2026 >] */
-.fin-cal-nav-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 0;
-}
-
-.fin-cal-nav-cluster {
+/* Single Navigation Header: [ < ] November 2026 [ > ] */
+.fin-cal-header-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(20, 15, 11, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  height: 34px;
-  padding: 0 4px;
+  padding: 4px 2px;
 }
 
-.fin-cal-month-cluster {
-  flex: 1.35;
+.fin-cal-title-nav {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  user-select: none;
 }
 
-.fin-cal-year-cluster {
-  flex: 1;
-}
-
-.fin-cal-nav-divider {
-  width: 1px;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0 2px;
-}
-
-.fin-cal-nav-btn {
+.fin-cal-nav-arrow {
   background: transparent;
   border: none;
-  color: #8e8275;
-  width: 26px;
-  height: 26px;
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -5076,21 +5037,9 @@ canvas {
   padding: 0;
 }
 
-.fin-cal-nav-btn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.fin-cal-label {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: #fff;
-  text-align: center;
-  user-select: none;
-}
-
-.fin-cal-year-label {
-  font-weight: 600;
+.fin-cal-nav-arrow:hover {
+  color: var(--gold-light);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* Weekday column headers */
@@ -5099,20 +5048,20 @@ canvas {
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
   text-align: center;
-  padding: 6px 0 2px 0;
+  padding: 4px 0 2px 0;
 }
 
 .fin-cal-weekdays span {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 500;
-  color: #7d7266;
+  color: var(--text-muted);
 }
 
-/* Grid of days */
+/* Days Grid */
 .fin-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px 2px;
+  gap: 2px;
   position: relative;
 }
 
@@ -5122,78 +5071,72 @@ canvas {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   cursor: pointer;
   position: relative;
-  transition: all 0.15s ease;
-  padding: 1px 0;
+  transition: background 0.15s ease;
+  padding: 2px 0;
   box-sizing: border-box;
+  user-select: none;
 }
 
 .fin-cal-day-cell:hover:not(.selected-start):not(.selected-end):not(.selected-single) {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .fin-cal-day-num {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 500;
-  color: #e2ded9;
+  color: var(--text-primary);
   line-height: 1;
   pointer-events: none;
 }
 
-/* Other month days */
+/* Dates outside current month */
 .fin-cal-day-cell.other-month .fin-cal-day-num {
-  color: #554e46;
-  opacity: 0.45;
+  color: var(--text-muted);
+  opacity: 0.35;
 }
 
 /* Today indicator */
 .fin-cal-day-cell.today:not(.selected-start):not(.selected-end):not(.selected-single) {
-  box-shadow: inset 0 0 0 1px rgba(211, 172, 119, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(211, 172, 119, 0.45);
 }
 
-/* Selected Start / End / Single Date: Solid clean Gold */
+/* Restrained Gold fill for Start & End dates */
 .fin-cal-day-cell.selected-start,
 .fin-cal-day-cell.selected-end,
 .fin-cal-day-cell.selected-single {
-  background: #d4a359 !important;
-  border-radius: 8px !important;
+  background: var(--gold) !important;
+  border-radius: 6px !important;
 }
 
 .fin-cal-day-cell.selected-start .fin-cal-day-num,
 .fin-cal-day-cell.selected-end .fin-cal-day-num,
 .fin-cal-day-cell.selected-single .fin-cal-day-num {
-  color: #0a0704 !important;
+  color: #0d0905 !important;
   font-weight: 700 !important;
 }
 
-/* Distinct indicator for ACTIVE endpoint being edited */
-.fin-cal-day-cell.endpoint-active {
-  outline: 2px solid #ffffff !important;
-  outline-offset: 1px !important;
-  box-shadow: 0 0 12px rgba(212, 163, 89, 0.55) !important;
-}
-
-/* Dates between Start Date and End Date */
+/* Subtle background for dates between them */
 .fin-cal-day-cell.in-range {
-  background: rgba(212, 163, 89, 0.14) !important;
+  background: rgba(211, 172, 119, 0.12) !important;
   border-radius: 0 !important;
 }
 
 .fin-cal-day-cell.in-range .fin-cal-day-num {
-  color: #f0d5ab !important;
-  font-weight: 600;
+  color: var(--gold-light) !important;
+  font-weight: 500;
 }
 
-/* Transaction activity indicator dots */
+/* Activity Dots */
 .fin-cal-dots-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  height: 5px;
+  height: 4px;
   margin-top: 2px;
   pointer-events: none;
 }
@@ -5213,17 +5156,16 @@ canvas {
   background: #FF3B5C;
 }
 
-/* On gold selected cells, ensure dots have high contrast */
 .fin-cal-day-cell.selected-start .fin-cal-dot-income,
 .fin-cal-day-cell.selected-end .fin-cal-dot-income,
 .fin-cal-day-cell.selected-single .fin-cal-dot-income {
-  background: #1c7c34;
+  background: #196f2e;
 }
 
 .fin-cal-day-cell.selected-start .fin-cal-dot-expense,
 .fin-cal-day-cell.selected-end .fin-cal-dot-expense,
 .fin-cal-day-cell.selected-single .fin-cal-dot-expense {
-  background: #bf1e38;
+  background: #9e1428;
 }
 
 /* Floating Tooltip */
@@ -5231,13 +5173,13 @@ canvas {
   position: fixed;
   z-index: 10000;
   pointer-events: none;
-  background: rgba(22, 17, 13, 0.96);
+  background: rgba(22, 17, 13, 0.95);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(211, 172, 119, 0.25);
-  border-radius: 6px;
+  border: 1px solid rgba(211, 172, 119, 0.2);
+  border-radius: var(--radius-sm);
   padding: 6px 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
   font-size: 0.72rem;
   line-height: 1.4;
   white-space: nowrap;
@@ -5260,89 +5202,76 @@ canvas {
   color: #FF3B5C;
 }
 
-/* Controls section below calendar */
-.date-filter-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.date-filter-row-inline {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.date-filter-col {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.date-filter-col label {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: #8e8275;
-  text-transform: none;
-  letter-spacing: 0.1px;
-}
-
-.date-filter-select {
+/* Simple, Full-Width Apply Filter Button */
+.date-filter-apply-btn {
+  width: 100%;
   height: 38px;
-  padding: 0 28px 0 12px;
-  font-size: 0.82rem;
-  color: #fff;
-  background-color: rgba(20, 15, 11, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.2s ease;
-  font-family: inherit;
-  width: 100%;
-  box-sizing: border-box;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8275' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
-
-.date-filter-select:focus {
-  border-color: rgba(211, 172, 119, 0.4);
-}
-
-.date-filter-select option {
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
-.date-filter-apply {
-  width: 100%;
-  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #d8a760, #ba873c);
+  gap: 7px;
+  background: var(--gold);
   border: none;
-  border-radius: 10px;
-  font-size: 0.86rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
   font-weight: 600;
   color: #0a0704;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.15s ease;
   font-family: inherit;
+  margin-top: 2px;
 }
 
-.date-filter-apply:hover {
-  filter: brightness(1.08);
+.date-filter-apply-btn:hover {
+  opacity: 0.92;
   transform: translateY(-1px);
 }
 
-.date-filter-apply:active {
+.date-filter-apply-btn:active {
   transform: translateY(0);
+}
+
+/* =============================================
+   CHART CONTROLS: VIEW BY + CHART TYPE
+   ============================================= */
+.analytics-controls-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.chart-view-by-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+}
+
+.chart-view-by-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.chart-view-by-select {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 2px 4px;
+}
+
+.chart-view-by-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 /* =============================================

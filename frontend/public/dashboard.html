@@ -250,15 +250,26 @@
       <button class="analytics-tab" data-tab="income">Income</button>
       <button class="analytics-tab" data-tab="reports">Reports</button>
     </div>
-    <div class="chart-type-selector">
-      <button class="chart-type-btn active" data-chart-type="bar">
-        <i data-lucide="bar-chart-3"></i>
-        <span>Bar</span>
-      </button>
-      <button class="chart-type-btn" data-chart-type="line">
-        <i data-lucide="trending-up"></i>
-        <span>Line</span>
-      </button>
+    <div class="analytics-controls-right">
+      <div class="chart-view-by-selector">
+        <label for="filter-group-by" class="chart-view-by-label">View By</label>
+        <select id="filter-group-by" class="chart-view-by-select">
+          <option value="day">Daily</option>
+          <option value="week">Weekly</option>
+          <option value="month" selected>Monthly</option>
+          <option value="year">Yearly</option>
+        </select>
+      </div>
+      <div class="chart-type-selector">
+        <button class="chart-type-btn active" data-chart-type="bar">
+          <i data-lucide="bar-chart-3"></i>
+          <span>Bar</span>
+        </button>
+        <button class="chart-type-btn" data-chart-type="line">
+          <i data-lucide="trending-up"></i>
+          <span>Line</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -514,59 +525,43 @@
             <div class="glass-sheen"></div>
             <div class="glass-edge"></div>
             <div class="glass-card-content">
-              <!-- Header with Gold Icon, Title, and Range Subtitle -->
-              <div class="fin-cal-header-wrap">
-                <div class="fin-cal-header-title-row">
-                  <svg class="fin-cal-header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  <h4>Financial Date Filter</h4>
-                </div>
-                <div class="fin-cal-range-subtitle" id="fin-cal-range-display">Loading...</div>
-              </div>
-
-              <!-- Start Date & End Date Selectors (Clickable Endpoint Switchers) -->
-              <div class="fin-cal-endpoint-selectors">
-                <button type="button" class="fin-cal-endpoint-btn active" id="fin-cal-start-btn" title="Click to edit Start Date">
-                  <span class="fin-cal-ep-label">Start Date:</span>
-                  <span class="fin-cal-ep-val" id="fin-cal-start-display">--</span>
-                </button>
-                <button type="button" class="fin-cal-endpoint-btn" id="fin-cal-end-btn" title="Click to edit End Date">
-                  <span class="fin-cal-ep-label">End Date:</span>
-                  <span class="fin-cal-ep-val" id="fin-cal-end-display">--</span>
-                </button>
+              <!-- Title -->
+              <div class="side-card-header">
+                <h4><i data-lucide="calendar" style="width:16px;height:16px;display:inline;vertical-align:-2px;margin-right:6px;color:var(--gold);"></i>Financial Date Filter</h4>
               </div>
 
               <!-- Hidden inputs to preserve element references -->
               <input type="hidden" id="filter-start-date">
               <input type="hidden" id="filter-end-date">
 
-              <!-- Interactive Financial Date Range Calendar -->
+              <!-- Start Date & End Date Selectors -->
+              <div class="fin-date-selectors-row">
+                <div class="fin-date-selector-group">
+                  <span class="fin-date-label">Start</span>
+                  <button type="button" class="fin-date-btn active" id="fin-cal-start-btn" aria-label="Edit Start Date">
+                    <span id="fin-cal-start-display">Aug 23, 2026</span>
+                  </button>
+                </div>
+                <div class="fin-date-arrow">→</div>
+                <div class="fin-date-selector-group">
+                  <span class="fin-date-label">End</span>
+                  <button type="button" class="fin-date-btn" id="fin-cal-end-btn" aria-label="Edit End Date">
+                    <span id="fin-cal-end-display">Nov 20, 2026</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Interactive Calendar Widget -->
               <div class="fin-cal-widget" id="fin-cal-widget">
-                <!-- Navigation Header: [<] November [>] | [<] 2026 [>] -->
-                <div class="fin-cal-nav-bar">
-                  <div class="fin-cal-nav-cluster fin-cal-month-cluster">
-                    <button type="button" class="fin-cal-nav-btn" id="fin-cal-prev-month" title="Previous Month" aria-label="Previous Month">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                    </button>
-                    <span class="fin-cal-label" id="fin-cal-month-display">November</span>
-                    <button type="button" class="fin-cal-nav-btn" id="fin-cal-next-month" title="Next Month" aria-label="Next Month">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                    </button>
-                  </div>
-                  <div class="fin-cal-nav-divider"></div>
-                  <div class="fin-cal-nav-cluster fin-cal-year-cluster">
-                    <button type="button" class="fin-cal-nav-btn" id="fin-cal-prev-year" title="Previous Year" aria-label="Previous Year">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                    </button>
-                    <span class="fin-cal-label fin-cal-year-label" id="fin-cal-year-display">2026</span>
-                    <button type="button" class="fin-cal-nav-btn" id="fin-cal-next-year" title="Next Year" aria-label="Next Year">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                    </button>
-                  </div>
+                <!-- Navigation Header: [ < ] November 2026 [ > ] -->
+                <div class="fin-cal-header-nav">
+                  <button type="button" class="fin-cal-nav-arrow" id="fin-cal-prev-month" title="Previous Month" aria-label="Previous Month">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <span class="fin-cal-title-nav" id="fin-cal-month-year-display">November 2026</span>
+                  <button type="button" class="fin-cal-nav-arrow" id="fin-cal-next-month" title="Next Month" aria-label="Next Month">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
                 </div>
 
                 <!-- Weekday Column Headers -->
@@ -574,7 +569,7 @@
                   <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
                 </div>
 
-                <!-- Interactive Days Grid -->
+                <!-- Days Grid -->
                 <div class="fin-cal-grid" id="fin-cal-grid">
                   <!-- Rendered dynamically by JS -->
                 </div>
@@ -583,36 +578,11 @@
               <!-- Floating Tooltip for Hovered Date Activities -->
               <div class="fin-cal-tooltip" id="fin-cal-tooltip" style="display: none;"></div>
 
-              <div class="date-filter-controls">
-                <div class="date-filter-row-inline">
-                  <div class="date-filter-col">
-                    <label>Quick Select</label>
-                    <select id="filter-quick-select" class="date-filter-select">
-                      <option value="this-month">This Month</option>
-                      <option value="last-month">Last Month</option>
-                      <option value="this-year">This Year</option>
-                      <option value="last-7">Last 7 Days</option>
-                      <option value="last-30">Last 30 Days</option>
-                      <option value="last-90">Last 90 Days</option>
-                      <option value="all">All Time</option>
-                      <option value="custom" selected>Custom Range</option>
-                    </select>
-                  </div>
-                  <div class="date-filter-col">
-                    <label>View By</label>
-                    <select id="filter-group-by" class="date-filter-select">
-                      <option value="day">Daily</option>
-                      <option value="week">Weekly</option>
-                      <option value="month" selected>Monthly</option>
-                      <option value="year">Yearly</option>
-                    </select>
-                  </div>
-                </div>
-                <button class="date-filter-apply" id="filter-apply-btn">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                  <span>Apply Filter</span>
-                </button>
-              </div>
+              <!-- Apply Filter Button -->
+              <button class="date-filter-apply-btn" id="filter-apply-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                <span>Apply Filter</span>
+              </button>
             </div>
           </div>
         </div> <!-- /dashboard-side-content -->

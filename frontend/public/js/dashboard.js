@@ -663,8 +663,7 @@ function formatCalDisplayDate(ymdStr) {
   const d = parseInt(parts[2], 10);
   const date = new Date(y, m, d);
   const monthShort = date.toLocaleString('en-US', { month: 'short' });
-  const dayStr = String(d).padStart(2, '0');
-  return `${monthShort} ${dayStr}, ${y}`;
+  return `${monthShort} ${d}, ${y}`;
 }
 
 function initAnalytics() {
@@ -702,7 +701,7 @@ function initAnalytics() {
       // Toggle visibility: reports vs chart+analysis
       const chartContent = document.querySelector('.analytics-content');
       const reportsContent = document.getElementById('analytics-reports-content');
-      const chartTypeSelector = document.querySelector('.chart-type-selector');
+      const controlsRight = document.querySelector('.analytics-controls-right');
       const heatmapsOuterCard = document.getElementById('heatmaps-outer-card');
       const breakdownRow = document.getElementById('analytics-breakdown-row');
 
@@ -711,11 +710,11 @@ function initAnalytics() {
         if (breakdownRow) breakdownRow.style.display = 'none';
         if (heatmapsOuterCard) heatmapsOuterCard.style.display = 'none';
         if (reportsContent) reportsContent.style.display = 'block';
-        if (chartTypeSelector) chartTypeSelector.style.display = 'none';
+        if (controlsRight) controlsRight.style.display = 'none';
       } else {
         if (chartContent) chartContent.style.display = '';
         if (reportsContent) reportsContent.style.display = 'none';
-        if (chartTypeSelector) chartTypeSelector.style.display = '';
+        if (controlsRight) controlsRight.style.display = '';
       }
 
       // ── Instant tab switch: re-render from cached data without API call ──
@@ -888,6 +887,15 @@ function initAnalytics() {
     });
   }
 
+  // View By select change
+  const groupBySelect = document.getElementById('filter-group-by');
+  if (groupBySelect) {
+    groupBySelect.addEventListener('change', () => {
+      analyticsState.groupBy = groupBySelect.value;
+      loadAnalyticsData();
+    });
+  }
+
   // Load initial data
   loadAnalyticsData();
 }
@@ -899,8 +907,6 @@ function initAnalytics() {
 function initFinancialCalendar() {
   const prevMonthBtn = document.getElementById('fin-cal-prev-month');
   const nextMonthBtn = document.getElementById('fin-cal-next-month');
-  const prevYearBtn = document.getElementById('fin-cal-prev-year');
-  const nextYearBtn = document.getElementById('fin-cal-next-year');
 
   const startBtn = document.getElementById('fin-cal-start-btn');
   const endBtn = document.getElementById('fin-cal-end-btn');
@@ -920,7 +926,7 @@ function initFinancialCalendar() {
     });
   }
 
-  // Month navigation (preserves selected range)
+  // Month navigation (automatically updates year when crossing December / January)
   if (prevMonthBtn) {
     prevMonthBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -941,23 +947,6 @@ function initFinancialCalendar() {
         calViewMonth = 0;
         calViewYear++;
       }
-      renderFinancialCalendar();
-    });
-  }
-
-  // Year navigation (preserves selected range)
-  if (prevYearBtn) {
-    prevYearBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      calViewYear--;
-      renderFinancialCalendar();
-    });
-  }
-
-  if (nextYearBtn) {
-    nextYearBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      calViewYear++;
       renderFinancialCalendar();
     });
   }
@@ -997,9 +986,9 @@ function updateCalendarActivityMap(transactions) {
 }
 
 function renderFinancialCalendar() {
+  const monthYearDisplay = document.getElementById('fin-cal-month-year-display');
   const monthDisplay = document.getElementById('fin-cal-month-display');
   const yearDisplay = document.getElementById('fin-cal-year-display');
-  const rangeDisplay = document.getElementById('fin-cal-range-display');
   const startValEl = document.getElementById('fin-cal-start-display');
   const endValEl = document.getElementById('fin-cal-end-display');
   const startBtn = document.getElementById('fin-cal-start-btn');
@@ -1013,21 +1002,9 @@ function renderFinancialCalendar() {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  if (monthYearDisplay) monthYearDisplay.textContent = `${monthNames[calViewMonth]} ${calViewYear}`;
   if (monthDisplay) monthDisplay.textContent = monthNames[calViewMonth] || '';
   if (yearDisplay) yearDisplay.textContent = String(calViewYear);
-
-  // Update range subtitle
-  if (rangeDisplay) {
-    if (calSelectedStart && calSelectedEnd) {
-      if (calSelectedStart === calSelectedEnd) {
-        rangeDisplay.textContent = `${formatCalDisplayDate(calSelectedStart)} (Single Day)`;
-      } else {
-        rangeDisplay.textContent = `${formatCalDisplayDate(calSelectedStart)} – ${formatCalDisplayDate(calSelectedEnd)}`;
-      }
-    } else {
-      rangeDisplay.textContent = 'Select date range';
-    }
-  }
 
   // Update Start Date / End Date selector displays
   if (startValEl && calSelectedStart) {
