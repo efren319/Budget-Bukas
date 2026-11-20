@@ -514,8 +514,30 @@
             <div class="glass-sheen"></div>
             <div class="glass-edge"></div>
             <div class="glass-card-content">
-              <div class="side-card-header">
-                <h4><i data-lucide="calendar" style="width:16px;height:16px;display:inline;vertical-align:-2px;margin-right:6px;color:var(--gold);"></i>Financial Date Filter</h4>
+              <!-- Header with Gold Icon, Title, and Range Subtitle -->
+              <div class="fin-cal-header-wrap">
+                <div class="fin-cal-header-title-row">
+                  <svg class="fin-cal-header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <h4>Financial Date Filter</h4>
+                </div>
+                <div class="fin-cal-range-subtitle" id="fin-cal-range-display">Loading...</div>
+              </div>
+
+              <!-- Start Date & End Date Selectors (Clickable Endpoint Switchers) -->
+              <div class="fin-cal-endpoint-selectors">
+                <button type="button" class="fin-cal-endpoint-btn active" id="fin-cal-start-btn" title="Click to edit Start Date">
+                  <span class="fin-cal-ep-label">Start Date:</span>
+                  <span class="fin-cal-ep-val" id="fin-cal-start-display">--</span>
+                </button>
+                <button type="button" class="fin-cal-endpoint-btn" id="fin-cal-end-btn" title="Click to edit End Date">
+                  <span class="fin-cal-ep-label">End Date:</span>
+                  <span class="fin-cal-ep-val" id="fin-cal-end-display">--</span>
+                </button>
               </div>
 
               <!-- Hidden inputs to preserve element references -->
@@ -524,17 +546,9 @@
 
               <!-- Interactive Financial Date Range Calendar -->
               <div class="fin-cal-widget" id="fin-cal-widget">
-                <!-- Selected Date Range Display -->
-                <div class="fin-cal-range-wrap">
-                  <div class="fin-cal-range-pill">
-                    <span class="fin-cal-range-title">Range:</span>
-                    <span class="fin-cal-range-dates" id="fin-cal-range-display">Loading...</span>
-                  </div>
-                </div>
-
-                <!-- Navigation Header: [<] Month [>]    [<] Year [>] -->
+                <!-- Navigation Header: [<] November [>] | [<] 2026 [>] -->
                 <div class="fin-cal-nav-bar">
-                  <div class="fin-cal-nav-cluster">
+                  <div class="fin-cal-nav-cluster fin-cal-month-cluster">
                     <button type="button" class="fin-cal-nav-btn" id="fin-cal-prev-month" title="Previous Month" aria-label="Previous Month">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                     </button>
@@ -543,7 +557,8 @@
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
                   </div>
-                  <div class="fin-cal-nav-cluster">
+                  <div class="fin-cal-nav-divider"></div>
+                  <div class="fin-cal-nav-cluster fin-cal-year-cluster">
                     <button type="button" class="fin-cal-nav-btn" id="fin-cal-prev-year" title="Previous Year" aria-label="Previous Year">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                     </button>
@@ -594,8 +609,8 @@
                   </div>
                 </div>
                 <button class="date-filter-apply" id="filter-apply-btn">
-                  <i data-lucide="filter" style="width:14px;height:14px;"></i>
-                  Apply Filter
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  <span>Apply Filter</span>
                 </button>
               </div>
             </div>

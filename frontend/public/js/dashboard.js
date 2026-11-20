@@ -19,6 +19,7 @@ let calViewYear = new Date().getFullYear();
 let calViewMonth = new Date().getMonth();
 let calSelectedStart = null;
 let calSelectedEnd = null;
+let calActiveEndpoint = 'start'; // 'start' or 'end'
 const calendarActivityMap = new Map();
 
 let analyticsState = {
@@ -901,6 +902,25 @@ function initFinancialCalendar() {
   const prevYearBtn = document.getElementById('fin-cal-prev-year');
   const nextYearBtn = document.getElementById('fin-cal-next-year');
 
+  const startBtn = document.getElementById('fin-cal-start-btn');
+  const endBtn = document.getElementById('fin-cal-end-btn');
+
+  // Endpoint selector click handlers: switch active endpoint
+  if (startBtn) {
+    startBtn.addEventListener('click', () => {
+      calActiveEndpoint = 'start';
+      renderFinancialCalendar();
+    });
+  }
+
+  if (endBtn) {
+    endBtn.addEventListener('click', () => {
+      calActiveEndpoint = 'end';
+      renderFinancialCalendar();
+    });
+  }
+
+  // Month navigation (preserves selected range)
   if (prevMonthBtn) {
     prevMonthBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -925,6 +945,7 @@ function initFinancialCalendar() {
     });
   }
 
+  // Year navigation (preserves selected range)
   if (prevYearBtn) {
     prevYearBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -979,6 +1000,10 @@ function renderFinancialCalendar() {
   const monthDisplay = document.getElementById('fin-cal-month-display');
   const yearDisplay = document.getElementById('fin-cal-year-display');
   const rangeDisplay = document.getElementById('fin-cal-range-display');
+  const startValEl = document.getElementById('fin-cal-start-display');
+  const endValEl = document.getElementById('fin-cal-end-display');
+  const startBtn = document.getElementById('fin-cal-start-btn');
+  const endBtn = document.getElementById('fin-cal-end-btn');
   const gridEl = document.getElementById('fin-cal-grid');
 
   if (!gridEl) return;
@@ -991,6 +1016,7 @@ function renderFinancialCalendar() {
   if (monthDisplay) monthDisplay.textContent = monthNames[calViewMonth] || '';
   if (yearDisplay) yearDisplay.textContent = String(calViewYear);
 
+  // Update range subtitle
   if (rangeDisplay) {
     if (calSelectedStart && calSelectedEnd) {
       if (calSelectedStart === calSelectedEnd) {
@@ -1002,6 +1028,18 @@ function renderFinancialCalendar() {
       rangeDisplay.textContent = 'Select date range';
     }
   }
+
+  // Update Start Date / End Date selector displays
+  if (startValEl && calSelectedStart) {
+    startValEl.textContent = formatCalDisplayDate(calSelectedStart);
+  }
+  if (endValEl && calSelectedEnd) {
+    endValEl.textContent = formatCalDisplayDate(calSelectedEnd);
+  }
+
+  // Update active state on endpoint buttons
+  if (startBtn) startBtn.classList.toggle('active', calActiveEndpoint === 'start');
+  if (endBtn) endBtn.classList.toggle('active', calActiveEndpoint === 'end');
 
   gridEl.innerHTML = '';
 
@@ -1053,14 +1091,21 @@ function createCalendarDayCell(dayNum, dateStr, isOtherMonth, todayStr) {
     cell.classList.add('today');
   }
 
-  // Selection styling
+  // Selection styling & active endpoint indicator
   if (calSelectedStart && calSelectedEnd) {
     if (calSelectedStart === calSelectedEnd && dateStr === calSelectedStart) {
       cell.classList.add('selected-single');
+      cell.classList.add('endpoint-active');
     } else if (dateStr === calSelectedStart) {
       cell.classList.add('selected-start');
+      if (calActiveEndpoint === 'start') {
+        cell.classList.add('endpoint-active');
+      }
     } else if (dateStr === calSelectedEnd) {
       cell.classList.add('selected-end');
+      if (calActiveEndpoint === 'end') {
+        cell.classList.add('endpoint-active');
+      }
     } else if (dateStr > calSelectedStart && dateStr < calSelectedEnd) {
       cell.classList.add('in-range');
     }
@@ -1123,38 +1168,31 @@ function handleCalendarDateClick(clickedDateStr) {
     calViewMonth = clickedM - 1;
   }
 
-  if (!calSelectedStart || !calSelectedEnd || calSelectedStart === calSelectedEnd) {
-    if (!calSelectedStart) {
-      calSelectedStart = clickedDateStr;
-      calSelectedEnd = clickedDateStr;
-    } else {
-      // Second click: establish the other endpoint
-      if (clickedDateStr < calSelectedStart) {
+  if (!calSelectedStart || !calSelectedEnd) {
+    calSelectedStart = clickedDateStr;
+    calSelectedEnd = clickedDateStr;
+  } else {
+    // Explicit Endpoint Editing Behavior
+    if (calActiveEndpoint === 'start') {
+      if (clickedDateStr <= calSelectedEnd) {
+        // Case A & B: selected date is on or before End Date -> End Date unchanged
         calSelectedStart = clickedDateStr;
       } else {
+        // Case C: selected date is after End Date -> reorder chronologically
+        // Previous End Date becomes new Start Date, clicked date becomes new End Date
+        calSelectedStart = calSelectedEnd;
         calSelectedEnd = clickedDateStr;
       }
-    }
-  } else {
-    // Subsequent click: closest-endpoint replacement rule
-    const clickedTime = new Date(clickedDateStr + 'T00:00:00').getTime();
-    const startTime = new Date(calSelectedStart + 'T00:00:00').getTime();
-    const endTime = new Date(calSelectedEnd + 'T00:00:00').getTime();
-
-    const distToStart = Math.abs(clickedTime - startTime);
-    const distToEnd = Math.abs(clickedTime - endTime);
-
-    if (distToStart <= distToEnd) {
-      calSelectedStart = clickedDateStr;
-    } else {
-      calSelectedEnd = clickedDateStr;
-    }
-
-    // Chronological sort
-    if (calSelectedStart > calSelectedEnd) {
-      const temp = calSelectedStart;
-      calSelectedStart = calSelectedEnd;
-      calSelectedEnd = temp;
+    } else { // calActiveEndpoint === 'end'
+      if (clickedDateStr >= calSelectedStart) {
+        // Case A & B: selected date is on or after Start Date -> Start Date unchanged
+        calSelectedEnd = clickedDateStr;
+      } else {
+        // Case C: selected date is before Start Date -> reorder chronologically
+        // Previous Start Date becomes new End Date, clicked date becomes new Start Date
+        calSelectedEnd = calSelectedStart;
+        calSelectedStart = clickedDateStr;
+      }
     }
   }
 
@@ -1168,15 +1206,12 @@ function handleCalendarDateClick(clickedDateStr) {
   const quickSelect = document.getElementById('filter-quick-select');
   if (quickSelect) quickSelect.value = 'custom';
 
-  // Update analyticsState
+  // Update analyticsState dates
   analyticsState.startDate = calSelectedStart;
   analyticsState.endDate = calSelectedEnd;
 
-  // Re-render calendar UI
+  // Re-render calendar UI immediately (user clicks Apply Filter when ready)
   renderFinancialCalendar();
-
-  // Load analytics data for the new date range immediately
-  loadAnalyticsData();
 }
 
 function showCalendarTooltip(e, dateStr) {
