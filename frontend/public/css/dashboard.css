@@ -33,32 +33,35 @@
 
 .member-card {
   flex: 1 1 0%;
+  min-height: 0;
+  box-sizing: border-box;
+  /* Make the glass-card-content fill the card via padding-box flex */
   display: flex;
   flex-direction: column;
-  min-height: 0;
   overflow: hidden;
-  box-sizing: border-box;
 }
 
 .member-card .side-card-header {
   flex-shrink: 0;
 }
 
+/* glass-card-content inside member-card must fill remaining height */
 .member-card .glass-card-content {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
   overflow: hidden;
 }
 
+/* The scrollable list fills the content area and scrolls */
 .member-card .member-list {
   flex: 1 1 0%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: var(--space-sm);
-  min-height: 0;
   overflow-y: auto;
   padding-right: var(--space-xs);
 }

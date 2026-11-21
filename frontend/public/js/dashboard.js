@@ -529,37 +529,17 @@ function requestSyncMemberListHeight() {
 }
 
 function syncMemberListHeight() {
-  const memberCard = document.querySelector('.member-card');
+  // CSS flexbox now handles all height distribution.
+  // This function is kept for the mobile fallback only.
   const memberList = document.getElementById('members-list');
+  if (!memberList) return;
 
-  if (!memberCard || !memberList) return;
-
-  // On mobile/tablet screens (<= 900px) where columns stack, use a fixed cap
   if (window.innerWidth <= 900) {
-    memberCard.style.height = '';
     memberList.style.maxHeight = '360px';
-    return;
+  } else {
+    // On desktop, let the CSS flex chain handle it — clear any inline override
+    memberList.style.maxHeight = '';
   }
-
-  // CSS flexbox (flex: 1 1 0%) already sizes the member card correctly —
-  // do NOT override memberCard.style.height here.
-  memberCard.style.height = '';
-
-  // Calculate available height for the scrollable list inside the card
-  const cardH = memberCard.getBoundingClientRect().height;
-  if (cardH <= 0) return;
-
-  const header = memberCard.querySelector('.side-card-header');
-  const headerH = header ? header.getBoundingClientRect().height : 38;
-  const cardStyle = window.getComputedStyle(memberCard);
-  const paddingTop = parseFloat(cardStyle.paddingTop) || 24;
-  const paddingBottom = parseFloat(cardStyle.paddingBottom) || 24;
-  const contentEl = memberCard.querySelector('.glass-card-content');
-  const contentStyle = contentEl ? window.getComputedStyle(contentEl) : null;
-  const contentGap = contentStyle ? (parseFloat(contentStyle.rowGap || contentStyle.gap) || 12) : 12;
-
-  const listMaxH = Math.max(60, Math.floor(cardH - headerH - paddingTop - paddingBottom - contentGap));
-  memberList.style.maxHeight = `${listMaxH}px`;
 }
 window.syncMemberListHeight = requestSyncMemberListHeight;
 
