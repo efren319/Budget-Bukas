@@ -31,12 +31,14 @@
   min-height: 0;
 }
 
-/* member-card: natural height; JS sets max-height on .member-list directly */
+/* member-card: height dynamically synced to balance left/right columns */
 .member-card {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  min-height: 0;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .member-card .side-card-header {
@@ -46,10 +48,15 @@
 .member-card .glass-card-content {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* JS sets max-height dynamically; overflow-y: auto triggers scrolling */
+/* Safe default max-height prevents blowout before JS sync */
 .member-card .member-list {
+  flex: 1 1 0%;
+  max-height: 280px;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -57,6 +64,7 @@
   justify-content: flex-start;
   gap: var(--space-sm);
   padding-right: var(--space-xs);
+  min-height: 0;
 }
 
 .member-card .member-item {
@@ -3694,8 +3702,9 @@ canvas {
     width: 100%;
   }
   .member-card {
-    flex: 0 0 auto;
+    height: auto !important;
     min-height: 0;
+    transition: none;
   }
 }
 
@@ -5398,6 +5407,10 @@ canvas {
   .dashboard-side-content > * {
     flex: 1;
     min-width: 280px;
+  }
+  .member-card {
+    height: auto !important;
+    transition: none;
   }
 }
 

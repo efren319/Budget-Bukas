@@ -535,28 +535,53 @@ function requestSyncMemberListHeight() {
 
 function syncMemberListHeight() {
   const mainCol        = document.querySelector('.dashboard-main-content');
+  const sideCol        = document.querySelector('.dashboard-side-content');
   const memberCard     = document.querySelector('.member-card');
   const memberList     = document.getElementById('members-list');
   const dateFilterCard = document.querySelector('.date-filter-card');
 
-  if (!memberList) return;
+  if (!memberList || !memberCard) return;
 
-  // Mobile: fixed cap, columns are stacked
-  if (window.innerWidth <= 900 || !mainCol || !memberCard || !dateFilterCard) {
-    memberList.style.maxHeight = '360px';
+  // Mobile / tablet screen (<= 1200px) where columns stack vertically:
+  // Reset inline height and apply safe scroll cap
+  if (window.innerWidth <= 1200 || !mainCol || !sideCol || !dateFilterCard) {
+    memberCard.style.height = '';
+    memberList.style.maxHeight = '280px';
     return;
   }
 
-  const mainBottom = mainCol.getBoundingClientRect().bottom;
-  const filterH    = dateFilterCard.getBoundingClientRect().height || 380;
-  const gap        = 24;
-  const listTop    = memberList.getBoundingClientRect().top;
-  const targetListBottom = mainBottom - filterH - gap;
-  const rawMaxH = Math.floor(targetListBottom - listTop);
-  const finalMaxH = Math.max(96, rawMaxH);
+  // 1. Measure natural content height of the left column (mainCol)
+  const mainH = mainCol.offsetHeight || Math.round(mainCol.getBoundingClientRect().height);
+  if (mainH <= 0) return;
 
-  console.log('[syncMemberListHeight]', { mainBottom, filterH, listTop, targetListBottom, rawMaxH, finalMaxH });
-  memberList.style.maxHeight = `${finalMaxH}px`;
+  // 2. Measure actual height of the Date Filter card
+  let filterH = dateFilterCard.offsetHeight || Math.round(dateFilterCard.getBoundingClientRect().height);
+  if (filterH <= 0) filterH = 420;
+
+  // 3. Gap between member-card and date-filter-card in the right column
+  const sideStyle = window.getComputedStyle(sideCol);
+  const gap = parseFloat(sideStyle.rowGap || sideStyle.gap) || 24;
+
+  // 4. Target member-card height so that:
+  // memberCardHeight + gap + filterH === mainH
+  // That perfectly aligns the bottom of Financial Date Filter with the bottom of the left column!
+  const minMemberCardH = 160;
+  const targetMemberH = Math.max(minMemberCardH, Math.round(mainH - filterH - gap));
+
+  memberCard.style.height = `${targetMemberH}px`;
+
+  // 5. Calculate available scrollable height for the member list inside the card
+  const header = memberCard.querySelector('.side-card-header');
+  const headerH = header ? (header.offsetHeight || Math.round(header.getBoundingClientRect().height)) : 38;
+  const cardStyle = window.getComputedStyle(memberCard);
+  const paddingTop = parseFloat(cardStyle.paddingTop) || 24;
+  const paddingBottom = parseFloat(cardStyle.paddingBottom) || 24;
+  const contentEl = memberCard.querySelector('.glass-card-content');
+  const contentStyle = contentEl ? window.getComputedStyle(contentEl) : null;
+  const contentGap = contentStyle ? (parseFloat(contentStyle.rowGap || contentStyle.gap) || 12) : 12;
+
+  const listMaxH = Math.max(80, Math.floor(targetMemberH - headerH - paddingTop - paddingBottom - contentGap));
+  memberList.style.maxHeight = `${listMaxH}px`;
 }
 window.syncMemberListHeight = requestSyncMemberListHeight;
 
