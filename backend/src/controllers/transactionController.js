@@ -455,13 +455,21 @@ async function getAnalyticsData(req, res) {
   try {
     let { startDate, endDate, groupBy, tab } = req.query;
 
-    // Defaults
-    const now = new Date();
-    if (!startDate) {
-      startDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-    }
-    if (!endDate) {
-      endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    // Defaults: if no dates provided or if 'all', determine all-time range from DB
+    if (!startDate || startDate === 'all' || !endDate || endDate === 'all') {
+      const [minMaxRows] = await pool.query(`
+        SELECT TO_CHAR(MIN(date), 'YYYY-MM-DD') AS "minDate",
+               TO_CHAR(MAX(date), 'YYYY-MM-DD') AS "maxDate"
+        FROM transactions
+      `);
+      if (minMaxRows && minMaxRows[0] && minMaxRows[0].minDate) {
+        if (!startDate || startDate === 'all') startDate = minMaxRows[0].minDate;
+        if (!endDate || endDate === 'all') endDate = minMaxRows[0].maxDate;
+      } else {
+        const now = new Date();
+        if (!startDate || startDate === 'all') startDate = `${now.getFullYear()}-01-01`;
+        if (!endDate || endDate === 'all') endDate = `${now.getFullYear()}-12-31`;
+      }
     }
     if (!groupBy || !['day', 'week', 'month', 'year'].includes(groupBy)) {
       groupBy = 'day';
@@ -702,6 +710,9 @@ async function getAnalyticsData(req, res) {
     }
 
     // ── 5. Build Unified Response ──
+    const allTimeStart = (calendarActivity && calendarActivity.length > 0) ? calendarActivity[0].date : startDate;
+    const allTimeEnd = (calendarActivity && calendarActivity.length > 0) ? calendarActivity[calendarActivity.length - 1].date : endDate;
+
     const data = {
       summary: { totalIncome, totalExpenses, netBalance, remainingBalance },
       comparison,
@@ -711,6 +722,10 @@ async function getAnalyticsData(req, res) {
       topRecord: tab === 'expenses' ? topExpense : (tab === 'income' ? topIncome : (topExpense || topIncome)),
       recentTransactions,
       calendarActivity,
+      allTimeRange: {
+        startDate: allTimeStart,
+        endDate: allTimeEnd
+      },
       insights,
       insight: insights[tab] || insights.cashflow
     };

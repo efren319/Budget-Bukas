@@ -169,20 +169,19 @@ function initDashboard() {
   // Sync member list scroll height whenever the left column or date filter changes size
   window.addEventListener('resize', requestSyncMemberListHeight);
   if (window.ResizeObserver) {
-    // Watch the left column — its height change is what drives the calculation
+    const ro = new ResizeObserver(() => {
+      requestSyncMemberListHeight();
+    });
     const mainCol = document.querySelector('.dashboard-main-content');
-    if (mainCol) {
-      new ResizeObserver(() => {
-        requestSyncMemberListHeight();
-      }).observe(mainCol);
-    }
-    // Watch date filter card — its height affects the available space
+    if (mainCol) ro.observe(mainCol);
     const filterCard = document.querySelector('.date-filter-card');
-    if (filterCard) {
-      new ResizeObserver(() => {
-        requestSyncMemberListHeight();
-      }).observe(filterCard);
-    }
+    if (filterCard) ro.observe(filterCard);
+    const breakdownRow = document.getElementById('analytics-breakdown-row');
+    if (breakdownRow) ro.observe(breakdownRow);
+    const chartContent = document.querySelector('.analytics-content');
+    if (chartContent) ro.observe(chartContent);
+    const reportsContent = document.getElementById('analytics-reports-content');
+    if (reportsContent) ro.observe(reportsContent);
   }
 }
 
@@ -533,6 +532,22 @@ function requestSyncMemberListHeight() {
   });
 }
 
+function getActiveAnalyticsTargetEl() {
+  const tab = analyticsState.tab;
+  if (tab === 'reports') {
+    const reportsContent = document.getElementById('analytics-reports-content');
+    if (reportsContent && reportsContent.style.display !== 'none' && reportsContent.offsetHeight > 20) {
+      return reportsContent;
+    }
+  } else if (tab === 'expenses' || tab === 'income') {
+    const breakdownRow = document.getElementById('analytics-breakdown-row');
+    if (breakdownRow && breakdownRow.style.display !== 'none' && breakdownRow.offsetHeight > 20) {
+      return breakdownRow;
+    }
+  }
+  return document.querySelector('.analytics-content');
+}
+
 function syncMemberListHeight() {
   const mainCol        = document.querySelector('.dashboard-main-content');
   const sideCol        = document.querySelector('.dashboard-side-content');
@@ -550,9 +565,19 @@ function syncMemberListHeight() {
     return;
   }
 
-  // 1. Measure natural content height of the left column (mainCol)
-  const mainH = mainCol.offsetHeight || Math.round(mainCol.getBoundingClientRect().height);
-  if (mainH <= 0) return;
+  // 1. Identify active target element in the left column
+  const targetEl = getActiveAnalyticsTargetEl();
+  let totalSideH;
+
+  if (targetEl) {
+    const targetRect = targetEl.getBoundingClientRect();
+    const sideRect = sideCol.getBoundingClientRect();
+    totalSideH = Math.round(targetRect.bottom - sideRect.top);
+  } else {
+    totalSideH = mainCol.offsetHeight || Math.round(mainCol.getBoundingClientRect().height);
+  }
+
+  if (totalSideH <= 0) return;
 
   // 2. Measure actual height of the Date Filter card
   let filterH = dateFilterCard.offsetHeight || Math.round(dateFilterCard.getBoundingClientRect().height);
@@ -563,10 +588,10 @@ function syncMemberListHeight() {
   const gap = parseFloat(sideStyle.rowGap || sideStyle.gap) || 24;
 
   // 4. Target member-card height so that:
-  // memberCardHeight + gap + filterH === mainH
-  // That perfectly aligns the bottom of Financial Date Filter with the bottom of the left column!
-  const minMemberCardH = 160;
-  const targetMemberH = Math.max(minMemberCardH, Math.round(mainH - filterH - gap));
+  // memberCardHeight + gap + filterH === totalSideH
+  // On Expenses & Income, this expands the member list so Date Filter matches the bottom of Row 2!
+  const minMemberCardH = 140;
+  const targetMemberH = Math.max(minMemberCardH, Math.round(totalSideH - filterH - gap));
 
   memberCard.style.height = `${targetMemberH}px`;
 
@@ -743,24 +768,18 @@ function formatCalDisplayDate(ymdStr) {
 }
 
 function initAnalytics() {
-  // Set default dates (current month)
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  analyticsState.startDate = `${y}-${m}-01`;
-  analyticsState.endDate = `${y}-${m}-${d}`;
+  // Default to All-Time so user immediately sees financial data
+  analyticsState.startDate = '';
+  analyticsState.endDate = '';
 
-  // Populate date filter inputs
-  const startInput = document.getElementById('filter-start-date');
-  const endInput = document.getElementById('filter-end-date');
-  if (startInput) startInput.value = analyticsState.startDate;
-  if (endInput) endInput.value = analyticsState.endDate;
+  const initialQuickSelect = document.getElementById('filter-quick-select');
+  if (initialQuickSelect) initialQuickSelect.value = 'all';
 
   // Initialize interactive financial date range calendar state
-  calSelectedStart = analyticsState.startDate;
-  calSelectedEnd = analyticsState.endDate;
-  calViewYear = y;
+  calSelectedStart = null;
+  calSelectedEnd = null;
+  const now = new Date();
+  calViewYear = now.getFullYear();
   calViewMonth = now.getMonth();
   initFinancialCalendar();
 
@@ -781,7 +800,9 @@ function initAnalytics() {
       const heatmapsOuterCard = document.getElementById('heatmaps-outer-card');
       const breakdownRow = document.getElementById('analytics-breakdown-row');
 
-      if (analyticsState.tab === 'reports') {
+      const isBreakdownTab = newTab === 'expenses' || newTab === 'income';
+
+      if (newTab === 'reports') {
         if (chartContent) chartContent.style.display = 'none';
         if (breakdownRow) breakdownRow.style.display = 'none';
         if (heatmapsOuterCard) heatmapsOuterCard.style.display = 'none';
@@ -791,6 +812,8 @@ function initAnalytics() {
         if (chartContent) chartContent.style.display = '';
         if (reportsContent) reportsContent.style.display = 'none';
         if (controlsRight) controlsRight.style.display = '';
+        if (breakdownRow) breakdownRow.style.display = isBreakdownTab ? '' : 'none';
+        if (heatmapsOuterCard) heatmapsOuterCard.style.display = newTab === 'cashflow' ? '' : 'none';
       }
 
       // ── Instant tab switch: re-render from cached data without API call ──
@@ -923,6 +946,40 @@ function initAnalytics() {
         analyticsState.endDate = calSelectedEnd;
         renderFinancialCalendar();
       }
+    });
+  }
+
+  // Reset to All Time button
+  const resetBtn = document.getElementById('filter-reset-btn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      const start = analyticsState.allTimeStart || '2020-01-01';
+      const end = analyticsState.allTimeEnd || dateToYMD(new Date());
+
+      analyticsState.startDate = start;
+      analyticsState.endDate = end;
+      calSelectedStart = start;
+      calSelectedEnd = end;
+
+      const startInput = document.getElementById('filter-start-date');
+      const endInput = document.getElementById('filter-end-date');
+      if (startInput) startInput.value = start;
+      if (endInput) endInput.value = end;
+
+      const startDisplay = document.getElementById('fin-cal-start-display');
+      const endDisplay = document.getElementById('fin-cal-end-display');
+      if (startDisplay) startDisplay.textContent = formatCalDisplayDate(start);
+      if (endDisplay) endDisplay.textContent = formatCalDisplayDate(end);
+
+      const [eY, eM] = end.split('-').map(Number);
+      calViewYear = eY;
+      calViewMonth = eM - 1;
+
+      const quickSelect = document.getElementById('filter-quick-select');
+      if (quickSelect) quickSelect.value = 'all';
+
+      renderFinancialCalendar();
+      loadAnalyticsData();
     });
   }
 
@@ -1319,8 +1376,8 @@ async function loadAnalyticsData() {
     }
 
     const params = new URLSearchParams({
-      startDate: analyticsState.startDate,
-      endDate: analyticsState.endDate,
+      startDate: analyticsState.startDate || 'all',
+      endDate: analyticsState.endDate || 'all',
       groupBy: analyticsState.groupBy,
       tab: analyticsState.tab
     });
@@ -1330,6 +1387,36 @@ async function loadAnalyticsData() {
 
     // Store in cache
     analyticsCache.set(cacheKey, data.data);
+
+    // Save allTimeRange from server response
+    if (data.data.allTimeRange) {
+      analyticsState.allTimeStart = data.data.allTimeRange.startDate;
+      analyticsState.allTimeEnd = data.data.allTimeRange.endDate;
+    }
+
+    // Populate dates if default all-time
+    if ((!analyticsState.startDate || !analyticsState.endDate) && data.data.allTimeRange) {
+      analyticsState.startDate = data.data.allTimeRange.startDate;
+      analyticsState.endDate = data.data.allTimeRange.endDate;
+      calSelectedStart = analyticsState.startDate;
+      calSelectedEnd = analyticsState.endDate;
+
+      const startInput = document.getElementById('filter-start-date');
+      const endInput = document.getElementById('filter-end-date');
+      if (startInput) startInput.value = analyticsState.startDate;
+      if (endInput) endInput.value = analyticsState.endDate;
+
+      const startDisplay = document.getElementById('fin-cal-start-display');
+      const endDisplay = document.getElementById('fin-cal-end-display');
+      if (startDisplay) startDisplay.textContent = formatCalDisplayDate(analyticsState.startDate);
+      if (endDisplay) endDisplay.textContent = formatCalDisplayDate(analyticsState.endDate);
+
+      if (analyticsState.endDate) {
+        const [eY, eM] = analyticsState.endDate.split('-').map(Number);
+        calViewYear = eY;
+        calViewMonth = eM - 1;
+      }
+    }
 
     // Update calendar activity dots with actual database records
     if (data.data.calendarActivity) {
