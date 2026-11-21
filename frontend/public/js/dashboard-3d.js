@@ -45,17 +45,20 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     return;
   }
 
+  let isPerfMode = Boolean(window.PondoSyncPerf && window.PondoSyncPerf.isEnabled());
+
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true,
-    antialias: true,
-    powerPreference: 'high-performance'
+    antialias: !isPerfMode,
+    powerPreference: isPerfMode ? 'default' : 'high-performance'
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(isPerfMode ? 1 : Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.55;
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.autoUpdate = !isPerfMode;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   renderer.setClearColor(0x000000, 1);
@@ -125,6 +128,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     1.2,   // radius
     0.6    // threshold
   );
+  bloomPass.enabled = !isPerfMode;
   composer.addPass(bloomPass);
 
   const outputPass = new OutputPass();
@@ -215,18 +219,55 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   window.addEventListener('resize', resize);
 
   /* ========================================================
+     PERFORMANCE MODE SYNC
+     ======================================================== */
+  function applyPerfMode(perf) {
+    isPerfMode = perf;
+    if (bloomPass) {
+      bloomPass.enabled = !perf;
+    }
+    if (renderer) {
+      const dpr = perf ? 1 : Math.min(window.devicePixelRatio, 2);
+      renderer.setPixelRatio(dpr);
+      if (composer) composer.setPixelRatio(dpr);
+      renderer.shadowMap.autoUpdate = !perf;
+      if (!perf) {
+        renderer.shadowMap.needsUpdate = true;
+      }
+    }
+  }
+
+  window.addEventListener('pondosync-perf-change', (e) => {
+    applyPerfMode(e.detail.enabled);
+  });
+
+  /* ========================================================
      RENDER LOOP
      ======================================================== */
-  function animate() {
+  let lastFrameTime = 0;
+  const PERF_INTERVAL = 1000 / 30; // 30 FPS cap in performance mode
+
+  function animate(now) {
     requestAnimationFrame(animate);
+
+    // Pause rendering entirely when browser tab is hidden
+    if (document.hidden) return;
+
+    // Frame rate throttle in performance mode
+    if (isPerfMode && now) {
+      const elapsed = now - lastFrameTime;
+      if (elapsed < PERF_INTERVAL) return;
+      lastFrameTime = now - (elapsed % PERF_INTERVAL);
+    }
+
     current.x += (cursor.x - current.x) * LERP_FACTOR;
     current.y += (cursor.y - current.y) * LERP_FACTOR;
     if (modelWrapper) {
       const targetRotY = (current.x * MAX_ROT);
       const targetRotX = THREE.MathUtils.clamp(current.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
 
-      // Smooth oscillation for life
-      const oscillation = Math.sin(Date.now() * 0.0006) * (Math.PI / 12);
+      // Smooth oscillation for life (paused in performance mode to keep scene static)
+      const oscillation = isPerfMode ? 0 : Math.sin(Date.now() * 0.0006) * (Math.PI / 12);
 
       if (!introStarted) {
         modelWrapper.rotation.x = Math.PI / 5; // ~35deg tilt
@@ -239,7 +280,13 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
         modelWrapper.rotation.y = targetRotY + oscillation;
       }
     }
-    composer.render();
+
+    if (isPerfMode) {
+      // In performance mode: bypass EffectComposer & UnrealBloomPass multi-pass shaders
+      renderer.render(scene, camera);
+    } else {
+      composer.render();
+    }
   }
 
   animate();

@@ -21,10 +21,42 @@
     height: '100vh',
     pointerEvents: 'none',
     zIndex: '9999',
-    willChange: 'transform'
+    willChange: 'transform',
+    transition: 'opacity 0.3s ease'
   });
 
   document.body.appendChild(canvas);
+
+  let isPerfMode = Boolean(window.PondoSyncPerf && window.PondoSyncPerf.isEnabled());
+  let isTabVisible = !document.hidden;
+  let animId = null;
+
+  if (isPerfMode) {
+    canvas.style.opacity = '0';
+  }
+
+  function applyPerfMode(perf) {
+    isPerfMode = perf;
+    if (perf) {
+      canvas.style.opacity = '0';
+    } else {
+      canvas.style.opacity = '1';
+      if (!animId && isTabVisible) {
+        animId = requestAnimationFrame(animate);
+      }
+    }
+  }
+
+  window.addEventListener('pondosync-perf-change', (e) => {
+    applyPerfMode(e.detail.enabled);
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    isTabVisible = !document.hidden;
+    if (isTabVisible && !isPerfMode && !animId) {
+      animId = requestAnimationFrame(animate);
+    }
+  });
 
   let width, height;
   let mouseX = 0;
@@ -52,6 +84,12 @@
 
   // Main loop
   function animate() {
+    if (isPerfMode || !isTabVisible) {
+      animId = null;
+      ctx.clearRect(0, 0, width, height);
+      return;
+    }
+
     ctx.clearRect(0, 0, width, height);
 
     // Add a central soft glow at cursor (smaller radius)
@@ -65,8 +103,10 @@
       ctx.fillRect(mouseX - glowRadius, mouseY - glowRadius, glowRadius * 2, glowRadius * 2);
     }
 
-    requestAnimationFrame(animate);
+    animId = requestAnimationFrame(animate);
   }
 
-  requestAnimationFrame(animate);
+  if (!isPerfMode && isTabVisible) {
+    animId = requestAnimationFrame(animate);
+  }
 })();

@@ -21,6 +21,13 @@
 
   <!-- Setup last page synchronously to prevent dashboard flash -->
   <script>
+    (function() {
+      try {
+        if (localStorage.getItem('pondosync_perf_mode') === 'true') {
+          document.documentElement.classList.add('performance-mode');
+        }
+      } catch(e) {}
+    })();
     const lastPage = localStorage.getItem('bb_last_page') || 'dashboard';
     document.write(`<style id="initial-page-style">
       .page { display: none; }
@@ -30,6 +37,7 @@
       .sidebar-link[data-page="${lastPage}"]::before { opacity: 1 !important; }
     </style>`);
   </script>
+  <script src="js/performance-manager.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,6 +138,17 @@
           </div>
         </div>
         <div class="topbar-right">
+          <!-- Performance Mode Toggle -->
+          <div class="perf-toggle-wrapper" id="perf-toggle-wrapper">
+            <button type="button" class="perf-toggle-btn" id="perf-toggle-btn" role="switch" aria-checked="false" aria-label="Performance Mode" title="Performance Mode">
+              <i data-lucide="gauge" class="perf-toggle-icon"></i>
+              <span class="perf-toggle-track">
+                <span class="perf-toggle-thumb"></span>
+              </span>
+            </button>
+            <div class="perf-tooltip" role="tooltip">Performance Mode</div>
+          </div>
+
           <div class="notification-wrapper" id="notification-wrapper">
             <button class="topbar-action-btn notification-btn" id="notification-btn" aria-label="Notifications">
               <i data-lucide="bell"></i>

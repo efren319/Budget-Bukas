@@ -25,10 +25,19 @@
     height:        '100vh',
     pointerEvents: 'none',
     zIndex:        '10',      // above 3D canvas, below UI
-    willChange:    'transform'
+    willChange:    'transform',
+    transition:    'opacity 0.3s ease'
   });
 
   document.body.appendChild(canvas);
+
+  let isPerfMode = Boolean(window.PondoSyncPerf && window.PondoSyncPerf.isEnabled());
+  let isTabVisible = !document.hidden;
+  let animId = null;
+
+  if (isPerfMode) {
+    canvas.style.opacity = '0';
+  }
 
   let W = 0, H = 0;
 
@@ -195,9 +204,41 @@
   const motes  = Array.from({ length: COUNT }, () => new Dust());
 
   /* ========================================================
+     PERFORMANCE MODE SYNC
+     ======================================================== */
+  function applyPerfMode(perf) {
+    isPerfMode = perf;
+    if (perf) {
+      canvas.style.opacity = '0';
+    } else {
+      canvas.style.opacity = '1';
+      if (!animId && isTabVisible) {
+        animId = requestAnimationFrame(animate);
+      }
+    }
+  }
+
+  window.addEventListener('pondosync-perf-change', (e) => {
+    applyPerfMode(e.detail.enabled);
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    isTabVisible = !document.hidden;
+    if (isTabVisible && !isPerfMode && !animId) {
+      animId = requestAnimationFrame(animate);
+    }
+  });
+
+  /* ========================================================
      RENDER LOOP
      ======================================================== */
   function animate() {
+    if (isPerfMode || !isTabVisible) {
+      animId = null;
+      ctx.clearRect(0, 0, W, H);
+      return;
+    }
+
     ctx.clearRect(0, 0, W, H);
 
     // Slowly decay mouse velocity each frame so effect fades
@@ -209,8 +250,10 @@
       m.draw();
     }
 
-    requestAnimationFrame(animate);
+    animId = requestAnimationFrame(animate);
   }
 
-  requestAnimationFrame(animate);
+  if (!isPerfMode && isTabVisible) {
+    animId = requestAnimationFrame(animate);
+  }
 })();

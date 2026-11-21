@@ -18,6 +18,16 @@
 
   <title>PondoSync — Login</title>
   <link rel="icon" type="image/png" href="assets/logos/web-icon.png">
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('pondosync_perf_mode') === 'true') {
+          document.documentElement.classList.add('performance-mode');
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <script src="js/performance-manager.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -366,6 +376,19 @@
   <!-- Loading Screen Overlay removed for modern skeleton/progressive load system -->
 
   <div class="login-wrapper">
+    <!-- Performance Mode Toggle for Login -->
+    <div class="login-perf-wrapper">
+      <div class="perf-toggle-wrapper" id="perf-toggle-wrapper">
+        <button type="button" class="perf-toggle-btn" id="perf-toggle-btn" role="switch" aria-checked="false" aria-label="Performance Mode" title="Performance Mode">
+          <i data-lucide="gauge" class="perf-toggle-icon"></i>
+          <span class="perf-toggle-track">
+            <span class="perf-toggle-thumb"></span>
+          </span>
+        </button>
+        <div class="perf-tooltip" role="tooltip">Performance Mode</div>
+      </div>
+    </div>
+
     <!-- 3D Background Logo -->
     <div class="login-3d-container" id="login-3d-container">
       <canvas id="login-3d-canvas"></canvas>

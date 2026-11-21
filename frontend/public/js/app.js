@@ -935,6 +935,7 @@ function initGlassmorphism() {
   }, 1000);
 
   document.addEventListener('mousemove', (e) => {
+    if (window.PondoSyncPerf && window.PondoSyncPerf.isEnabled()) return;
     mouseX = e.clientX;
     mouseY = e.clientY;
 

@@ -31,6 +31,32 @@ let analyticsState = {
   data: null
 };
 
+// Sync Chart.js animations with Performance Mode
+function syncChartPerfMode(isPerf) {
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.animation = isPerf ? false : { duration: 600, easing: 'easeOutQuart' };
+    if (analyticsChart && analyticsChart.options) {
+      analyticsChart.options.animation = isPerf ? false : { duration: 600, easing: 'easeOutQuart' };
+      analyticsChart.update('none');
+    }
+    if (breakdownChart && breakdownChart.options) {
+      breakdownChart.options.animation = isPerf ? false : { duration: 600 };
+      breakdownChart.update('none');
+    }
+    if (pieChart && pieChart.options) {
+      pieChart.options.animation = isPerf ? false : { duration: 600 };
+      pieChart.update('none');
+    }
+  }
+}
+
+if (window.PondoSyncPerf) {
+  if (window.PondoSyncPerf.isEnabled()) {
+    if (typeof Chart !== 'undefined') Chart.defaults.animation = false;
+  }
+  window.PondoSyncPerf.addListener(syncChartPerfMode);
+}
+
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -47,6 +73,18 @@ function escapeHtml(str) {
 function animateCounter(elementId, targetValue, duration = 1200) {
   const el = document.getElementById(elementId);
   if (!el) return;
+
+  if (window.PondoSyncPerf && window.PondoSyncPerf.isEnabled()) {
+    if (typeof formatPeso === 'function') {
+      el.textContent = formatPeso(targetValue);
+    } else {
+      el.textContent = '₱' + Math.abs(parseFloat(targetValue) || 0).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+    return;
+  }
 
   const start = performance.now();
   const target = parseFloat(targetValue) || 0;
@@ -1512,7 +1550,7 @@ function renderAnalyticsChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      animation: { duration: 600, easing: 'easeOutQuart' },
+      animation: (window.PondoSyncPerf && window.PondoSyncPerf.isEnabled()) ? false : { duration: 600, easing: 'easeOutQuart' },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -1624,7 +1662,7 @@ function renderBreakdownChart(breakdown) {
       responsive: true,
       maintainAspectRatio: false,
       cutout: '60%',
-      animation: { duration: 600 },
+      animation: (window.PondoSyncPerf && window.PondoSyncPerf.isEnabled()) ? false : { duration: 600 },
       plugins: {
         legend: {
           display: true,

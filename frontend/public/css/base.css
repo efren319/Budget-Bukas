@@ -75,3 +75,204 @@ img { max-width: 100%; display: block; }
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* =============================================
+   PERFORMANCE MODE TOGGLE COMPONENT
+   ============================================= */
+.perf-toggle-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.perf-toggle-btn {
+  height: 36px;
+  padding: 0 10px;
+  gap: 7px;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  outline: none;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.perf-toggle-btn:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+  color: var(--gold);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.perf-toggle-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2;
+  color: var(--text-muted);
+  transition: color 0.25s ease, transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.perf-toggle-track {
+  width: 24px;
+  height: 13px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  position: relative;
+  transition: background-color 0.25s ease;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.perf-toggle-thumb {
+  width: 9px;
+  height: 9px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Active / ON State (Gold) */
+.perf-toggle-btn.active {
+  border-color: rgba(211, 172, 119, 0.45);
+  background: rgba(211, 172, 119, 0.1);
+  color: var(--gold);
+}
+
+.perf-toggle-btn.active .perf-toggle-icon {
+  color: var(--gold);
+}
+
+.perf-toggle-btn.active .perf-toggle-track {
+  background: rgba(211, 172, 119, 0.35);
+}
+
+.perf-toggle-btn.active .perf-toggle-thumb {
+  transform: translateX(11px);
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+}
+
+/* Tooltip on hover */
+.perf-tooltip {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(22, 17, 13, 0.96);
+  border: 1px solid rgba(211, 172, 119, 0.25);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.perf-toggle-wrapper:hover .perf-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Corner position for login page */
+.login-perf-wrapper {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 100;
+}
+
+/* =============================================
+   PERFORMANCE MODE OPTIMIZATION OVERRIDES
+   ============================================= */
+html.performance-mode {
+  --glass-blur: none;
+  --glass-gold-blur: none;
+  --glass-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --glass-gold-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --glass-bg: rgba(18, 14, 10, 0.94);
+  --glass-gold-bg: rgba(22, 16, 11, 0.94);
+}
+
+/* 1. Eliminate GPU/CPU backdrop-filter blur passes */
+html.performance-mode *,
+html.performance-mode *::before,
+html.performance-mode *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 2. Solidify glass card backgrounds so they stay crisp, dark and legible without blur */
+html.performance-mode .glass-card,
+html.performance-mode .dashboard-card,
+html.performance-mode .premium-card,
+html.performance-mode .date-filter-card,
+html.performance-mode .analytics-chart-card,
+html.performance-mode .analytics-analysis-card,
+html.performance-mode .analytics-pie-card,
+html.performance-mode .heatmaps-outer-card,
+html.performance-mode .recent-income-card,
+html.performance-mode .recent-expenses-card,
+html.performance-mode .breakdown-card,
+html.performance-mode .receipt-card,
+html.performance-mode .premium-table-container,
+html.performance-mode .modal-content,
+html.performance-mode .notification-panel {
+  background-color: #120e0a !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* 3. Hide continuous decorative glass sheen and shimmer lines */
+html.performance-mode .glass-sheen,
+html.performance-mode .glass-edge,
+html.performance-mode .login-wrapper::before,
+html.performance-mode .login-wrapper::after {
+  display: none !important;
+  animation: none !important;
+}
+
+/* 4. Disable heavy infinite decorative animations & pulsing */
+html.performance-mode [class*="shimmer"],
+html.performance-mode [class*="pulse"],
+html.performance-mode [class*="glow-anim"] {
+  animation: none !important;
+}
+
+/* 5. Remove expensive text shadows and excessive box shadow glows */
+html.performance-mode * {
+  text-shadow: none !important;
+}
+
+/* 6. Smooth transitions when switching modes */
+.glass-card,
+.dashboard-card,
+.premium-card,
+.date-filter-card,
+.topbar,
+.sidebar,
+.notification-panel {
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* 7. Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

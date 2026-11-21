@@ -51,17 +51,20 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
      return;
   }
 
+  let isPerfMode = Boolean(window.PondoSyncPerf && window.PondoSyncPerf.isEnabled());
+
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true, // Will be overridden by composer, but we use mix-blend-mode in CSS
-    antialias: true,
-    powerPreference: 'high-performance'
+    antialias: !isPerfMode,
+    powerPreference: isPerfMode ? 'default' : 'high-performance'
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(isPerfMode ? 1 : Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.6;           // cinematic darkness
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.autoUpdate = !isPerfMode;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   
   // Set clear color to pure black, we will use mix-blend-mode: screen in CSS to make it transparent
@@ -195,6 +198,7 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
     1.1,      // radius — increased spread for a bigger, softer glow
     0.65      // threshold — only emissive/bright areas bloom
   );
+  bloomPass.enabled = !isPerfMode;
   composer.addPass(bloomPass);
 
   // OutputPass handles color space conversion after bloom
@@ -330,10 +334,46 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
   });
 
   /* ========================================================
-     RENDER LOOP — uses composer (bloom pipeline)
+     PERFORMANCE MODE SYNC
      ======================================================== */
-  function animate() {
+  function applyPerfMode(perf) {
+    isPerfMode = perf;
+    if (bloomPass) {
+      bloomPass.enabled = !perf;
+    }
+    if (renderer) {
+      const dpr = perf ? 1 : Math.min(window.devicePixelRatio, 2);
+      renderer.setPixelRatio(dpr);
+      if (composer) composer.setPixelRatio(dpr);
+      renderer.shadowMap.autoUpdate = !perf;
+      if (!perf) {
+        renderer.shadowMap.needsUpdate = true;
+      }
+    }
+  }
+
+  window.addEventListener('pondosync-perf-change', (e) => {
+    applyPerfMode(e.detail.enabled);
+  });
+
+  /* ========================================================
+     RENDER LOOP — uses composer or direct render
+     ======================================================== */
+  let lastFrameTime = 0;
+  const PERF_INTERVAL = 1000 / 30; // 30 FPS cap in performance mode
+
+  function animate(now) {
     requestAnimationFrame(animate);
+
+    // Pause rendering entirely when browser tab is hidden
+    if (document.hidden) return;
+
+    // Frame rate throttle in performance mode
+    if (isPerfMode && now) {
+      const elapsed = now - lastFrameTime;
+      if (elapsed < PERF_INTERVAL) return;
+      lastFrameTime = now - (elapsed % PERF_INTERVAL);
+    }
 
     current.x += (cursor.x - current.x) * LERP_FACTOR;
     current.y += (cursor.y - current.y) * LERP_FACTOR;
@@ -358,8 +398,11 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
       }
     });
 
-    // Render through bloom composer
-    composer.render();
+    if (isPerfMode) {
+      renderer.render(scene, camera);
+    } else {
+      composer.render();
+    }
   }
 
   animate();
