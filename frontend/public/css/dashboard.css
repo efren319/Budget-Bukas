@@ -4013,10 +4013,12 @@ canvas {
   justify-content: center;
 }
 
-/* Heatmaps outer card */
+/* Heatmaps outer card - stretches full available dashboard width below master layout */
 .heatmaps-outer-card {
   min-width: 0;
-  margin-top: 0;
+  width: 100%;
+  margin-top: var(--space-xl);
+  box-sizing: border-box;
 }
 
 .heatmaps-outer-card .glass-card-content {
@@ -4326,57 +4328,27 @@ canvas {
   color: var(--text-muted);
 }
 
-.heatmap-year-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(22, 17, 13, 0.6);
-  border: 1px solid rgba(211, 172, 119, 0.18);
-  border-radius: var(--radius-sm);
-  padding: 3px 8px;
-}
-
-.heatmap-year-nav-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+/* Master horizontal layout: Side-by-side heatmaps + far-right vertical year selector */
+.heatmaps-content-layout {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
-}
-
-.heatmap-year-nav-btn:hover {
-  color: var(--gold-light);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.heatmap-year-display {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--gold);
-  min-width: 44px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  user-select: none;
-}
-
-/* Two-column responsive layout: equal width & height */
-.heatmaps-stack {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-xl);
   align-items: stretch;
+  gap: var(--space-lg);
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Subtle divider between the two heatmaps */
+/* Two-column responsive layout: equal width sharing across dashboard */
+.heatmaps-stack {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-xl);
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+/* Subtle vertical divider between Income and Expense calendars */
 .heatmap-card:first-child {
   border-right: 1px solid rgba(211, 172, 119, 0.12);
   padding-right: var(--space-xl);
@@ -4386,7 +4358,7 @@ canvas {
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 0 0 var(--space-md) 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -4472,6 +4444,17 @@ canvas {
   overflow-x: auto;
   overflow-y: visible;
   padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.2) transparent;
+}
+
+.heatmap-scroll-area::-webkit-scrollbar {
+  height: 4px;
+}
+
+.heatmap-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.2);
+  border-radius: 4px;
 }
 
 .heatmap-grid-wrap {
@@ -4479,7 +4462,7 @@ canvas {
   flex-direction: column;
   gap: 4px;
   width: 100%;
-  min-width: 0;
+  min-width: 440px;
   user-select: none;
 }
 
@@ -4497,18 +4480,18 @@ canvas {
 }
 
 .heatmap-months-track {
-  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(53, 14px);
-  gap: 3px;
+  grid-template-columns: repeat(53, minmax(0, 1fr));
+  gap: clamp(1px, 0.22vw, 3px);
   align-items: center;
   position: relative;
   overflow: visible;
 }
 
 .heatmap-month-label {
-  font-size: 0.65rem;
+  font-size: clamp(0.58rem, 0.68vw, 0.65rem);
   font-weight: 500;
   color: var(--text-muted);
   line-height: 1;
@@ -4540,18 +4523,21 @@ canvas {
 }
 
 .heatmap-cells-grid {
+  width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-rows: repeat(7, 14px);
-  grid-template-columns: repeat(53, 14px);
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(53, minmax(0, 1fr));
   grid-auto-flow: column;
-  gap: 3px;
+  gap: clamp(1px, 0.22vw, 3px);
 }
 
-/* Individual Cell */
+/* Individual Cell: responsive scaling with max limits */
 .heatmap-cell {
-  width: 14px;
-  height: 14px;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 14px;
+  max-height: 14px;
   border-radius: 2px;
   cursor: pointer;
   transition: transform 0.12s ease, outline 0.12s ease;
@@ -4578,9 +4564,118 @@ canvas {
   opacity: 0.35;
 }
 
-@media (max-width: 768px) {
+/* =============================================
+   VERTICAL YEAR SELECTOR (GitHub-Style)
+   ============================================= */
+.heatmap-years-sidebar {
+  flex-shrink: 0;
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--space-md);
+  border-left: 1px solid rgba(211, 172, 119, 0.12);
+  justify-content: flex-start;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.heatmap-years-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 145px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.25) transparent;
+}
+
+.heatmap-years-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.heatmap-years-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.heatmap-years-list::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 4px;
+}
+
+.heatmap-years-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.45);
+}
+
+.heatmap-year-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.heatmap-year-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.heatmap-year-btn.active {
+  background: rgba(212, 175, 55, 0.14);
+  border-color: rgba(212, 175, 55, 0.35);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
   .heatmaps-stack {
     grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+  .heatmap-card:first-child {
+    border-right: none;
+    border-bottom: 1px solid rgba(211, 172, 119, 0.12);
+    padding-right: 0;
+    padding-bottom: var(--space-md);
+  }
+}
+
+@media (max-width: 640px) {
+  .heatmaps-content-layout {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  .heatmap-years-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid rgba(211, 172, 119, 0.12);
+    padding-left: 0;
+    padding-top: var(--space-sm);
+  }
+  .heatmap-years-list {
+    flex-direction: row;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+  }
+  .heatmap-year-btn {
+    width: auto;
+    padding: 6px 14px;
+    flex-shrink: 0;
   }
 }
 

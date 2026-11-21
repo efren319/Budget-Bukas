@@ -780,28 +780,6 @@ function initAnalytics() {
     });
   });
 
-  // Heatmap year navigation buttons
-  const heatmapPrev = document.getElementById('heatmap-year-prev');
-  const heatmapNext = document.getElementById('heatmap-year-next');
-  if (heatmapPrev) {
-    heatmapPrev.addEventListener('click', () => {
-      heatmapSelectedYear--;
-      updateHeatmapYearDisplay();
-      if (analyticsState.data) {
-        renderFinancialHeatmaps(analyticsState.data);
-      }
-    });
-  }
-  if (heatmapNext) {
-    heatmapNext.addEventListener('click', () => {
-      heatmapSelectedYear++;
-      updateHeatmapYearDisplay();
-      if (analyticsState.data) {
-        renderFinancialHeatmaps(analyticsState.data);
-      }
-    });
-  }
-
   // Recent transactions "View All" link
   const recentViewAll = document.getElementById('analysis-recent-view-all');
   if (recentViewAll) {
@@ -1873,15 +1851,110 @@ function renderTabDependentSections(data) {
 // GitHub-Style Yearly Financial Activity Heatmaps
 // ============================================
 
+// Dynamic extraction of unique years that have actual financial transaction data
+function getAvailableHeatmapYears(calendarActivity) {
+  const yearsSet = new Set();
+  if (Array.isArray(calendarActivity)) {
+    calendarActivity.forEach(tx => {
+      if (tx && tx.date) {
+        const yr = parseInt(String(tx.date).slice(0, 4), 10);
+        if (!isNaN(yr) && yr > 1900 && yr < 2100) {
+          yearsSet.add(yr);
+        }
+      }
+    });
+  }
+  // If database contains no transactions, fallback to current year
+  if (yearsSet.size === 0) {
+    yearsSet.add(new Date().getFullYear());
+  }
+  // Sort descending: e.g. [2026, 2025, 2024, 2022] (GitHub contribution style)
+  return Array.from(yearsSet).sort((a, b) => b - a);
+}
+
+function renderHeatmapYearSelector(availableYears, selectedYear) {
+  const listEl = document.getElementById('heatmap-years-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+
+  availableYears.forEach(year => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `heatmap-year-btn ${year === selectedYear ? 'active' : ''}`;
+    btn.dataset.year = year;
+    btn.textContent = year;
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', year === selectedYear ? 'true' : 'false');
+    btn.setAttribute('aria-label', `Year ${year}`);
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (heatmapSelectedYear === year) return;
+      heatmapSelectedYear = year;
+
+      // Update active states
+      listEl.querySelectorAll('.heatmap-year-btn').forEach(b => {
+        const isActive = parseInt(b.dataset.year, 10) === heatmapSelectedYear;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      // Keep selected year visible within scroll container
+      btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+      // Re-render both Income Activity and Expense Activity heatmaps for selected year
+      if (analyticsState.data && analyticsState.data.calendarActivity) {
+        renderYearlyHeatmap('income', analyticsState.data.calendarActivity, 'heatmap-income-wrap', heatmapSelectedYear);
+        renderYearlyHeatmap('expense', analyticsState.data.calendarActivity, 'heatmap-expense-wrap', heatmapSelectedYear);
+      }
+    });
+
+    listEl.appendChild(btn);
+  });
+
+  // Ensure active year button is scrolled into view
+  const activeBtn = listEl.querySelector('.heatmap-year-btn.active');
+  if (activeBtn) {
+    activeBtn.scrollIntoView({ block: 'nearest' });
+  }
+}
+
 function updateHeatmapYearDisplay() {
   const yearEl = document.getElementById('heatmap-year-display');
   if (yearEl) yearEl.textContent = heatmapSelectedYear;
+
+  const listEl = document.getElementById('heatmap-years-list');
+  if (listEl) {
+    listEl.querySelectorAll('.heatmap-year-btn').forEach(b => {
+      const isActive = parseInt(b.dataset.year, 10) === heatmapSelectedYear;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  }
 }
 
 function renderFinancialHeatmaps(data) {
-  updateHeatmapYearDisplay();
+  const activity = (data && data.calendarActivity) || [];
+  const availableYears = getAvailableHeatmapYears(activity);
 
-  const activity = data.calendarActivity || [];
+  // If current heatmapSelectedYear is not in available years, pick matching end date or latest available
+  if (!availableYears.includes(heatmapSelectedYear)) {
+    if (analyticsState.endDate) {
+      const parsedYear = parseInt(analyticsState.endDate.slice(0, 4), 10);
+      if (availableYears.includes(parsedYear)) {
+        heatmapSelectedYear = parsedYear;
+      } else {
+        heatmapSelectedYear = availableYears[0];
+      }
+    } else {
+      heatmapSelectedYear = availableYears[0];
+    }
+  }
+
+  updateHeatmapYearDisplay();
+  renderHeatmapYearSelector(availableYears, heatmapSelectedYear);
+
   renderYearlyHeatmap('income', activity, 'heatmap-income-wrap', heatmapSelectedYear);
   renderYearlyHeatmap('expense', activity, 'heatmap-expense-wrap', heatmapSelectedYear);
 }
@@ -1985,10 +2058,14 @@ function renderYearlyHeatmap(type, allActivity, containerId, year) {
         const dayData = dateMap[curDateStr] || { count: 0, total: 0 };
         const levelClass = getIntensityLevel(dayData.total);
 
-        // Check if date falls outside current dashboard filter range
+        // Only dim dates if the selected year is the one currently active in the dashboard filter range
         let isOutOfFilter = false;
-        if (analyticsState.startDate && curDateStr < analyticsState.startDate) isOutOfFilter = true;
-        if (analyticsState.endDate && curDateStr > analyticsState.endDate) isOutOfFilter = true;
+        const filterStartYear = analyticsState.startDate ? parseInt(analyticsState.startDate.slice(0, 4), 10) : null;
+        const filterEndYear = analyticsState.endDate ? parseInt(analyticsState.endDate.slice(0, 4), 10) : null;
+        if (year === filterStartYear || year === filterEndYear) {
+          if (analyticsState.startDate && curDateStr < analyticsState.startDate) isOutOfFilter = true;
+          if (analyticsState.endDate && curDateStr > analyticsState.endDate) isOutOfFilter = true;
+        }
         const filterClass = isOutOfFilter ? 'out-of-filter' : '';
 
         cellsHtml += `<div class="heatmap-cell ${levelClass} ${filterClass}" data-date="${curDateStr}" data-type="${type}" data-count="${dayData.count}" data-total="${dayData.total.toFixed(2)}" tabindex="0" role="button" aria-label="${curDateStr}"></div>`;
