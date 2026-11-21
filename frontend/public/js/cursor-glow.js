@@ -31,20 +31,40 @@
   let isTabVisible = !document.hidden;
   let animId = null;
 
-  if (isPerfMode) {
-    canvas.style.opacity = '0';
+  function clearGlow() {
+    isMoving = false;
+    mouseX = -9999;
+    mouseY = -9999;
+    if (width && height) {
+      ctx.clearRect(0, 0, width, height);
+    }
   }
 
   function applyPerfMode(perf) {
     isPerfMode = perf;
     if (perf) {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+      clearGlow();
+      canvas.style.display = 'none';
+      canvas.style.visibility = 'hidden';
       canvas.style.opacity = '0';
     } else {
+      canvas.style.display = 'block';
+      canvas.style.visibility = 'visible';
       canvas.style.opacity = '1';
       if (!animId && isTabVisible) {
         animId = requestAnimationFrame(animate);
       }
     }
+  }
+
+  if (isPerfMode) {
+    canvas.style.display = 'none';
+    canvas.style.visibility = 'hidden';
+    canvas.style.opacity = '0';
   }
 
   window.addEventListener('pondosync-perf-change', (e) => {
@@ -59,8 +79,8 @@
   });
 
   let width, height;
-  let mouseX = 0;
-  let mouseY = 0;
+  let mouseX = -9999;
+  let mouseY = -9999;
   let isMoving = false;
 
   // Resize handler
@@ -70,13 +90,17 @@
     canvas.width = width * window.devicePixelRatio;
     canvas.height = height * window.devicePixelRatio;
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    if (isPerfMode) {
+      ctx.clearRect(0, 0, width, height);
+    }
   }
 
   window.addEventListener('resize', resize);
   resize();
 
-  // Track mouse position
+  // Track mouse position (completely bypassed when in Performance Mode)
   window.addEventListener('mousemove', (e) => {
+    if (isPerfMode) return;
     mouseX = e.clientX;
     mouseY = e.clientY;
     isMoving = true;

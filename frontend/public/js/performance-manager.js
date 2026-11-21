@@ -41,11 +41,6 @@
       btn.setAttribute('title', label);
       btn.setAttribute('aria-label', label);
     });
-
-    const tooltips = document.querySelectorAll('.perf-tooltip');
-    tooltips.forEach(tt => {
-      tt.textContent = enabled ? 'Performance Mode: ON' : 'Performance Mode: OFF';
-    });
   }
 
   function setMode(isPerf, save = true) {

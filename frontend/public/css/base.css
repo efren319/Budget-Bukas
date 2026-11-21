@@ -77,116 +77,64 @@ img { max-width: 100%; display: block; }
 }
 
 /* =============================================
-   PERFORMANCE MODE TOGGLE COMPONENT
+   PERFORMANCE MODE CIRCULAR TOGGLE BUTTON
    ============================================= */
-.perf-toggle-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
 .perf-toggle-btn {
+  width: 36px;
   height: 36px;
-  padding: 0 10px;
-  gap: 7px;
-  display: inline-flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid var(--border-color);
   border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: inherit;
+  padding: 0;
   outline: none;
+  flex-shrink: 0;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
   user-select: none;
-  flex-shrink: 0;
-}
-
-.perf-toggle-btn:hover {
-  border-color: rgba(212, 175, 55, 0.4);
-  color: var(--gold);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.perf-toggle-icon {
-  width: 15px;
-  height: 15px;
-  stroke-width: 2;
-  color: var(--text-muted);
-  transition: color 0.25s ease, transform 0.25s ease;
-  flex-shrink: 0;
-}
-
-.perf-toggle-track {
-  width: 24px;
-  height: 13px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
   position: relative;
-  transition: background-color 0.25s ease;
-  pointer-events: none;
-  flex-shrink: 0;
 }
 
-.perf-toggle-thumb {
-  width: 9px;
-  height: 9px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, box-shadow 0.25s ease;
+.perf-toggle-btn .perf-toggle-icon,
+.perf-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+  color: inherit;
+  transition: color 0.25s ease;
 }
 
 /* Active / ON State (Gold) */
 .perf-toggle-btn.active {
-  border-color: rgba(211, 172, 119, 0.45);
-  background: rgba(211, 172, 119, 0.1);
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.35);
   color: var(--gold);
 }
 
-.perf-toggle-btn.active .perf-toggle-icon {
-  color: var(--gold);
+/* STRICTLY NO HOVER EFFECTS (visually stable, no glow, no movement) */
+.perf-toggle-btn:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  animation: none !important;
 }
 
-.perf-toggle-btn.active .perf-toggle-track {
-  background: rgba(211, 172, 119, 0.35);
+.perf-toggle-btn:not(.active):hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
 }
 
-.perf-toggle-btn.active .perf-toggle-thumb {
-  transform: translateX(11px);
-  background: var(--gold);
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+.perf-toggle-btn.active:hover {
+  background: rgba(212, 175, 55, 0.12) !important;
+  border-color: rgba(212, 175, 55, 0.35) !important;
+  color: var(--gold) !important;
 }
 
-/* Tooltip on hover */
-.perf-tooltip {
-  position: absolute;
-  bottom: -32px;
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  background: rgba(22, 17, 13, 0.96);
-  border: 1px solid rgba(211, 172, 119, 0.25);
-  color: var(--text-primary);
-  font-size: 0.72rem;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.perf-toggle-wrapper:hover .perf-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
+.perf-toggle-btn:active {
+  transform: none !important;
 }
 
 /* Corner position for login page */
@@ -203,10 +151,10 @@ img { max-width: 100%; display: block; }
 html.performance-mode {
   --glass-blur: none;
   --glass-gold-blur: none;
-  --glass-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  --glass-gold-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  --glass-bg: rgba(18, 14, 10, 0.94);
-  --glass-gold-bg: rgba(22, 16, 11, 0.94);
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --glass-gold-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --glass-bg: #160D07;
+  --glass-gold-bg: #160D07;
 }
 
 /* 1. Eliminate GPU/CPU backdrop-filter blur passes */
@@ -217,7 +165,7 @@ html.performance-mode *::after {
   -webkit-backdrop-filter: none !important;
 }
 
-/* 2. Solidify glass card backgrounds so they stay crisp, dark and legible without blur */
+/* 2. Replace glassmorphism with exact solid theme color #160D07 */
 html.performance-mode .glass-card,
 html.performance-mode .dashboard-card,
 html.performance-mode .premium-card,
@@ -231,19 +179,31 @@ html.performance-mode .recent-expenses-card,
 html.performance-mode .breakdown-card,
 html.performance-mode .receipt-card,
 html.performance-mode .premium-table-container,
+html.performance-mode .member-card,
+html.performance-mode .sidebar,
+html.performance-mode .topbar.topbar-scrolled,
+html.performance-mode .notification-panel,
 html.performance-mode .modal-content,
-html.performance-mode .notification-panel {
-  background-color: #120e0a !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+html.performance-mode .login-container,
+html.performance-mode .login-brand {
+  background-color: #160D07 !important;
+  background-image: none !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* 3. Hide continuous decorative glass sheen and shimmer lines */
+/* 3. Hide cursor lighting, proximity blobs, and decorative glass sheen */
+html.performance-mode .glass-glow-bottom,
+html.performance-mode .glass-glow-bright,
+html.performance-mode .glass-glow-top,
+html.performance-mode .glass-card::after,
 html.performance-mode .glass-sheen,
 html.performance-mode .glass-edge,
 html.performance-mode .login-wrapper::before,
 html.performance-mode .login-wrapper::after {
   display: none !important;
   animation: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 /* 4. Disable heavy infinite decorative animations & pulsing */

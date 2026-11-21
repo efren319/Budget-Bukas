@@ -929,10 +929,30 @@ function initGlassmorphism() {
   let mouseX = 0;
   let mouseY = 0;
 
+  function clearCardGlows() {
+    cards.forEach(card => {
+      card.style.removeProperty('--mouse-x');
+      card.style.removeProperty('--mouse-y');
+    });
+  }
+
   // Refresh the card list periodically in case the DOM changes
   setInterval(() => {
     cards = document.querySelectorAll('.glass-card');
+    if (window.PondoSyncPerf && window.PondoSyncPerf.isEnabled()) {
+      clearCardGlows();
+    }
   }, 1000);
+
+  if (window.PondoSyncPerf && window.PondoSyncPerf.isEnabled()) {
+    clearCardGlows();
+  }
+
+  window.addEventListener('pondosync-perf-change', (e) => {
+    if (e.detail.enabled) {
+      clearCardGlows();
+    }
+  });
 
   document.addEventListener('mousemove', (e) => {
     if (window.PondoSyncPerf && window.PondoSyncPerf.isEnabled()) return;

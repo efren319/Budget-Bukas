@@ -142,3 +142,17 @@
   --edge-gold:         linear-gradient(90deg, transparent 0%, rgba(255, 210, 100, 0.25) 30%, rgba(255, 230, 140, 0.45) 50%, rgba(255, 210, 100, 0.25) 70%, transparent 100%);
   --edge-hover:        linear-gradient(90deg, transparent 0%, rgba(210, 185, 155, 0.15) 30%, rgba(230, 210, 185, 0.25) 50%, rgba(210, 185, 155, 0.15) 70%, transparent 100%);
 }
+
+/* =============================================
+   PERFORMANCE MODE VARIABLES
+   ============================================= */
+html.performance-mode {
+  --glass-bg: #160D07;
+  --glass-gold-bg: #160D07;
+  --glass-blur: none;
+  --glass-gold-blur: none;
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --glass-gold-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --glass-border: 1px solid rgba(212, 175, 55, 0.12);
+  --glass-gold-border: 1px solid rgba(212, 175, 55, 0.15);
+}
