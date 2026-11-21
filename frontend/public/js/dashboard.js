@@ -166,15 +166,17 @@ function initDashboard() {
   // Initialize analytics system
   initAnalytics();
 
-  // Keep the scrollable member list height in sync when the card resizes
+  // Sync member list scroll height whenever the left column or date filter changes size
   window.addEventListener('resize', requestSyncMemberListHeight);
   if (window.ResizeObserver) {
-    const memberCard = document.querySelector('.member-card');
-    if (memberCard) {
+    // Watch the left column — its height change is what drives the calculation
+    const mainCol = document.querySelector('.dashboard-main-content');
+    if (mainCol) {
       new ResizeObserver(() => {
         requestSyncMemberListHeight();
-      }).observe(memberCard);
+      }).observe(mainCol);
     }
+    // Watch date filter card — its height affects the available space
     const filterCard = document.querySelector('.date-filter-card');
     if (filterCard) {
       new ResizeObserver(() => {
@@ -522,24 +524,46 @@ let syncHeightPending = false;
 function requestSyncMemberListHeight() {
   if (syncHeightPending) return;
   syncHeightPending = true;
+  // Double rAF: first frame lets layout settle, second frame reads stable values
   requestAnimationFrame(() => {
-    syncHeightPending = false;
-    syncMemberListHeight();
+    requestAnimationFrame(() => {
+      syncHeightPending = false;
+      syncMemberListHeight();
+    });
   });
 }
 
 function syncMemberListHeight() {
-  // CSS flexbox now handles all height distribution.
-  // This function is kept for the mobile fallback only.
-  const memberList = document.getElementById('members-list');
+  const mainCol        = document.querySelector('.dashboard-main-content');
+  const memberCard     = document.querySelector('.member-card');
+  const memberList     = document.getElementById('members-list');
+  const dateFilterCard = document.querySelector('.date-filter-card');
+
   if (!memberList) return;
 
-  if (window.innerWidth <= 900) {
+  // Mobile: fixed cap, columns are stacked
+  if (window.innerWidth <= 900 || !mainCol || !memberCard || !dateFilterCard) {
     memberList.style.maxHeight = '360px';
-  } else {
-    // On desktop, let the CSS flex chain handle it — clear any inline override
-    memberList.style.maxHeight = '';
+    return;
   }
+
+  // With align-items:flex-start the left column's height is its true natural
+  // content height — completely independent of the right column.
+  const mainBottom = mainCol.getBoundingClientRect().bottom;
+  const filterH    = dateFilterCard.getBoundingClientRect().height || 380;
+  const gap        = 24; // --space-lg
+
+  // The member list's top position in the viewport (doesn't depend on list height).
+  const listTop = memberList.getBoundingClientRect().top;
+
+  // Target: list bottom should not exceed where the date-filter top would sit
+  // if the right column were as tall as the left column.
+  //   targetListBottom = mainBottom - filterH - gap
+  const targetListBottom = mainBottom - filterH - gap;
+  const rawMaxH = Math.floor(targetListBottom - listTop);
+
+  // Clamp: always show at least 2 rows (~96px), cap at calculated value
+  memberList.style.maxHeight = `${Math.max(96, rawMaxH)}px`;
 }
 window.syncMemberListHeight = requestSyncMemberListHeight;
 

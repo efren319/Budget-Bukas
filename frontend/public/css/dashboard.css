@@ -9,7 +9,7 @@
 .dashboard-master-layout {
   display: flex;
   gap: var(--space-xl);
-  align-items: stretch;
+  align-items: flex-start;
   min-width: 0;
   max-width: 100%;
 }
@@ -31,38 +31,31 @@
   min-height: 0;
 }
 
+/* member-card: natural height; JS sets max-height on .member-list directly */
 .member-card {
-  flex: 1 1 0%;
-  min-height: 0;
-  box-sizing: border-box;
-  /* Make the glass-card-content fill the card via padding-box flex */
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .member-card .side-card-header {
   flex-shrink: 0;
 }
 
-/* glass-card-content inside member-card must fill remaining height */
 .member-card .glass-card-content {
-  flex: 1 1 0%;
-  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-/* The scrollable list fills the content area and scrolls */
+/* JS sets max-height dynamically; overflow-y: auto triggers scrolling */
 .member-card .member-list {
-  flex: 1 1 0%;
-  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: var(--space-sm);
-  overflow-y: auto;
   padding-right: var(--space-xs);
 }
 
