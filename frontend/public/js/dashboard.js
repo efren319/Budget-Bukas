@@ -166,14 +166,14 @@ function initDashboard() {
   // Initialize analytics system
   initAnalytics();
 
-  // Keep member card height dynamically synced with the main content column
+  // Keep the scrollable member list height in sync when the card resizes
   window.addEventListener('resize', requestSyncMemberListHeight);
   if (window.ResizeObserver) {
-    const mainCol = document.querySelector('.dashboard-main-content');
-    if (mainCol) {
+    const memberCard = document.querySelector('.member-card');
+    if (memberCard) {
       new ResizeObserver(() => {
         requestSyncMemberListHeight();
-      }).observe(mainCol);
+      }).observe(memberCard);
     }
     const filterCard = document.querySelector('.date-filter-card');
     if (filterCard) {
@@ -529,47 +529,26 @@ function requestSyncMemberListHeight() {
 }
 
 function syncMemberListHeight() {
-  const mainCol = document.querySelector('.dashboard-main-content');
-  const sideCol = document.querySelector('.dashboard-side-content');
   const memberCard = document.querySelector('.member-card');
   const memberList = document.getElementById('members-list');
-  const dateFilterCard = document.querySelector('.date-filter-card');
 
   if (!memberCard || !memberList) return;
 
-  // On mobile/tablet screens (<= 900px) where columns stack vertically, remove synchronization
-  if (window.innerWidth <= 900 || !mainCol || !sideCol) {
+  // On mobile/tablet screens (<= 900px) where columns stack, use a fixed cap
+  if (window.innerWidth <= 900) {
     memberCard.style.height = '';
     memberList.style.maxHeight = '360px';
     return;
   }
 
-  // Measure true natural content height of the left main column
-  const mainH = mainCol.getBoundingClientRect().height;
-  if (mainH <= 0) return;
+  // CSS flexbox (flex: 1 1 0%) already sizes the member card correctly —
+  // do NOT override memberCard.style.height here.
+  memberCard.style.height = '';
 
-  // Measure height of Date Filter card (or fallback to natural height ~370px)
-  let filterH = 0;
-  if (dateFilterCard && dateFilterCard.offsetParent !== null) {
-    filterH = dateFilterCard.getBoundingClientRect().height;
-  }
-  if (filterH <= 0) filterH = 370;
+  // Calculate available height for the scrollable list inside the card
+  const cardH = memberCard.getBoundingClientRect().height;
+  if (cardH <= 0) return;
 
-  // Measure gap between member card and date filter card in side content column
-  const sideStyle = window.getComputedStyle(sideCol);
-  const gap = parseFloat(sideStyle.rowGap || sideStyle.gap) || 24;
-
-  // Target member card height so that:
-  // memberCardHeight + gap + filterCardHeight === mainColHeight
-  const calculatedHeight = mainH - filterH - gap;
-
-  // Ensure a sensible minimum height so the header and at least 2 member rows are always visible
-  const minMemberCardH = 140;
-  const targetMemberH = Math.max(minMemberCardH, Math.round(calculatedHeight));
-
-  memberCard.style.height = `${targetMemberH}px`;
-
-  // Calculate available height for scrollable member list inside the card
   const header = memberCard.querySelector('.side-card-header');
   const headerH = header ? header.getBoundingClientRect().height : 38;
   const cardStyle = window.getComputedStyle(memberCard);
@@ -579,7 +558,7 @@ function syncMemberListHeight() {
   const contentStyle = contentEl ? window.getComputedStyle(contentEl) : null;
   const contentGap = contentStyle ? (parseFloat(contentStyle.rowGap || contentStyle.gap) || 12) : 12;
 
-  const listMaxH = Math.max(60, Math.floor(targetMemberH - headerH - paddingTop - paddingBottom - contentGap));
+  const listMaxH = Math.max(60, Math.floor(cardH - headerH - paddingTop - paddingBottom - contentGap));
   memberList.style.maxHeight = `${listMaxH}px`;
 }
 window.syncMemberListHeight = requestSyncMemberListHeight;
