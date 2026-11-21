@@ -547,23 +547,16 @@ function syncMemberListHeight() {
     return;
   }
 
-  // With align-items:flex-start the left column's height is its true natural
-  // content height — completely independent of the right column.
   const mainBottom = mainCol.getBoundingClientRect().bottom;
   const filterH    = dateFilterCard.getBoundingClientRect().height || 380;
-  const gap        = 24; // --space-lg
-
-  // The member list's top position in the viewport (doesn't depend on list height).
-  const listTop = memberList.getBoundingClientRect().top;
-
-  // Target: list bottom should not exceed where the date-filter top would sit
-  // if the right column were as tall as the left column.
-  //   targetListBottom = mainBottom - filterH - gap
+  const gap        = 24;
+  const listTop    = memberList.getBoundingClientRect().top;
   const targetListBottom = mainBottom - filterH - gap;
   const rawMaxH = Math.floor(targetListBottom - listTop);
+  const finalMaxH = Math.max(96, rawMaxH);
 
-  // Clamp: always show at least 2 rows (~96px), cap at calculated value
-  memberList.style.maxHeight = `${Math.max(96, rawMaxH)}px`;
+  console.log('[syncMemberListHeight]', { mainBottom, filterH, listTop, targetListBottom, rawMaxH, finalMaxH });
+  memberList.style.maxHeight = `${finalMaxH}px`;
 }
 window.syncMemberListHeight = requestSyncMemberListHeight;
 
