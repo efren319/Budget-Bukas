@@ -166,14 +166,20 @@ function initDashboard() {
   // Initialize analytics system
   initAnalytics();
 
-  // Keep member card height synced with the analytics content card
-  window.addEventListener('resize', syncMemberListHeight);
+  // Keep member card height dynamically synced with the main content column
+  window.addEventListener('resize', requestSyncMemberListHeight);
   if (window.ResizeObserver) {
-    const analyticsContent = document.querySelector('.analytics-chart-card') || document.querySelector('.analytics-content');
-    if (analyticsContent) {
+    const mainCol = document.querySelector('.dashboard-main-content');
+    if (mainCol) {
       new ResizeObserver(() => {
-        syncMemberListHeight();
-      }).observe(analyticsContent);
+        requestSyncMemberListHeight();
+      }).observe(mainCol);
+    }
+    const filterCard = document.querySelector('.date-filter-card');
+    if (filterCard) {
+      new ResizeObserver(() => {
+        requestSyncMemberListHeight();
+      }).observe(filterCard);
     }
   }
 }
@@ -509,43 +515,74 @@ function renderMembers(members) {
   }).join('');
 
   if (typeof lucide !== 'undefined') lucide.createIcons();
-  requestAnimationFrame(syncMemberListHeight);
+  requestSyncMemberListHeight();
+}
+
+let syncHeightPending = false;
+function requestSyncMemberListHeight() {
+  if (syncHeightPending) return;
+  syncHeightPending = true;
+  requestAnimationFrame(() => {
+    syncHeightPending = false;
+    syncMemberListHeight();
+  });
 }
 
 function syncMemberListHeight() {
+  const mainCol = document.querySelector('.dashboard-main-content');
+  const sideCol = document.querySelector('.dashboard-side-content');
   const memberCard = document.querySelector('.member-card');
   const memberList = document.getElementById('members-list');
+  const dateFilterCard = document.querySelector('.date-filter-card');
+
   if (!memberCard || !memberList) return;
 
-  // Only apply on desktop (side-by-side layout)
-  if (window.innerWidth <= 1200) {
+  // On mobile/tablet screens (<= 900px) where columns stack vertically, remove synchronization
+  if (window.innerWidth <= 900 || !mainCol || !sideCol) {
     memberCard.style.height = '';
-    memberList.style.maxHeight = '';
+    memberList.style.maxHeight = '360px';
     return;
   }
 
-  // Track the analytics chart card (first sub-card in the analytics row)
-  const analyticsChartCard = document.querySelector('.analytics-chart-card');
-  if (analyticsState.tab === 'reports' || !analyticsChartCard || analyticsChartCard.offsetParent === null) {
-    memberCard.style.height = '';
-    memberList.style.maxHeight = '420px';
-    return;
+  // Measure true natural content height of the left main column
+  const mainH = mainCol.getBoundingClientRect().height;
+  if (mainH <= 0) return;
+
+  // Measure height of Date Filter card (or fallback to natural height ~370px)
+  let filterH = 0;
+  if (dateFilterCard && dateFilterCard.offsetParent !== null) {
+    filterH = dateFilterCard.getBoundingClientRect().height;
   }
+  if (filterH <= 0) filterH = 370;
 
-  const chartH = analyticsChartCard.getBoundingClientRect().height;
-  if (chartH <= 0) return;
+  // Measure gap between member card and date filter card in side content column
+  const sideStyle = window.getComputedStyle(sideCol);
+  const gap = parseFloat(sideStyle.rowGap || sideStyle.gap) || 24;
 
-  // Set the card to match the analytics card height exactly
-  memberCard.style.height = `${Math.round(chartH)}px`;
+  // Target member card height so that:
+  // memberCardHeight + gap + filterCardHeight === mainColHeight
+  const calculatedHeight = mainH - filterH - gap;
 
-  // The list scrolls within the card; cap its max-height so natural rows don't stretch
+  // Ensure a sensible minimum height so the header and at least 2 member rows are always visible
+  const minMemberCardH = 140;
+  const targetMemberH = Math.max(minMemberCardH, Math.round(calculatedHeight));
+
+  memberCard.style.height = `${targetMemberH}px`;
+
+  // Calculate available height for scrollable member list inside the card
   const header = memberCard.querySelector('.side-card-header');
-  const headerH = header ? header.getBoundingClientRect().height : 46;
-  // Approximate glass-card padding (top + bottom): 24px each = 48px
-  const cardPadding = 48;
-  const listMaxH = Math.max(80, Math.floor(chartH - headerH - cardPadding - 8));
+  const headerH = header ? header.getBoundingClientRect().height : 38;
+  const cardStyle = window.getComputedStyle(memberCard);
+  const paddingTop = parseFloat(cardStyle.paddingTop) || 24;
+  const paddingBottom = parseFloat(cardStyle.paddingBottom) || 24;
+  const contentEl = memberCard.querySelector('.glass-card-content');
+  const contentStyle = contentEl ? window.getComputedStyle(contentEl) : null;
+  const contentGap = contentStyle ? (parseFloat(contentStyle.rowGap || contentStyle.gap) || 12) : 12;
+
+  const listMaxH = Math.max(60, Math.floor(targetMemberH - headerH - paddingTop - paddingBottom - contentGap));
   memberList.style.maxHeight = `${listMaxH}px`;
 }
+window.syncMemberListHeight = requestSyncMemberListHeight;
 
 async function loadChartData(period) {
   try {
@@ -772,6 +809,7 @@ function initAnalytics() {
           if (heatmapsOuterCard) heatmapsOuterCard.style.display = 'none';
           renderReportsContent(data);
         }
+        requestSyncMemberListHeight();
         return; // ← no network call
       }
 
@@ -1565,7 +1603,7 @@ function renderAnalyticsChart(data) {
   });
 
   // Sync member panel height now that the chart has rendered
-  requestAnimationFrame(syncMemberListHeight);
+  requestSyncMemberListHeight();
 
   // Handle breakdown chart (expenses/income tabs)
   if ((analyticsState.tab === 'expenses' || analyticsState.tab === 'income') && data.breakdown) {
@@ -1808,6 +1846,8 @@ function renderReportsContent(data) {
       <p class="analysis-insight-text">${data.insight || 'No data available.'}</p>
     </div>
   `;
+
+  requestSyncMemberListHeight();
 }
 
 
@@ -1844,7 +1884,7 @@ function renderTabDependentSections(data) {
     renderFinancialHeatmaps(data);
   }
 
-  requestAnimationFrame(syncMemberListHeight);
+  requestSyncMemberListHeight();
 }
 
 // ============================================

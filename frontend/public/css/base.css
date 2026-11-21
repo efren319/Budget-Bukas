@@ -218,6 +218,10 @@ html.performance-mode * {
   text-shadow: none !important;
 }
 
+html.performance-mode .member-card {
+  transition: none !important;
+}
+
 /* 6. Smooth transitions when switching modes */
 .glass-card,
 .dashboard-card,
