@@ -80,30 +80,30 @@
    Card height & list height to align Date Filter with Row 1 (Chart & Analysis) */
 .dashboard-master-layout[data-active-tab="cashflow"] .member-card,
 .dashboard-master-layout:not([data-active-tab]) .member-card {
-  height: 180px !important;            /* 👈 EDIT CASH FLOW CARD HEIGHT */
+  height: 310px !important;            /* 👈 EDIT CASH FLOW CARD HEIGHT */
 }
 .dashboard-master-layout[data-active-tab="cashflow"] .member-card .member-list,
 .dashboard-master-layout:not([data-active-tab]) .member-card .member-list {
-  max-height: 85px !important;         /* 👈 EDIT CASH FLOW LIST SCROLL HEIGHT */
+  max-height: 215px !important;         /* 👈 EDIT CASH FLOW LIST SCROLL HEIGHT */
 }
 
 /* ── 2. EXPENSES & INCOME TABS ──
    Card height & list height to align Date Filter with Row 2 (Breakdown & Recents) */
 .dashboard-master-layout[data-active-tab="expenses"] .member-card,
 .dashboard-master-layout[data-active-tab="income"] .member-card {
-  height: 540px !important;            /* 👈 EDIT EXPENSES/INCOME CARD HEIGHT */
+  height: 680px !important;            /* 👈 EDIT EXPENSES/INCOME CARD HEIGHT */
 }
 .dashboard-master-layout[data-active-tab="expenses"] .member-card .member-list,
 .dashboard-master-layout[data-active-tab="income"] .member-card .member-list {
-  max-height: 440px !important;        /* 👈 EDIT EXPENSES/INCOME LIST SCROLL HEIGHT */
+  max-height: 580px !important;        /* 👈 EDIT EXPENSES/INCOME LIST SCROLL HEIGHT */
 }
 
 /* ── 3. REPORTS TAB ── */
 .dashboard-master-layout[data-active-tab="reports"] .member-card {
-  height: 400px !important;            /* 👈 EDIT REPORTS CARD HEIGHT */
+  height: 365px !important;            /* 👈 EDIT REPORTS CARD HEIGHT */
 }
 .dashboard-master-layout[data-active-tab="reports"] .member-card .member-list {
-  max-height: 300px !important;        /* 👈 EDIT REPORTS LIST SCROLL HEIGHT */
+  max-height: 265px !important;        /* 👈 EDIT REPORTS LIST SCROLL HEIGHT */
 }
 
 .member-card .member-item {

@@ -158,7 +158,7 @@ function navigateTo(page) {
   // Update breadcrumb
   const breadcrumbEl = document.getElementById('breadcrumb-current');
   if (breadcrumbEl) {
-    breadcrumbEl.textContent = page.charAt(0).toUpperCase() + page.slice(1).replace('-', ' ');
+    breadcrumbEl.textContent = page.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   // Close mobile sidebar
@@ -178,6 +178,9 @@ function navigateTo(page) {
       break;
     case 'receipts':
       loadReceipts();
+      break;
+    case 'financial-activity':
+      if (typeof initFinancialActivity === 'function') initFinancialActivity();
       break;
   }
 
