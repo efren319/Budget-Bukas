@@ -35,17 +35,19 @@
   min-height: 0;
 }
 
-/* =============================================
-   MEMBER CARD & LIST SIZES (Hardcoded per Active Tab)
-   ============================================= */
+/* ==========================================================================
+   MEMBER CARD & LIST SIZES (EDIT YOUR HEIGHTS HERE)
+   Change the pixel values below to adjust the height of the right column!
+   ========================================================================== */
 
+/* ── DEFAULT / BASE SETTINGS ── */
 .member-card {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   min-height: 0;
-  height: 180px; /* Default: Cash Flow tab */
+  height: 180px; /* Default height */
   transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -61,10 +63,9 @@
   overflow: hidden;
 }
 
-/* Base scrollable member list */
 .member-card .member-list {
   flex: 1 1 0%;
-  max-height: 85px; /* Default: Cash Flow list height */
+  max-height: 85px;
   overflow-y: auto !important;
   overflow-x: hidden;
   display: flex;
@@ -75,32 +76,34 @@
   min-height: 0;
 }
 
-/* 1. Cash Flow Tab: Date Filter matches the bottom of Row 1 (Chart & Analysis) */
+/* ── 1. CASH FLOW TAB ──
+   Card height & list height to align Date Filter with Row 1 (Chart & Analysis) */
 .dashboard-master-layout[data-active-tab="cashflow"] .member-card,
 .dashboard-master-layout:not([data-active-tab]) .member-card {
-  height: 180px !important;
+  height: 180px !important;            /* 👈 EDIT CASH FLOW CARD HEIGHT */
 }
 .dashboard-master-layout[data-active-tab="cashflow"] .member-card .member-list,
 .dashboard-master-layout:not([data-active-tab]) .member-card .member-list {
-  max-height: 85px !important;
+  max-height: 85px !important;         /* 👈 EDIT CASH FLOW LIST SCROLL HEIGHT */
 }
 
-/* 2. Expenses & Income Tabs: Member card expands so Date Filter matches the bottom of Row 2 (Breakdown & Recents) */
+/* ── 2. EXPENSES & INCOME TABS ──
+   Card height & list height to align Date Filter with Row 2 (Breakdown & Recents) */
 .dashboard-master-layout[data-active-tab="expenses"] .member-card,
 .dashboard-master-layout[data-active-tab="income"] .member-card {
-  height: 540px !important;
+  height: 540px !important;            /* 👈 EDIT EXPENSES/INCOME CARD HEIGHT */
 }
 .dashboard-master-layout[data-active-tab="expenses"] .member-card .member-list,
 .dashboard-master-layout[data-active-tab="income"] .member-card .member-list {
-  max-height: 440px !important;
+  max-height: 440px !important;        /* 👈 EDIT EXPENSES/INCOME LIST SCROLL HEIGHT */
 }
 
-/* 3. Reports Tab */
+/* ── 3. REPORTS TAB ── */
 .dashboard-master-layout[data-active-tab="reports"] .member-card {
-  height: 400px !important;
+  height: 400px !important;            /* 👈 EDIT REPORTS CARD HEIGHT */
 }
 .dashboard-master-layout[data-active-tab="reports"] .member-card .member-list {
-  max-height: 300px !important;
+  max-height: 300px !important;        /* 👈 EDIT REPORTS LIST SCROLL HEIGHT */
 }
 
 .member-card .member-item {
@@ -4828,10 +4831,6 @@ canvas {
   color: var(--text-muted);
   font-style: italic;
   font-size: 0.7rem;
-}
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--gold-light);
 }
 
 /* =============================================
