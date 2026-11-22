@@ -166,23 +166,9 @@ function initDashboard() {
   // Initialize analytics system
   initAnalytics();
 
-  // Sync member list scroll height whenever the left column or date filter changes size
-  window.addEventListener('resize', requestSyncMemberListHeight);
-  if (window.ResizeObserver) {
-    const ro = new ResizeObserver(() => {
-      requestSyncMemberListHeight();
-    });
-    const mainCol = document.querySelector('.dashboard-main-content');
-    if (mainCol) ro.observe(mainCol);
-    const filterCard = document.querySelector('.date-filter-card');
-    if (filterCard) ro.observe(filterCard);
-    const breakdownRow = document.getElementById('analytics-breakdown-row');
-    if (breakdownRow) ro.observe(breakdownRow);
-    const chartContent = document.querySelector('.analytics-content');
-    if (chartContent) ro.observe(chartContent);
-    const reportsContent = document.getElementById('analytics-reports-content');
-    if (reportsContent) ro.observe(reportsContent);
-  }
+  // Initialize active tab state for hardcoded CSS height synchronization
+  syncMemberListHeight();
+  window.addEventListener('resize', syncMemberListHeight);
 }
 
 /**
@@ -519,96 +505,22 @@ function renderMembers(members) {
   requestSyncMemberListHeight();
 }
 
-let syncHeightPending = false;
 function requestSyncMemberListHeight() {
-  if (syncHeightPending) return;
-  syncHeightPending = true;
-  // Double rAF: first frame lets layout settle, second frame reads stable values
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      syncHeightPending = false;
-      syncMemberListHeight();
-    });
-  });
-}
-
-function getActiveAnalyticsTargetEl() {
-  const tab = analyticsState.tab;
-  if (tab === 'reports') {
-    const reportsContent = document.getElementById('analytics-reports-content');
-    if (reportsContent && reportsContent.style.display !== 'none' && reportsContent.offsetHeight > 20) {
-      return reportsContent;
-    }
-  } else if (tab === 'expenses' || tab === 'income') {
-    const breakdownRow = document.getElementById('analytics-breakdown-row');
-    if (breakdownRow && breakdownRow.style.display !== 'none' && breakdownRow.offsetHeight > 20) {
-      return breakdownRow;
-    }
-  }
-  return document.querySelector('.analytics-content');
+  syncMemberListHeight();
 }
 
 function syncMemberListHeight() {
-  const mainCol        = document.querySelector('.dashboard-main-content');
-  const sideCol        = document.querySelector('.dashboard-side-content');
-  const memberCard     = document.querySelector('.member-card');
-  const memberList     = document.getElementById('members-list');
-  const dateFilterCard = document.querySelector('.date-filter-card');
-
-  if (!memberList || !memberCard) return;
-
-  // Mobile / tablet screen (<= 1200px) where columns stack vertically:
-  // Reset inline height and apply safe scroll cap
-  if (window.innerWidth <= 1200 || !mainCol || !sideCol || !dateFilterCard) {
-    memberCard.style.height = '';
-    memberList.style.maxHeight = '280px';
-    return;
+  const masterLayout = document.querySelector('.dashboard-master-layout');
+  const tab = (typeof analyticsState !== 'undefined' && analyticsState.tab) ? analyticsState.tab : 'cashflow';
+  if (masterLayout) {
+    masterLayout.dataset.activeTab = tab;
   }
-
-  // 1. Identify active target element in the left column
-  const targetEl = getActiveAnalyticsTargetEl();
-  let totalSideH;
-
-  if (targetEl) {
-    const targetRect = targetEl.getBoundingClientRect();
-    const sideRect = sideCol.getBoundingClientRect();
-    totalSideH = Math.round(targetRect.bottom - sideRect.top);
-  } else {
-    totalSideH = mainCol.offsetHeight || Math.round(mainCol.getBoundingClientRect().height);
-  }
-
-  if (totalSideH <= 0) return;
-
-  // 2. Measure actual height of the Date Filter card
-  let filterH = dateFilterCard.offsetHeight || Math.round(dateFilterCard.getBoundingClientRect().height);
-  if (filterH <= 0) filterH = 420;
-
-  // 3. Gap between member-card and date-filter-card in the right column
-  const sideStyle = window.getComputedStyle(sideCol);
-  const gap = parseFloat(sideStyle.rowGap || sideStyle.gap) || 24;
-
-  // 4. Target member-card height so that:
-  // memberCardHeight + gap + filterH === totalSideH
-  // On Expenses & Income, this expands the member list so Date Filter matches the bottom of Row 2!
-  const minMemberCardH = 140;
-  const targetMemberH = Math.max(minMemberCardH, Math.round(totalSideH - filterH - gap));
-
-  memberCard.style.height = `${targetMemberH}px`;
-
-  // 5. Calculate available scrollable height for the member list inside the card
-  const header = memberCard.querySelector('.side-card-header');
-  const headerH = header ? (header.offsetHeight || Math.round(header.getBoundingClientRect().height)) : 38;
-  const cardStyle = window.getComputedStyle(memberCard);
-  const paddingTop = parseFloat(cardStyle.paddingTop) || 24;
-  const paddingBottom = parseFloat(cardStyle.paddingBottom) || 24;
-  const contentEl = memberCard.querySelector('.glass-card-content');
-  const contentStyle = contentEl ? window.getComputedStyle(contentEl) : null;
-  const contentGap = contentStyle ? (parseFloat(contentStyle.rowGap || contentStyle.gap) || 12) : 12;
-
-  const listMaxH = Math.max(80, Math.floor(targetMemberH - headerH - paddingTop - paddingBottom - contentGap));
-  memberList.style.maxHeight = `${listMaxH}px`;
+  const memberCard = document.querySelector('.member-card');
+  const memberList = document.getElementById('members-list');
+  if (memberCard) memberCard.style.height = '';
+  if (memberList) memberList.style.maxHeight = '';
 }
-window.syncMemberListHeight = requestSyncMemberListHeight;
+window.syncMemberListHeight = syncMemberListHeight;
 
 async function loadChartData(period) {
   try {
@@ -784,6 +696,7 @@ function initAnalytics() {
   calViewYear = now.getFullYear();
   calViewMonth = now.getMonth();
   initFinancialCalendar();
+  syncMemberListHeight();
 
   // Tab buttons — instant switching from cached data
   document.querySelectorAll('.analytics-tab').forEach(btn => {
@@ -794,6 +707,7 @@ function initAnalytics() {
       document.querySelectorAll('.analytics-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       analyticsState.tab = newTab;
+      syncMemberListHeight();
 
       // Toggle visibility: reports vs chart+analysis
       const chartContent = document.querySelector('.analytics-content');
