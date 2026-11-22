@@ -60,8 +60,8 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/dashboard.css?v=2.7">
-  <link rel="stylesheet" href="css/financial-activity.css?v=1.0">
+  <link rel="stylesheet" href="css/dashboard.css?v=2.8">
+  <link rel="stylesheet" href="css/financial-activity.css?v=1.1">
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/avatar.css">
   <link rel="stylesheet" href="css/glass-card.css">
@@ -86,10 +86,6 @@
         <a href="#" class="sidebar-link active" data-page="dashboard" id="nav-dashboard">
           <i data-lucide="layout-dashboard"></i>
           <span>Dashboard</span>
-        </a>
-        <a href="#" class="sidebar-link" data-page="financial-activity" id="nav-financial-activity">
-          <i data-lucide="activity"></i>
-          <span>Financial Activity</span>
         </a>
         <a href="#" class="sidebar-link" data-page="records" id="nav-records">
           <i data-lucide="file-text"></i>
@@ -267,6 +263,7 @@
       <button class="analytics-tab" data-tab="expenses">Expenses</button>
       <button class="analytics-tab" data-tab="income">Income</button>
       <button class="analytics-tab" data-tab="reports">Reports</button>
+      <button class="analytics-tab" data-tab="activity">Financial Activity</button>
     </div>
     <div class="analytics-controls-right">
       <div class="chart-view-by-selector">
@@ -287,6 +284,18 @@
           <i data-lucide="trending-up"></i>
           <span>Line</span>
         </button>
+      </div>
+      <!-- Year Selector for Financial Activity Tab -->
+      <div class="analytics-year-selector" id="analytics-year-selector" style="display: none;">
+        <div class="fa-year-dropdown">
+          <button type="button" class="fa-year-trigger" id="fa-year-trigger">
+            <span id="fa-year-val">2026</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="fa-year-menu" id="fa-year-menu">
+            <!-- Rendered dynamically by JS -->
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -411,6 +420,104 @@
       </div>
     </div>
   </div>
+
+  <!-- Financial Activity Tab Content (hidden by default) -->
+  <div class="analytics-activity-content" id="analytics-activity-content" style="display:none;">
+    <div class="fa-tab-layout">
+      <!-- LEFT COLUMN: Heatmaps (~58% width) -->
+      <div class="fa-heatmaps-col">
+        <!-- 1. Income Activity Heatmap -->
+        <div class="fa-heatmap-card glass-card" id="fa-heatmap-income-card">
+          <div class="glass-glow-bottom"></div>
+          <div class="glass-glow-bright"></div>
+          <div class="glass-glow-top"></div>
+          <div class="glass-sheen"></div>
+          <div class="glass-edge"></div>
+          <div class="glass-card-content">
+            <div class="fa-heatmap-header">
+              <div class="fa-heatmap-title">
+                <span class="fa-heatmap-dot income"></span>
+                <span class="fa-heatmap-name">Income Activity</span>
+                <span class="fa-heatmap-summary" id="fa-income-summary">0 income transactions</span>
+              </div>
+              <div class="fa-heatmap-legend">
+                <span class="legend-text">Less</span>
+                <div class="legend-cell level-0" title="No income"></div>
+                <div class="legend-cell income-1" title="Low income"></div>
+                <div class="legend-cell income-2" title="Medium-low"></div>
+                <div class="legend-cell income-3" title="Medium-high"></div>
+                <div class="legend-cell income-4" title="High income"></div>
+                <span class="legend-text">More</span>
+              </div>
+            </div>
+            <div class="fa-heatmap-scroll">
+              <div class="heatmap-grid-wrap" id="fa-heatmap-income-wrap">
+                <!-- Rendered dynamically by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Expense Activity Heatmap -->
+        <div class="fa-heatmap-card glass-card" id="fa-heatmap-expense-card">
+          <div class="glass-glow-bottom"></div>
+          <div class="glass-glow-bright"></div>
+          <div class="glass-glow-top"></div>
+          <div class="glass-sheen"></div>
+          <div class="glass-edge"></div>
+          <div class="glass-card-content">
+            <div class="fa-heatmap-header">
+              <div class="fa-heatmap-title">
+                <span class="fa-heatmap-dot expense"></span>
+                <span class="fa-heatmap-name">Expense Activity</span>
+                <span class="fa-heatmap-summary" id="fa-expense-summary">0 expense transactions</span>
+              </div>
+              <div class="fa-heatmap-legend">
+                <span class="legend-text">Less</span>
+                <div class="legend-cell level-0" title="No expenses"></div>
+                <div class="legend-cell expense-1" title="Low expenses"></div>
+                <div class="legend-cell expense-2" title="Medium-low"></div>
+                <div class="legend-cell expense-3" title="Medium-high"></div>
+                <div class="legend-cell expense-4" title="High expenses"></div>
+                <span class="legend-text">More</span>
+              </div>
+            </div>
+            <div class="fa-heatmap-scroll">
+              <div class="heatmap-grid-wrap" id="fa-heatmap-expense-wrap">
+                <!-- Rendered dynamically by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Transactions for Selected Date (~42% width) -->
+      <div class="fa-tx-panel glass-card" id="fa-tx-panel">
+        <div class="glass-glow-bottom"></div>
+        <div class="glass-glow-bright"></div>
+        <div class="glass-glow-top"></div>
+        <div class="glass-sheen"></div>
+        <div class="glass-edge"></div>
+        <div class="glass-card-content">
+          <div class="fa-tx-panel-header">
+            <div class="fa-tx-header-top">
+              <h3 class="fa-tx-panel-title">Transactions</h3>
+              <span class="fa-tx-count" id="fa-tx-count"></span>
+            </div>
+            <div class="fa-tx-date-display" id="fa-tx-date-display">Select a date</div>
+          </div>
+          <div class="fa-tx-list" id="fa-tx-list">
+            <div class="fa-tx-empty">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); opacity: 0.5;">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <p>Click a day on the heatmap to view transactions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
         </div> <!-- /dashboard-main-content -->
@@ -526,210 +633,9 @@
 
       </div> <!-- /dashboard-master-layout -->
 
-      <!-- ========== FINANCIAL ACTIVITY HEATMAPS (Full-Width below Master Layout & Date Filter) ========== -->
-      <div class="heatmaps-outer-card glass-card" id="heatmaps-outer-card">
-        <div class="glass-glow-bottom"></div>
-        <div class="glass-glow-bright"></div>
-        <div class="glass-glow-top"></div>
-        <div class="glass-sheen"></div>
-        <div class="glass-edge"></div>
-        <div class="glass-card-content">
-          <div class="financial-heatmaps-section" id="financial-heatmaps-section">
-            <div class="financial-heatmaps-header">
-              <div class="financial-heatmaps-title-wrap">
-                <div class="heatmaps-title-row">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  <h4>Financial Activity</h4>
-                </div>
-                <span class="financial-heatmaps-subtitle">Yearly transaction intensity and volume heatmaps</span>
-              </div>
-            </div>
-
-            <div class="heatmaps-content-layout">
-              <div class="heatmaps-stack">
-                <!-- 1. Income Activity Heatmap -->
-                <div class="heatmap-card" id="heatmap-income-card">
-                  <div class="heatmap-card-header">
-                    <div class="heatmap-card-title">
-                      <span class="heatmap-dot income-dot"></span>
-                      <span class="heatmap-card-name">Income Activity</span>
-                      <span class="heatmap-summary-badge" id="heatmap-income-summary">0 income transactions</span>
-                    </div>
-                    <div class="heatmap-legend">
-                      <span class="legend-text">Less</span>
-                      <div class="legend-cell level-0" title="No income"></div>
-                      <div class="legend-cell income-1" title="Low income"></div>
-                      <div class="legend-cell income-2" title="Medium-low income"></div>
-                      <div class="legend-cell income-3" title="Medium-high income"></div>
-                      <div class="legend-cell income-4" title="High income"></div>
-                      <span class="legend-text">More</span>
-                    </div>
-                  </div>
-                  <div class="heatmap-scroll-area">
-                    <div class="heatmap-grid-wrap" id="heatmap-income-wrap">
-                      <!-- Rendered dynamically by JS -->
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 2. Expense Activity Heatmap -->
-                <div class="heatmap-card" id="heatmap-expense-card">
-                  <div class="heatmap-card-header">
-                    <div class="heatmap-card-title">
-                      <span class="heatmap-dot expense-dot"></span>
-                      <span class="heatmap-card-name">Expense Activity</span>
-                      <span class="heatmap-summary-badge" id="heatmap-expense-summary">0 expense transactions</span>
-                    </div>
-                    <div class="heatmap-legend">
-                      <span class="legend-text">Less</span>
-                      <div class="legend-cell level-0" title="No expenses"></div>
-                      <div class="legend-cell expense-1" title="Low expenses"></div>
-                      <div class="legend-cell expense-2" title="Medium-low expenses"></div>
-                      <div class="legend-cell expense-3" title="Medium-high expenses"></div>
-                      <div class="legend-cell expense-4" title="High expenses"></div>
-                      <span class="legend-text">More</span>
-                    </div>
-                  </div>
-                  <div class="heatmap-scroll-area">
-                    <div class="heatmap-grid-wrap" id="heatmap-expense-wrap">
-                      <!-- Rendered dynamically by JS -->
-                    </div>
-                  </div>
-                </div>
-              </div> <!-- /heatmaps-stack -->
-
-              <!-- 3. Vertical Year Selector (GitHub Contribution Style) -->
-              <div class="heatmap-years-sidebar" id="heatmap-years-sidebar">
-                <div class="heatmap-years-list" id="heatmap-years-list" role="tablist" aria-label="Select year for financial activity">
-                  <!-- Rendered dynamically by JS based on actual transaction data -->
-                </div>
-              </div>
-            </div> <!-- /heatmaps-content-layout -->
-          </div>
-        </div>
-      </div><!-- /heatmaps-outer-card -->
-
       <!-- Heatmap Tooltip (Hover & Focus) -->
       <div class="heatmap-tooltip" id="heatmap-tooltip" style="display: none;"></div>
     </section> <!-- /page-dashboard -->
-
-    <!-- ========== FINANCIAL ACTIVITY PAGE ========== -->
-    <section class="page page-financial-activity" id="page-financial-activity">
-      <div class="fa-page-header">
-        <div>
-          <div class="fa-page-title-wrap">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <h2 class="fa-page-title">Financial Activity</h2>
-          </div>
-          <div class="fa-page-subtitle">Yearly transaction intensity and volume heatmaps</div>
-        </div>
-        <div class="fa-year-dropdown">
-          <button type="button" class="fa-year-trigger" id="fa-year-trigger">
-            <span>2026</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="fa-year-menu" id="fa-year-menu">
-            <!-- Rendered by JS -->
-          </div>
-        </div>
-      </div>
-
-      <div class="fa-layout">
-        <!-- LEFT COLUMN: Heatmaps -->
-        <div class="fa-heatmaps-col">
-          <!-- Income Activity Heatmap -->
-          <div class="fa-heatmap-card glass-card" id="fa-heatmap-income-card">
-            <div class="glass-glow-bottom"></div>
-            <div class="glass-glow-bright"></div>
-            <div class="glass-glow-top"></div>
-            <div class="glass-sheen"></div>
-            <div class="glass-edge"></div>
-            <div class="glass-card-content">
-              <div class="fa-heatmap-header">
-                <div class="fa-heatmap-title">
-                  <span class="fa-heatmap-dot income"></span>
-                  <span class="fa-heatmap-name">Income Activity</span>
-                  <span class="fa-heatmap-summary" id="fa-income-summary">0 income transactions</span>
-                </div>
-                <div class="fa-heatmap-legend">
-                  <span class="legend-text">Less</span>
-                  <div class="legend-cell level-0" title="No income"></div>
-                  <div class="legend-cell income-1" title="Low income"></div>
-                  <div class="legend-cell income-2" title="Medium-low"></div>
-                  <div class="legend-cell income-3" title="Medium-high"></div>
-                  <div class="legend-cell income-4" title="High income"></div>
-                  <span class="legend-text">More</span>
-                </div>
-              </div>
-              <div class="fa-heatmap-scroll">
-                <div class="heatmap-grid-wrap" id="fa-heatmap-income-wrap">
-                  <!-- Rendered by JS -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Expense Activity Heatmap -->
-          <div class="fa-heatmap-card glass-card" id="fa-heatmap-expense-card">
-            <div class="glass-glow-bottom"></div>
-            <div class="glass-glow-bright"></div>
-            <div class="glass-glow-top"></div>
-            <div class="glass-sheen"></div>
-            <div class="glass-edge"></div>
-            <div class="glass-card-content">
-              <div class="fa-heatmap-header">
-                <div class="fa-heatmap-title">
-                  <span class="fa-heatmap-dot expense"></span>
-                  <span class="fa-heatmap-name">Expense Activity</span>
-                  <span class="fa-heatmap-summary" id="fa-expense-summary">0 expense transactions</span>
-                </div>
-                <div class="fa-heatmap-legend">
-                  <span class="legend-text">Less</span>
-                  <div class="legend-cell level-0" title="No expenses"></div>
-                  <div class="legend-cell expense-1" title="Low expenses"></div>
-                  <div class="legend-cell expense-2" title="Medium-low"></div>
-                  <div class="legend-cell expense-3" title="Medium-high"></div>
-                  <div class="legend-cell expense-4" title="High expenses"></div>
-                  <span class="legend-text">More</span>
-                </div>
-              </div>
-              <div class="fa-heatmap-scroll">
-                <div class="heatmap-grid-wrap" id="fa-heatmap-expense-wrap">
-                  <!-- Rendered by JS -->
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT COLUMN: Transaction Panel -->
-        <div class="fa-tx-panel glass-card">
-          <div class="glass-glow-bottom"></div>
-          <div class="glass-glow-bright"></div>
-          <div class="glass-glow-top"></div>
-          <div class="glass-sheen"></div>
-          <div class="glass-edge"></div>
-          <div class="glass-card-content">
-            <div class="fa-tx-panel-header">
-              <h3 class="fa-tx-panel-title">Transactions</h3>
-              <div class="fa-tx-date-display" id="fa-tx-date-display">Select a date</div>
-              <div class="fa-tx-count" id="fa-tx-count"></div>
-            </div>
-            <div class="fa-tx-list" id="fa-tx-list">
-              <div class="fa-tx-empty">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); opacity: 0.5;">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <p>Click a day on the heatmap to view transactions.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- FA Tooltip -->
-      <div class="fa-tooltip" id="fa-tooltip" style="display: none;"></div>
-    </section>
 
     <!-- ========== LIVE UPDATE NOTIFICATION ========== -->
     <div id="live-update-toast" class="update-toast hidden">
@@ -1783,8 +1689,8 @@
   <script src="js/api.js"></script>
 
   <script src="js/app.js"></script>
-  <script src="js/dashboard.js?v=2.7"></script>
-  <script src="js/financial-activity.js?v=1.0"></script>
+  <script src="js/dashboard.js?v=2.8"></script>
+  <script src="js/financial-activity.js?v=1.1"></script>
   <script src="js/transactions.js"></script>
   <script src="js/receipts.js"></script>
   <script src="js/chatbot.js"></script>

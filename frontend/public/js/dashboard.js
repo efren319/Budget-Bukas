@@ -709,11 +709,14 @@ function initAnalytics() {
       analyticsState.tab = newTab;
       syncMemberListHeight();
 
-      // Toggle visibility: reports vs chart+analysis
+      // Toggle visibility: reports vs activity vs chart+analysis
       const chartContent = document.querySelector('.analytics-content');
       const reportsContent = document.getElementById('analytics-reports-content');
+      const activityContent = document.getElementById('analytics-activity-content');
       const controlsRight = document.querySelector('.analytics-controls-right');
-      const heatmapsOuterCard = document.getElementById('heatmaps-outer-card');
+      const chartViewBy = document.querySelector('.chart-view-by-selector');
+      const chartTypeSel = document.querySelector('.chart-type-selector');
+      const yearSelector = document.getElementById('analytics-year-selector');
       const breakdownRow = document.getElementById('analytics-breakdown-row');
 
       const isBreakdownTab = newTab === 'expenses' || newTab === 'income';
@@ -721,15 +724,27 @@ function initAnalytics() {
       if (newTab === 'reports') {
         if (chartContent) chartContent.style.display = 'none';
         if (breakdownRow) breakdownRow.style.display = 'none';
-        if (heatmapsOuterCard) heatmapsOuterCard.style.display = 'none';
+        if (activityContent) activityContent.style.display = 'none';
         if (reportsContent) reportsContent.style.display = 'block';
         if (controlsRight) controlsRight.style.display = 'none';
+      } else if (newTab === 'activity') {
+        if (chartContent) chartContent.style.display = 'none';
+        if (breakdownRow) breakdownRow.style.display = 'none';
+        if (reportsContent) reportsContent.style.display = 'none';
+        if (activityContent) activityContent.style.display = 'block';
+        if (controlsRight) controlsRight.style.display = 'flex';
+        if (chartViewBy) chartViewBy.style.display = 'none';
+        if (chartTypeSel) chartTypeSel.style.display = 'none';
+        if (yearSelector) yearSelector.style.display = 'flex';
       } else {
         if (chartContent) chartContent.style.display = '';
         if (reportsContent) reportsContent.style.display = 'none';
+        if (activityContent) activityContent.style.display = 'none';
         if (controlsRight) controlsRight.style.display = '';
+        if (chartViewBy) chartViewBy.style.display = '';
+        if (chartTypeSel) chartTypeSel.style.display = '';
+        if (yearSelector) yearSelector.style.display = 'none';
         if (breakdownRow) breakdownRow.style.display = isBreakdownTab ? '' : 'none';
-        if (heatmapsOuterCard) heatmapsOuterCard.style.display = newTab === 'cashflow' ? '' : 'none';
       }
 
       // ── Instant tab switch: re-render from cached data without API call ──
@@ -740,13 +755,16 @@ function initAnalytics() {
           data.insight = data.insights[analyticsState.tab] || data.insights.cashflow;
         }
 
-        if (analyticsState.tab !== 'reports') {
+        if (analyticsState.tab === 'activity') {
+          if (typeof renderFinancialActivityTab === 'function') {
+            renderFinancialActivityTab(data);
+          }
+        } else if (analyticsState.tab !== 'reports') {
           renderAnalyticsChart(data);
           renderAnalysisPanel(data);
           renderTabDependentSections(data);
         } else {
           if (breakdownRow) breakdownRow.style.display = 'none';
-          if (heatmapsOuterCard) heatmapsOuterCard.style.display = 'none';
           renderReportsContent(data);
         }
         requestSyncMemberListHeight();
@@ -1273,15 +1291,17 @@ async function loadAnalyticsData() {
       }
 
       updateSummaryCards(cached.summary);
-      if (analyticsState.tab !== 'reports') {
+      if (analyticsState.tab === 'activity') {
+        if (typeof renderFinancialActivityTab === 'function') {
+          renderFinancialActivityTab(cached);
+        }
+      } else if (analyticsState.tab !== 'reports') {
         renderAnalyticsChart(cached);
         renderAnalysisPanel(cached);
         renderTabDependentSections(cached);
       } else {
         const breakdownRow = document.getElementById('analytics-breakdown-row');
-        const heatmapsOuterCard = document.getElementById('heatmaps-outer-card');
         if (breakdownRow) breakdownRow.style.display = 'none';
-        if (heatmapsOuterCard) heatmapsOuterCard.style.display = 'none';
         renderReportsContent(cached);
       }
       return;
@@ -1353,15 +1373,17 @@ async function loadAnalyticsData() {
     updateSummaryCards(data.data.summary);
 
     // Render analytics chart
-    if (analyticsState.tab !== 'reports') {
+    if (analyticsState.tab === 'activity') {
+      if (typeof renderFinancialActivityTab === 'function') {
+        renderFinancialActivityTab(data.data);
+      }
+    } else if (analyticsState.tab !== 'reports') {
       renderAnalyticsChart(data.data);
       renderAnalysisPanel(data.data);
       renderTabDependentSections(data.data);
     } else {
       const breakdownRow = document.getElementById('analytics-breakdown-row');
-      const heatmapsOuterCard = document.getElementById('heatmaps-outer-card');
       if (breakdownRow) breakdownRow.style.display = 'none';
-      if (heatmapsOuterCard) heatmapsOuterCard.style.display = 'none';
       renderReportsContent(data.data);
     }
   } catch (err) {
@@ -1856,16 +1878,8 @@ function renderReportsContent(data) {
 // ============================================
 
 function renderTabDependentSections(data) {
-  const heatmapsOuterCard = document.getElementById('heatmaps-outer-card');
-  const heatmapsSection = document.getElementById('financial-heatmaps-section');
   const breakdownRow = document.getElementById('analytics-breakdown-row');
-
-  const isCashflow = analyticsState.tab === 'cashflow';
   const isBreakdownTab = analyticsState.tab === 'expenses' || analyticsState.tab === 'income';
-
-  // Heatmaps: only on cashflow tab
-  if (heatmapsOuterCard) heatmapsOuterCard.style.display = isCashflow ? '' : 'none';
-  if (heatmapsSection) heatmapsSection.style.display = isCashflow ? '' : 'none';
 
   // Breakdown & Recent row: only on expenses/income tabs
   if (breakdownRow) breakdownRow.style.display = isBreakdownTab ? '' : 'none';
@@ -1877,11 +1891,6 @@ function renderTabDependentSections(data) {
     if (data) {
       renderRecentTransactions(data);
     }
-  }
-
-  // Render heatmaps if on cashflow tab
-  if (isCashflow && data && data.calendarActivity) {
-    renderFinancialHeatmaps(data);
   }
 
   requestSyncMemberListHeight();

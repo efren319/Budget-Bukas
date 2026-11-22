@@ -179,9 +179,6 @@ function navigateTo(page) {
     case 'receipts':
       loadReceipts();
       break;
-    case 'financial-activity':
-      if (typeof initFinancialActivity === 'function') initFinancialActivity();
-      break;
   }
 
   // Refresh Lucide icons for new content

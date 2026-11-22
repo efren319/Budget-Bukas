@@ -106,6 +106,14 @@
   max-height: 265px !important;        /* 👈 EDIT REPORTS LIST SCROLL HEIGHT */
 }
 
+/* ── 4. FINANCIAL ACTIVITY TAB ── */
+.dashboard-master-layout[data-active-tab="activity"] .member-card {
+  height: 480px !important;            /* 👈 EDIT FINANCIAL ACTIVITY CARD HEIGHT */
+}
+.dashboard-master-layout[data-active-tab="activity"] .member-card .member-list {
+  max-height: 380px !important;        /* 👈 EDIT FINANCIAL ACTIVITY LIST SCROLL HEIGHT */
+}
+
 .member-card .member-item {
   flex: 0 0 auto !important;
   height: auto !important;
@@ -5485,7 +5493,8 @@ canvas {
   .dashboard-master-layout[data-active-tab="cashflow"] .member-card,
   .dashboard-master-layout[data-active-tab="expenses"] .member-card,
   .dashboard-master-layout[data-active-tab="income"] .member-card,
-  .dashboard-master-layout[data-active-tab="reports"] .member-card {
+  .dashboard-master-layout[data-active-tab="reports"] .member-card,
+  .dashboard-master-layout[data-active-tab="activity"] .member-card {
     height: auto !important;
     transition: none !important;
   }
@@ -5493,7 +5502,8 @@ canvas {
   .dashboard-master-layout[data-active-tab="cashflow"] .member-card .member-list,
   .dashboard-master-layout[data-active-tab="expenses"] .member-card .member-list,
   .dashboard-master-layout[data-active-tab="income"] .member-card .member-list,
-  .dashboard-master-layout[data-active-tab="reports"] .member-card .member-list {
+  .dashboard-master-layout[data-active-tab="reports"] .member-card .member-list,
+  .dashboard-master-layout[data-active-tab="activity"] .member-card .member-list {
     max-height: 280px !important;
   }
 }

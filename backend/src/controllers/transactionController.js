@@ -478,7 +478,7 @@ async function getAnalyticsData(req, res) {
     if (!groupBy || !['day', 'week', 'month', 'year'].includes(groupBy)) {
       groupBy = 'day';
     }
-    if (!tab || !['cashflow', 'expenses', 'income', 'reports'].includes(tab)) {
+    if (!tab || !['cashflow', 'expenses', 'income', 'reports', 'activity'].includes(tab)) {
       tab = 'cashflow';
     }
 
@@ -554,8 +554,10 @@ async function getAnalyticsData(req, res) {
       // E. All transaction records with details (for breakdowns, recent, and yearly heatmaps)
       pool.query(`
         SELECT t.id, t.type, t.amount, TO_CHAR(t.date, 'YYYY-MM-DD') AS date,
+               u.name AS user_name,
                i.source, e.category, e.description
         FROM transactions t
+        LEFT JOIN users u ON u.id = t.user_id
         LEFT JOIN income i ON i.transaction_id = t.id
         LEFT JOIN expenses e ON e.transaction_id = t.id
         ORDER BY t.date ASC, t.id ASC
@@ -601,7 +603,8 @@ async function getAnalyticsData(req, res) {
       date: r.date,
       source: r.source,
       category: r.category,
-      description: r.description
+      description: r.description,
+      userName: r.user_name || null
     }));
 
     // Filter transactions for the selected period (startDate to endDate)

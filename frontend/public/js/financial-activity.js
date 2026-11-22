@@ -1,5 +1,6 @@
 // ============================================
-// Financial Activity Page — Dedicated Heatmap + Transaction Panel
+// Financial Activity Tab — Dedicated Heatmap + Transaction Panel
+// Integrated into Dashboard Financial Analytics
 // ============================================
 
 let faState = {
@@ -7,101 +8,61 @@ let faState = {
   selectedDate: null,
   allTransactions: [],
   availableYears: [],
-  initialized: false,
-  loading: false
+  dropdownBound: false
 };
 
-// ── Initialization ──
-function initFinancialActivity() {
-  if (faState.initialized) return;
-  faState.initialized = true;
-  loadFinancialActivityData();
-}
+/**
+ * Main render function called by dashboard.js when Financial Activity tab is active
+ */
+function renderFinancialActivityTab(data) {
+  if (!data) return;
 
-// ── Data Loading ──
-async function loadFinancialActivityData() {
-  if (faState.loading) return;
-  faState.loading = true;
+  faState.allTransactions = data.calendarActivity || [];
 
-  // Show skeletons
-  showFASkeletons();
-
-  try {
-    const res = await apiGet('/transactions/dashboard/analytics?startDate=all&endDate=all&tab=cashflow');
-    if (!res || !res.success || !res.data) {
-      showFAEmptyState();
-      return;
+  // Extract available years dynamically from transactions
+  const yearsSet = new Set();
+  faState.allTransactions.forEach(tx => {
+    if (tx && tx.date) {
+      const yr = parseInt(String(tx.date).slice(0, 4), 10);
+      if (!isNaN(yr) && yr > 1900 && yr < 2100) yearsSet.add(yr);
     }
+  });
 
-    const data = res.data;
-    faState.allTransactions = data.calendarActivity || [];
+  faState.availableYears = Array.from(yearsSet).sort((a, b) => b - a);
+  if (faState.availableYears.length === 0) {
+    faState.availableYears = [new Date().getFullYear()];
+  }
 
-    // Extract available years
-    const yearsSet = new Set();
-    faState.allTransactions.forEach(tx => {
-      if (tx && tx.date) {
-        const yr = parseInt(String(tx.date).slice(0, 4), 10);
-        if (!isNaN(yr) && yr > 1900 && yr < 2100) yearsSet.add(yr);
-      }
-    });
-
-    faState.availableYears = Array.from(yearsSet).sort((a, b) => b - a);
-
-    if (faState.availableYears.length === 0) {
-      faState.availableYears = [new Date().getFullYear()];
-    }
-
-    // Set year to current if available, otherwise latest
-    if (!faState.availableYears.includes(faState.year)) {
+  // Preserve existing year selection if valid, otherwise default to current year or latest
+  if (!faState.availableYears.includes(faState.year)) {
+    const currentYear = new Date().getFullYear();
+    if (faState.availableYears.includes(currentYear)) {
+      faState.year = currentYear;
+    } else {
       faState.year = faState.availableYears[0];
     }
-
-    // Build year dropdown
-    renderFAYearDropdown();
-
-    // Render heatmaps
-    renderFAHeatmaps();
-
-    // Auto-select today or most recent date with activity
-    autoSelectFADate();
-
-  } catch (err) {
-    console.error('Financial Activity load error:', err);
-    showFAEmptyState();
-  } finally {
-    faState.loading = false;
   }
+
+  // Setup Year Dropdown
+  renderFAYearDropdown();
+
+  // Render both Heatmaps
+  renderFAHeatmaps();
+
+  // Auto-select date for the active year
+  autoSelectFADate();
 }
 
-function showFASkeletons() {
-  const incomeWrap = document.getElementById('fa-heatmap-income-wrap');
-  const expenseWrap = document.getElementById('fa-heatmap-expense-wrap');
-  const txPanel = document.getElementById('fa-tx-list');
-
-  const skeletonGrid = `<div class="fa-skeleton-grid">${'<div class="fa-skeleton-cell"></div>'.repeat(53 * 7)}</div>`;
-
-  if (incomeWrap) incomeWrap.innerHTML = skeletonGrid;
-  if (expenseWrap) expenseWrap.innerHTML = skeletonGrid;
-  if (txPanel) txPanel.innerHTML = `
-    <div class="fa-skeleton-tx">${'<div class="fa-skeleton-tx-item"></div>'.repeat(5)}</div>
-  `;
-}
-
-function showFAEmptyState() {
-  const incomeWrap = document.getElementById('fa-heatmap-income-wrap');
-  const expenseWrap = document.getElementById('fa-heatmap-expense-wrap');
-  if (incomeWrap) incomeWrap.innerHTML = '<div class="fa-empty-msg">No income activity data available.</div>';
-  if (expenseWrap) expenseWrap.innerHTML = '<div class="fa-empty-msg">No expense activity data available.</div>';
-  renderFATransactions(null, []);
-}
-
-// ── Year Dropdown ──
+/**
+ * Setup and populate the Year Dropdown in the Analytics header controls
+ */
 function renderFAYearDropdown() {
   const trigger = document.getElementById('fa-year-trigger');
   const menu = document.getElementById('fa-year-menu');
+  const valSpan = document.getElementById('fa-year-val');
   if (!trigger || !menu) return;
 
-  trigger.querySelector('span').textContent = faState.year;
+  if (valSpan) valSpan.textContent = faState.year;
 
   menu.innerHTML = '';
   faState.availableYears.forEach(yr => {
@@ -109,6 +70,7 @@ function renderFAYearDropdown() {
     item.className = `fa-year-option ${yr === faState.year ? 'active' : ''}`;
     item.textContent = yr;
     item.dataset.year = yr;
+
     item.addEventListener('click', (e) => {
       e.stopPropagation();
       if (faState.year === yr) {
@@ -116,32 +78,45 @@ function renderFAYearDropdown() {
         return;
       }
       faState.year = yr;
-      trigger.querySelector('span').textContent = yr;
-      menu.querySelectorAll('.fa-year-option').forEach(o => o.classList.toggle('active', parseInt(o.dataset.year) === yr));
+      if (valSpan) valSpan.textContent = yr;
+      menu.querySelectorAll('.fa-year-option').forEach(o => {
+        o.classList.toggle('active', parseInt(o.dataset.year, 10) === yr);
+      });
       menu.classList.remove('open');
+
+      // Reset selected date for the new year & re-render
       faState.selectedDate = null;
       renderFAHeatmaps();
       autoSelectFADate();
     });
+
     menu.appendChild(item);
   });
 
-  // Toggle dropdown
-  trigger.onclick = (e) => {
-    e.stopPropagation();
-    menu.classList.toggle('open');
-  };
+  if (!faState.dropdownBound) {
+    faState.dropdownBound = true;
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
 
-  // Close on outside click
-  document.addEventListener('click', () => menu.classList.remove('open'));
+    document.addEventListener('click', () => {
+      menu.classList.remove('open');
+    });
+  }
 }
 
-// ── Heatmap Rendering ──
+/**
+ * Render both Income and Expense heatmaps for the selected year
+ */
 function renderFAHeatmaps() {
   renderFASingleHeatmap('income', 'fa-heatmap-income-wrap', 'fa-income-summary');
   renderFASingleHeatmap('expense', 'fa-heatmap-expense-wrap', 'fa-expense-summary');
 }
 
+/**
+ * Render an individual annual GitHub-style heatmap (Income or Expense)
+ */
 function renderFASingleHeatmap(type, containerId, summaryId) {
   const container = document.getElementById(containerId);
   const summaryEl = document.getElementById(summaryId);
@@ -151,9 +126,9 @@ function renderFASingleHeatmap(type, containerId, summaryId) {
   const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
   const totalDaysInYear = isLeap ? 366 : 365;
   const jan1 = new Date(year, 0, 1);
-  const startDay = jan1.getDay();
+  const startDay = jan1.getDay(); // 0 = Sun, 1 = Mon, etc.
 
-  // Build date map
+  // Build daily aggregate map for this year
   const dateMap = {};
   let yearTotal = 0;
   let yearCount = 0;
@@ -164,34 +139,39 @@ function renderFASingleHeatmap(type, containerId, summaryId) {
     dateMap[dateStr] = { count: 0, total: 0, transactions: [] };
   }
 
+  // Filter transactions for this type and year
   const yearPrefix = `${year}-`;
   faState.allTransactions.forEach(tx => {
     if (tx.type !== type) return;
     const txDate = (tx.date || '').slice(0, 10);
     if (!txDate.startsWith(yearPrefix)) return;
+
     const amt = parseFloat(tx.amount) || 0;
     if (dateMap[txDate]) {
       dateMap[txDate].count++;
       dateMap[txDate].total += amt;
       dateMap[txDate].transactions.push(tx);
+    } else {
+      dateMap[txDate] = { count: 1, total: amt, transactions: [tx] };
     }
     yearTotal += amt;
     yearCount++;
   });
 
-  // Update summary
+  // Update header summary badge
   if (summaryEl) {
     const word = yearCount === 1 ? 'transaction' : 'transactions';
-    summaryEl.textContent = `${yearCount} ${type} ${word} (${formatPeso(yearTotal)})`;
+    const formattedAmt = typeof formatPeso === 'function' ? formatPeso(yearTotal) : `₱${yearTotal.toLocaleString()}`;
+    summaryEl.textContent = `${yearCount} ${type} ${word} (${formattedAmt})`;
   }
 
-  // Max for intensity
+  // Calculate maximum daily amount for 4-tier intensity scale
   let maxDayTotal = 0;
   Object.values(dateMap).forEach(d => {
     if (d.total > maxDayTotal) maxDayTotal = d.total;
   });
 
-  function getLevel(dayTotal) {
+  function getIntensityLevel(dayTotal) {
     if (!dayTotal || dayTotal <= 0 || maxDayTotal <= 0) return 'level-0';
     const ratio = dayTotal / maxDayTotal;
     if (ratio <= 0.25) return `${type}-1`;
@@ -200,7 +180,7 @@ function renderFASingleHeatmap(type, containerId, summaryId) {
     return `${type}-4`;
   }
 
-  // Month labels
+  // 1. Month Row Header (53 columns)
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthCols = {};
   for (let m = 0; m < 12; m++) {
@@ -218,7 +198,7 @@ function renderFASingleHeatmap(type, containerId, summaryId) {
   }
   monthsHtml += '</div></div>';
 
-  // Cells grid
+  // 2. Cells Grid (53 columns x 7 rows)
   let cellsHtml = '<div class="heatmap-cells-grid">';
   for (let col = 0; col < 53; col++) {
     for (let row = 0; row < 7; row++) {
@@ -229,7 +209,7 @@ function renderFASingleHeatmap(type, containerId, summaryId) {
         const curDate = new Date(year, 0, 1 + offset);
         const curDateStr = `${year}-${String(curDate.getMonth() + 1).padStart(2, '0')}-${String(curDate.getDate()).padStart(2, '0')}`;
         const dayData = dateMap[curDateStr] || { count: 0, total: 0 };
-        const levelClass = getLevel(dayData.total);
+        const levelClass = getIntensityLevel(dayData.total);
         const selectedClass = faState.selectedDate === curDateStr ? 'fa-selected' : '';
 
         cellsHtml += `<div class="heatmap-cell ${levelClass} ${selectedClass}" data-date="${curDateStr}" data-type="${type}" data-count="${dayData.count}" data-total="${dayData.total.toFixed(2)}" tabindex="0" role="button" aria-label="${curDateStr}"></div>`;
@@ -240,7 +220,7 @@ function renderFASingleHeatmap(type, containerId, summaryId) {
 
   container.innerHTML = `${monthsHtml}<div class="heatmap-main-row">${cellsHtml}</div>`;
 
-  // Attach event listeners
+  // Attach hover, focus, and click listeners
   container.querySelectorAll('.heatmap-cell:not(.empty)').forEach(cell => {
     cell.addEventListener('mouseenter', e => showFATooltip(e, cell));
     cell.addEventListener('mousemove', () => positionFATooltip(cell));
@@ -251,16 +231,20 @@ function renderFASingleHeatmap(type, containerId, summaryId) {
   });
 }
 
-// ── Date Click Handler ──
+/**
+ * Handle clicking a day in either Income or Expense heatmap
+ * Highlights the date in both calendars and updates the transaction panel
+ */
 function handleFADateClick(dateStr) {
+  if (!dateStr) return;
   faState.selectedDate = dateStr;
 
-  // Update selected visual in both heatmaps
-  document.querySelectorAll('#page-financial-activity .heatmap-cell').forEach(cell => {
+  // Highlight selected date in BOTH Income and Expense heatmaps
+  document.querySelectorAll('#analytics-activity-content .heatmap-cell').forEach(cell => {
     cell.classList.toggle('fa-selected', cell.dataset.date === dateStr);
   });
 
-  // Get all transactions for this date (both income and expense)
+  // Filter transactions for this exact date (both income and expenses)
   const dateTx = faState.allTransactions.filter(tx => {
     const txDate = (tx.date || '').slice(0, 10);
     return txDate === dateStr;
@@ -269,18 +253,21 @@ function handleFADateClick(dateStr) {
   renderFATransactions(dateStr, dateTx);
 }
 
+/**
+ * Auto-select today (if in year) or the most recent date with transactions
+ */
 function autoSelectFADate() {
   const year = faState.year;
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-  // If today is in the selected year, try it first
+  // If today is in the selected year, check if it has activity or default to it
   if (today.getFullYear() === year) {
     handleFADateClick(todayStr);
     return;
   }
 
-  // Otherwise find most recent date with transactions in this year
+  // Find most recent date with activity in this year
   const yearPrefix = `${year}-`;
   let latestDate = null;
   faState.allTransactions.forEach(tx => {
@@ -293,34 +280,37 @@ function autoSelectFADate() {
   if (latestDate) {
     handleFADateClick(latestDate);
   } else {
-    // No transactions - show Jan 1
     handleFADateClick(`${year}-01-01`);
   }
 }
 
-// ── Transaction Panel ──
+/**
+ * Render Transactions for Selected Date on the right panel
+ */
 function renderFATransactions(dateStr, transactions) {
   const dateDisplay = document.getElementById('fa-tx-date-display');
   const listEl = document.getElementById('fa-tx-list');
   const countEl = document.getElementById('fa-tx-count');
   if (!listEl) return;
 
-  // Format date header
+  // Format date for header
   if (dateDisplay && dateStr) {
     const [yr, mo, da] = dateStr.split('-');
-    const d = new Date(parseInt(yr), parseInt(mo) - 1, parseInt(da));
+    const d = new Date(parseInt(yr, 10), parseInt(mo, 10) - 1, parseInt(da, 10));
     dateDisplay.textContent = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   } else if (dateDisplay) {
     dateDisplay.textContent = 'Select a date';
   }
 
+  const txList = transactions || [];
+
   if (countEl) {
-    countEl.textContent = transactions.length > 0
-      ? `${transactions.length} transaction${transactions.length !== 1 ? 's' : ''}`
-      : '';
+    countEl.textContent = txList.length > 0
+      ? `${txList.length} transaction${txList.length !== 1 ? 's' : ''}`
+      : '0 transactions';
   }
 
-  if (!transactions || transactions.length === 0) {
+  if (txList.length === 0) {
     listEl.innerHTML = `
       <div class="fa-tx-empty">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); opacity: 0.5;">
@@ -332,8 +322,8 @@ function renderFATransactions(dateStr, transactions) {
     return;
   }
 
-  // Sort: income first, then expense, by amount desc
-  const sorted = [...transactions].sort((a, b) => {
+  // Sort: income first, then expense, then highest amount first
+  const sorted = [...txList].sort((a, b) => {
     if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
     return parseFloat(b.amount) - parseFloat(a.amount);
   });
@@ -341,80 +331,95 @@ function renderFATransactions(dateStr, transactions) {
   let totalIncome = 0;
   let totalExpense = 0;
 
-  let html = '';
+  let itemsHtml = '';
   sorted.forEach(tx => {
     const amt = parseFloat(tx.amount) || 0;
     const isIncome = tx.type === 'income';
     const typeClass = isIncome ? 'income' : 'expense';
     const typeLabel = isIncome ? 'Income' : 'Expense';
     const typeIcon = isIncome
-      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'
-      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>';
+      ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'
+      : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>';
 
     if (isIncome) totalIncome += amt; else totalExpense += amt;
 
     const label = isIncome ? (tx.source || 'Income') : (tx.category || 'Expense');
     const description = tx.description || '';
+    const addedBy = tx.userName || tx.user_name || '';
 
-    html += `
+    const formattedAmt = typeof formatPeso === 'function' ? formatPeso(amt) : `₱${amt.toFixed(2)}`;
+
+    itemsHtml += `
       <div class="fa-tx-item">
         <div class="fa-tx-item-icon ${typeClass}">${typeIcon}</div>
         <div class="fa-tx-item-info">
           <div class="fa-tx-item-label">${escapeHtml(label)}</div>
           ${description ? `<div class="fa-tx-item-desc">${escapeHtml(description)}</div>` : ''}
-          <div class="fa-tx-item-type">${typeLabel}</div>
+          <div class="fa-tx-item-meta">
+            <span class="fa-tx-item-type">${typeLabel}</span>
+            ${addedBy ? `<span class="fa-tx-item-added-by">Added by ${escapeHtml(addedBy)}</span>` : ''}
+          </div>
         </div>
-        <div class="fa-tx-item-amount ${typeClass}">${isIncome ? '+' : '-'}${formatPeso(amt)}</div>
+        <div class="fa-tx-item-amount ${typeClass}">${isIncome ? '+' : '-'}${formattedAmt}</div>
       </div>
     `;
   });
 
-  // Add day summary at top
+  // Summary badges for the day
   let summaryHtml = '<div class="fa-tx-day-summary">';
   if (totalIncome > 0) {
-    summaryHtml += `<span class="fa-tx-summary-badge income">+${formatPeso(totalIncome)}</span>`;
+    const incStr = typeof formatPeso === 'function' ? formatPeso(totalIncome) : `₱${totalIncome.toFixed(2)}`;
+    summaryHtml += `<span class="fa-tx-summary-badge income">+${incStr}</span>`;
   }
   if (totalExpense > 0) {
-    summaryHtml += `<span class="fa-tx-summary-badge expense">-${formatPeso(totalExpense)}</span>`;
+    const expStr = typeof formatPeso === 'function' ? formatPeso(totalExpense) : `₱${totalExpense.toFixed(2)}`;
+    summaryHtml += `<span class="fa-tx-summary-badge expense">-${expStr}</span>`;
   }
   summaryHtml += '</div>';
 
-  listEl.innerHTML = summaryHtml + html;
+  listEl.innerHTML = summaryHtml + itemsHtml;
 }
 
-// ── Tooltip ──
+/**
+ * Comprehensive Tooltip on hover/focus showing both income and expense for that date
+ */
 function showFATooltip(e, cell) {
-  const tooltip = document.getElementById('fa-tooltip');
+  const tooltip = document.getElementById('heatmap-tooltip') || document.getElementById('fa-tooltip');
   if (!tooltip) return;
 
   const dateStr = cell.dataset.date;
-  const type = cell.dataset.type;
 
-  // Get BOTH income and expense data for this date
   const dateTx = faState.allTransactions.filter(tx => (tx.date || '').slice(0, 10) === dateStr);
-  const incomeCount = dateTx.filter(tx => tx.type === 'income').length;
-  const expenseCount = dateTx.filter(tx => tx.type === 'expense').length;
-  const incomeTotal = dateTx.filter(tx => tx.type === 'income').reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
-  const expenseTotal = dateTx.filter(tx => tx.type === 'expense').reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+  const incomeTx = dateTx.filter(tx => tx.type === 'income');
+  const expenseTx = dateTx.filter(tx => tx.type === 'expense');
+
+  const incomeCount = incomeTx.length;
+  const expenseCount = expenseTx.length;
+  const incomeTotal = incomeTx.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
+  const expenseTotal = expenseTx.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
 
   // Format date
   const [yr, mo, da] = dateStr.split('-');
-  const d = new Date(parseInt(yr), parseInt(mo) - 1, parseInt(da));
+  const d = new Date(parseInt(yr, 10), parseInt(mo, 10) - 1, parseInt(da, 10));
   const fullDate = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   let bodyHtml = `<div class="heatmap-tt-date">${fullDate}</div>`;
 
   if (incomeCount > 0 || expenseCount > 0) {
     if (incomeCount > 0) {
-      bodyHtml += `<div class="heatmap-tt-count">${incomeCount} income transaction${incomeCount !== 1 ? 's' : ''}</div>`;
-      bodyHtml += `<div class="heatmap-tt-amount income">${formatPeso(incomeTotal)} total income</div>`;
+      const incWord = incomeCount === 1 ? 'transaction' : 'transactions';
+      const incFormatted = typeof formatPeso === 'function' ? formatPeso(incomeTotal) : `₱${incomeTotal.toFixed(2)}`;
+      bodyHtml += `<div class="heatmap-tt-count">${incomeCount} income ${incWord}</div>`;
+      bodyHtml += `<div class="heatmap-tt-amount income">${incFormatted} total income</div>`;
     }
     if (expenseCount > 0) {
-      bodyHtml += `<div class="heatmap-tt-count">${expenseCount} expense transaction${expenseCount !== 1 ? 's' : ''}</div>`;
-      bodyHtml += `<div class="heatmap-tt-amount expense">${formatPeso(expenseTotal)} total expenses</div>`;
+      const expWord = expenseCount === 1 ? 'transaction' : 'transactions';
+      const expFormatted = typeof formatPeso === 'function' ? formatPeso(expenseTotal) : `₱${expenseTotal.toFixed(2)}`;
+      bodyHtml += `<div class="heatmap-tt-count">${expenseCount} expense ${expWord}</div>`;
+      bodyHtml += `<div class="heatmap-tt-amount expense">${expFormatted} total expenses</div>`;
     }
   } else {
-    bodyHtml += '<div class="heatmap-tt-empty">No transactions</div>';
+    bodyHtml += '<div class="heatmap-tt-empty">No transactions recorded</div>';
   }
 
   tooltip.innerHTML = bodyHtml;
@@ -424,7 +429,7 @@ function showFATooltip(e, cell) {
 }
 
 function positionFATooltip(cell) {
-  const tooltip = document.getElementById('fa-tooltip');
+  const tooltip = document.getElementById('heatmap-tooltip') || document.getElementById('fa-tooltip');
   if (!tooltip || !tooltip.classList.contains('visible')) return;
 
   const rect = cell.getBoundingClientRect();
@@ -441,10 +446,8 @@ function positionFATooltip(cell) {
 }
 
 function hideFATooltip() {
-  const tooltip = document.getElementById('fa-tooltip');
+  const tooltip = document.getElementById('heatmap-tooltip') || document.getElementById('fa-tooltip');
   if (!tooltip) return;
   tooltip.classList.remove('visible');
   tooltip.style.display = 'none';
 }
-
-// escapeHtml is defined in dashboard.js

@@ -1,132 +1,33 @@
 /* ============================================
-   Financial Activity Page — Dedicated Heatmap + Transaction Panel
+   Financial Activity Tab Styles
+   Integrated into Dashboard Financial Analytics
    ============================================ */
 
-/* ── Page Layout ── */
-.fa-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-lg);
-  flex-wrap: wrap;
-  gap: var(--space-sm);
+/* ── Container ── */
+.analytics-activity-content {
+  width: 100%;
+  animation: faFadeIn 0.25s ease-out;
 }
 
-.fa-page-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+@keyframes faFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.fa-page-title-wrap svg {
-  color: var(--gold);
-  flex-shrink: 0;
-}
-
-.fa-page-title {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.fa-page-subtitle {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-left: 36px;
-  margin-top: 2px;
-}
-
-/* ── Year Dropdown ── */
-.fa-year-dropdown {
-  position: relative;
-}
-
-.fa-year-trigger {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: var(--radius-sm);
-  padding: 7px 14px;
-  color: var(--gold-light);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-  font-variant-numeric: tabular-nums;
-}
-
-.fa-year-trigger:hover {
-  background: rgba(212, 175, 55, 0.1);
-  border-color: rgba(212, 175, 55, 0.35);
-}
-
-.fa-year-trigger svg {
-  transition: transform 0.2s ease;
-}
-
-.fa-year-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 100px;
-  background: rgba(18, 14, 11, 0.97);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 12px rgba(212, 175, 55, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  z-index: 100;
-  overflow: hidden;
-  display: none;
-  max-height: 240px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(212, 175, 55, 0.25) transparent;
-}
-
-.fa-year-menu.open {
-  display: block;
-}
-
-.fa-year-option {
-  padding: 8px 16px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  font-variant-numeric: tabular-nums;
-}
-
-.fa-year-option:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-primary);
-}
-
-.fa-year-option.active {
-  background: rgba(212, 175, 55, 0.14);
-  color: var(--gold);
-  font-weight: 600;
-}
-
-/* ── Two-Column Layout ── */
-.fa-layout {
+/* ── Two-Column Layout (approx 58% / 42%) ── */
+.fa-tab-layout {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: var(--space-lg);
-  align-items: start;
-  min-height: 580px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: stretch;
 }
 
-/* ── Heatmap Cards ── */
+/* ── Left Column: Stacked Heatmaps ── */
 .fa-heatmaps-col {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: var(--space-md);
+  min-width: 0;
 }
 
 .fa-heatmap-card {
@@ -142,7 +43,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
   flex-wrap: wrap;
   gap: var(--space-xs);
 }
@@ -160,8 +61,8 @@
   flex-shrink: 0;
 }
 
-.fa-heatmap-dot.income { background: #34C759; }
-.fa-heatmap-dot.expense { background: #FF3B5C; }
+.fa-heatmap-dot.income { background: #34C759; box-shadow: 0 0 8px rgba(52, 199, 89, 0.4); }
+.fa-heatmap-dot.expense { background: #FF3B5C; box-shadow: 0 0 8px rgba(255, 59, 92, 0.4); }
 
 .fa-heatmap-name {
   font-size: 0.88rem;
@@ -199,7 +100,7 @@
   overflow-y: hidden;
   scrollbar-width: thin;
   scrollbar-color: rgba(212, 175, 55, 0.2) transparent;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 
 .fa-heatmap-scroll::-webkit-scrollbar {
@@ -213,20 +114,23 @@
   border-radius: 4px;
 }
 
-/* ── Selected Date Cell ── */
+/* ── Selected Date Cell Highlight ── */
 .heatmap-cell.fa-selected {
   outline: 2px solid var(--gold) !important;
   outline-offset: 1px;
-  z-index: 5;
-  transform: scale(1.2);
+  z-index: 10;
+  transform: scale(1.3) !important;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.6) !important;
 }
 
-/* ── Transaction Panel ── */
+/* ── Right Column: Transactions Panel ── */
 .fa-tx-panel {
-  min-height: 580px;
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-md);
+  height: 100%;
+  min-height: 480px;
+  max-height: 520px;
 }
 
 .fa-tx-panel .glass-card-content {
@@ -234,42 +138,51 @@
   flex-direction: column;
   height: 100%;
   padding: 0;
+  overflow: hidden;
 }
 
 .fa-tx-panel-header {
   padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
   flex-shrink: 0;
+  background: rgba(18, 14, 11, 0.25);
+}
+
+.fa-tx-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
 }
 
 .fa-tx-panel-title {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 2px 0;
+  margin: 0;
+}
+
+.fa-tx-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .fa-tx-date-display {
   font-size: 0.82rem;
   color: var(--gold-light);
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.fa-tx-count {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-/* ── Transaction List ── */
+/* ── Transaction List (Scrollable) ── */
 .fa-tx-list {
-  flex: 1;
+  flex: 1 1 0%;
   overflow-y: auto;
-  padding: var(--space-sm) var(--space-lg) var(--space-lg);
+  overflow-x: hidden;
+  padding: var(--space-sm) var(--space-lg) var(--space-md);
   scrollbar-width: thin;
-  scrollbar-color: rgba(212, 175, 55, 0.15) transparent;
+  scrollbar-color: rgba(212, 175, 55, 0.2) transparent;
   min-height: 0;
-  max-height: 500px;
 }
 
 .fa-tx-list::-webkit-scrollbar {
@@ -279,7 +192,7 @@
   background: transparent;
 }
 .fa-tx-list::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(212, 175, 55, 0.2);
   border-radius: 4px;
 }
 
@@ -287,14 +200,16 @@
 .fa-tx-day-summary {
   display: flex;
   gap: 8px;
-  padding: var(--space-sm) 0 var(--space-md);
+  padding: 4px 0 var(--space-sm);
   flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  margin-bottom: var(--space-xs);
 }
 
 .fa-tx-summary-badge {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-xs);
   font-variant-numeric: tabular-nums;
 }
@@ -302,21 +217,21 @@
 .fa-tx-summary-badge.income {
   background: rgba(52, 199, 89, 0.12);
   color: #4ade80;
-  border: 1px solid rgba(52, 199, 89, 0.2);
+  border: 1px solid rgba(52, 199, 89, 0.25);
 }
 
 .fa-tx-summary-badge.expense {
   background: rgba(255, 59, 92, 0.12);
   color: #ff6b8b;
-  border: 1px solid rgba(255, 59, 92, 0.2);
+  border: 1px solid rgba(255, 59, 92, 0.25);
 }
 
 /* Transaction Item */
 .fa-tx-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) 0;
+  padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -325,14 +240,13 @@
 }
 
 .fa-tx-item-icon {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
 .fa-tx-item-icon.income {
@@ -351,7 +265,7 @@
 }
 
 .fa-tx-item-label {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.3;
@@ -361,7 +275,7 @@
 }
 
 .fa-tx-item-desc {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   margin-top: 1px;
   overflow: hidden;
@@ -369,13 +283,25 @@
   white-space: nowrap;
 }
 
-.fa-tx-item-type {
-  font-size: 0.65rem;
-  color: var(--text-muted);
+.fa-tx-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 2px;
+}
+
+.fa-tx-item-type {
+  font-size: 0.62rem;
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 500;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+
+.fa-tx-item-added-by {
+  font-size: 0.65rem;
+  color: var(--gold-light);
+  opacity: 0.85;
 }
 
 .fa-tx-item-amount {
@@ -383,7 +309,6 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
 .fa-tx-item-amount.income { color: #4ade80; }
@@ -401,140 +326,124 @@
 }
 
 .fa-tx-empty p {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   margin: 0;
 }
 
-/* ── Skeleton Loading ── */
-.fa-skeleton-grid {
-  display: grid;
-  grid-template-rows: repeat(7, 1fr);
-  grid-template-columns: repeat(53, 1fr);
-  grid-auto-flow: column;
-  gap: 2px;
-}
-
-.fa-skeleton-cell {
-  aspect-ratio: 1;
-  width: 100%;
-  max-width: 14px;
-  max-height: 14px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.04);
-  animation: fa-pulse 1.5s ease-in-out infinite;
-}
-
-.fa-skeleton-tx {
+/* ── Year Dropdown in Analytics Header Controls ── */
+.analytics-year-selector {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  padding: var(--space-md) 0;
+  align-items: center;
 }
 
-.fa-skeleton-tx-item {
-  height: 52px;
-  border-radius: var(--radius-xs);
-  background: rgba(255, 255, 255, 0.04);
-  animation: fa-pulse 1.5s ease-in-out infinite;
+.fa-year-dropdown {
+  position: relative;
 }
 
-.fa-skeleton-tx-item:nth-child(2) { animation-delay: 0.1s; }
-.fa-skeleton-tx-item:nth-child(3) { animation-delay: 0.2s; }
-.fa-skeleton-tx-item:nth-child(4) { animation-delay: 0.3s; }
-.fa-skeleton-tx-item:nth-child(5) { animation-delay: 0.4s; }
-
-@keyframes fa-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-
-/* Empty message for heatmaps */
-.fa-empty-msg {
-  color: var(--text-muted);
+.fa-year-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(22, 18, 14, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  color: var(--gold-light);
   font-size: 0.82rem;
-  text-align: center;
-  padding: var(--space-2xl) var(--space-md);
-  font-style: italic;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  user-select: none;
 }
 
-/* ── FA Tooltip (uses same styling as dashboard tooltip) ── */
-.fa-tooltip {
-  position: fixed;
-  z-index: 99999;
-  pointer-events: none;
-  background: rgba(18, 14, 11, 0.96);
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: 8px;
-  padding: 8px 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 12px rgba(212, 175, 55, 0.15);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+.fa-year-trigger:hover {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.45);
   color: #fff;
-  font-size: 0.72rem;
-  line-height: 1.45;
-  white-space: nowrap;
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.12s ease, transform 0.12s ease;
 }
 
-.fa-tooltip.visible {
-  opacity: 1;
-  transform: translateY(0);
+.fa-year-trigger svg {
+  transition: transform 0.2s ease;
 }
 
-/* ── Responsive ── */
+.fa-year-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 90px;
+  background: rgba(18, 14, 11, 0.97);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7), 0 0 12px rgba(212, 175, 55, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 1000;
+  overflow: hidden;
+  display: none;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.25) transparent;
+}
 
-/* Tablet */
+.fa-year-menu.open {
+  display: block;
+}
+
+.fa-year-option {
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.fa-year-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.fa-year-option.active {
+  background: rgba(212, 175, 55, 0.16);
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ── Responsive Behavior ── */
 @media (max-width: 1100px) {
-  .fa-layout {
-    grid-template-columns: 1fr 320px;
-    gap: var(--space-md);
+  .fa-tab-layout {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   }
 }
 
-/* Small Tablet / Large Phone */
-@media (max-width: 860px) {
-  .fa-layout {
+@media (max-width: 900px) {
+  .fa-tab-layout {
     grid-template-columns: 1fr;
-    min-height: auto;
   }
-
   .fa-tx-panel {
-    min-height: 350px;
-  }
-
-  .fa-tx-list {
-    max-height: 320px;
+    min-height: 380px;
+    max-height: 440px;
   }
 }
 
-/* Mobile */
 @media (max-width: 640px) {
-  .fa-page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .fa-page-subtitle {
-    margin-left: 0;
-  }
-
   .fa-heatmap-card .glass-card-content {
     padding: var(--space-sm) var(--space-md);
   }
-
   .fa-heatmap-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+    gap: 4px;
   }
-
   .fa-tx-panel-header {
     padding: var(--space-sm) var(--space-md);
   }
-
   .fa-tx-list {
     padding: var(--space-sm) var(--space-md) var(--space-md);
   }
