@@ -772,8 +772,10 @@ function initAnalytics() {
   analyticsState.startDate = '';
   analyticsState.endDate = '';
 
-  const initialQuickSelect = document.getElementById('filter-quick-select');
-  if (initialQuickSelect) initialQuickSelect.value = 'all';
+  const startInput = document.getElementById('filter-start-date');
+  const endInput = document.getElementById('filter-end-date');
+  const quickSelect = document.getElementById('filter-quick-select');
+  if (quickSelect) quickSelect.value = 'all';
 
   // Initialize interactive financial date range calendar state
   calSelectedStart = null;
@@ -865,7 +867,6 @@ function initAnalytics() {
   });
 
   // Quick select dropdown
-  const quickSelect = document.getElementById('filter-quick-select');
   if (quickSelect) {
     quickSelect.addEventListener('change', () => {
       const val = quickSelect.value;
@@ -961,8 +962,6 @@ function initAnalytics() {
       calSelectedStart = start;
       calSelectedEnd = end;
 
-      const startInput = document.getElementById('filter-start-date');
-      const endInput = document.getElementById('filter-end-date');
       if (startInput) startInput.value = start;
       if (endInput) endInput.value = end;
 
@@ -975,7 +974,6 @@ function initAnalytics() {
       calViewYear = eY;
       calViewMonth = eM - 1;
 
-      const quickSelect = document.getElementById('filter-quick-select');
       if (quickSelect) quickSelect.value = 'all';
 
       renderFinancialCalendar();

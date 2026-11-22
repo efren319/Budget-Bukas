@@ -462,9 +462,13 @@ async function getAnalyticsData(req, res) {
                TO_CHAR(MAX(date), 'YYYY-MM-DD') AS "maxDate"
         FROM transactions
       `);
-      if (minMaxRows && minMaxRows[0] && minMaxRows[0].minDate) {
-        if (!startDate || startDate === 'all') startDate = minMaxRows[0].minDate;
-        if (!endDate || endDate === 'all') endDate = minMaxRows[0].maxDate;
+      const row = minMaxRows && minMaxRows[0] ? minMaxRows[0] : null;
+      const minDate = row ? (row.minDate || row.mindate) : null;
+      const maxDate = row ? (row.maxDate || row.maxdate) : null;
+
+      if (minDate && maxDate) {
+        if (!startDate || startDate === 'all') startDate = minDate;
+        if (!endDate || endDate === 'all') endDate = maxDate;
       } else {
         const now = new Date();
         if (!startDate || startDate === 'all') startDate = `${now.getFullYear()}-01-01`;
