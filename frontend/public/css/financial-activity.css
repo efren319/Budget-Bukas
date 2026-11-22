@@ -14,38 +14,51 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Two-Column Layout (approx 58% / 42%) ── */
+/* ── Two-Column Layout (Wider Calendars ~65% / Narrower Transactions ~35%) ── */
 .fa-tab-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.85fr) minmax(280px, 1fr);
   gap: var(--space-md);
   align-items: stretch;
+  min-height: 530px;
 }
 
-/* ── Left Column: Stacked Heatmaps ── */
+/* ── Left Column: Stacked Heatmaps (Fills Full Height) ── */
 .fa-heatmaps-col {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
   min-width: 0;
+  height: 100%;
 }
 
+/* Each Heatmap Card expands equally to fill 50% of the available height */
 .fa-heatmap-card {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
   border-radius: var(--radius-md);
   overflow: hidden;
+  min-height: 250px;
 }
 
 .fa-heatmap-card .glass-card-content {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
+  box-sizing: border-box;
 }
 
 .fa-heatmap-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
   flex-wrap: wrap;
   gap: var(--space-xs);
+  flex-shrink: 0;
 }
 
 .fa-heatmap-title {
@@ -95,12 +108,17 @@
   margin: 0 3px;
 }
 
+/* Heatmap Scroll Container — Vertically Centered within expanded card */
 .fa-heatmap-scroll {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
   scrollbar-color: rgba(212, 175, 55, 0.2) transparent;
-  padding-bottom: 2px;
+  padding: var(--space-xs) 0;
 }
 
 .fa-heatmap-scroll::-webkit-scrollbar {
@@ -114,23 +132,89 @@
   border-radius: 4px;
 }
 
+/* ── Heatmap Month Row & Cell Grid Proportions ── */
+#analytics-activity-content .heatmap-months-row {
+  margin-bottom: 6px;
+}
+
+#analytics-activity-content .heatmap-months-track {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(53, minmax(0, 1fr));
+  gap: clamp(2px, 0.28vw, 4px);
+  align-items: center;
+  position: relative;
+  overflow: visible;
+}
+
+#analytics-activity-content .heatmap-month-label {
+  font-size: clamp(0.62rem, 0.7vw, 0.7rem);
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1;
+  white-space: nowrap;
+  text-align: left;
+  overflow: visible;
+  pointer-events: none;
+  width: 0;
+}
+
+#analytics-activity-content .heatmap-main-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+#analytics-activity-content .heatmap-cells-grid {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(53, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: clamp(2px, 0.28vw, 4px);
+  row-gap: clamp(3px, 0.38vw, 5.5px); /* Enhanced vertical spacing between rows */
+}
+
+#analytics-activity-content .heatmap-cell {
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 16px;   /* Slightly larger squares for better readability */
+  max-height: 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.12s ease, outline 0.12s ease, box-shadow 0.12s ease;
+  outline: 1.5px solid transparent;
+  outline-offset: 1px;
+  position: relative;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+#analytics-activity-content .heatmap-cell:hover,
+#analytics-activity-content .heatmap-cell:focus {
+  transform: scale(1.35);
+  outline-color: var(--gold);
+  z-index: 20;
+}
+
 /* ── Selected Date Cell Highlight ── */
 .heatmap-cell.fa-selected {
   outline: 2px solid var(--gold) !important;
   outline-offset: 1px;
-  z-index: 10;
+  z-index: 15;
   transform: scale(1.3) !important;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.6) !important;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.65) !important;
 }
 
-/* ── Right Column: Transactions Panel ── */
+/* ── Right Column: Transactions Panel (Height Matches Left Column Exactly) ── */
 .fa-tx-panel {
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-md);
   height: 100%;
-  min-height: 480px;
-  max-height: 520px;
+  min-height: 530px;
 }
 
 .fa-tx-panel .glass-card-content {
@@ -174,7 +258,7 @@
   font-weight: 600;
 }
 
-/* ── Transaction List (Scrollable) ── */
+/* ── Transaction List (Scrollable Interior) ── */
 .fa-tx-list {
   flex: 1 1 0%;
   overflow-y: auto;
@@ -226,12 +310,12 @@
   border: 1px solid rgba(255, 59, 92, 0.25);
 }
 
-/* Transaction Item */
+/* Transaction Item (Optimized for Slightly Narrower Card) */
 .fa-tx-item {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 8px 0;
+  padding: 9px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -260,7 +344,7 @@
 }
 
 .fa-tx-item-info {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
 }
 
@@ -286,8 +370,9 @@
 .fa-tx-item-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: 2px;
+  flex-wrap: wrap;
 }
 
 .fa-tx-item-type {
@@ -309,6 +394,9 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+  margin-left: var(--space-xs);
+  text-align: right;
+  white-space: nowrap;
 }
 
 .fa-tx-item-amount.income { color: #4ade80; }
@@ -416,19 +504,23 @@
 }
 
 /* ── Responsive Behavior ── */
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .fa-tab-layout {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.65fr) minmax(260px, 1fr);
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .fa-tab-layout {
     grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .fa-heatmap-card {
+    min-height: 230px;
   }
   .fa-tx-panel {
     min-height: 380px;
-    max-height: 440px;
+    max-height: 480px;
   }
 }
 

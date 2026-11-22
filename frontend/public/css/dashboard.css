@@ -108,10 +108,10 @@
 
 /* ── 4. FINANCIAL ACTIVITY TAB ── */
 .dashboard-master-layout[data-active-tab="activity"] .member-card {
-  height: 480px !important;            /* 👈 EDIT FINANCIAL ACTIVITY CARD HEIGHT */
+  height: 530px !important;            /* 👈 EDIT FINANCIAL ACTIVITY CARD HEIGHT */
 }
 .dashboard-master-layout[data-active-tab="activity"] .member-card .member-list {
-  max-height: 380px !important;        /* 👈 EDIT FINANCIAL ACTIVITY LIST SCROLL HEIGHT */
+  max-height: 430px !important;        /* 👈 EDIT FINANCIAL ACTIVITY LIST SCROLL HEIGHT */
 }
 
 .member-card .member-item {
