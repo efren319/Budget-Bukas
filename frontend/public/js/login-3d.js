@@ -338,20 +338,20 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     const frustumW = frustumH * camera.aspect;
 
     // Responsive landing settings for JPCS centerpiece:
-    // Large, majestic coin rising from the bottom edge
-    const landingDiam = Math.min(9.5, Math.max(5.8, frustumW * 0.76));
+    // Balanced size with majestic curved horizon rising from bottom
+    const landingDiam = Math.min(7.4, Math.max(4.8, frustumW * 0.60));
     landingScaleJPCS = landingDiam;
 
-    // Position: Top rim of the coin sits at ~28% from the bottom of the screen,
-    // safely below the hero text and "Get Started" button with clear void spacing.
-    const topRimY = -(frustumH * 0.20);
+    // Position: Top rim of the coin sits nicely below the "Get Started" button
+    // (~42% from the bottom of the screen), without covering the button or text.
+    const topRimY = -(frustumH * 0.09);
     landingPosY = topRimY - (landingDiam / 2);
 
     // Responsive login offsets
     loginXOffset = Math.min(4.8, frustumW * 0.42);
 
-    centerKeyLight.position.set(0, topRimY + 3.2, 5.5);
-    centerKeyLight.target.position.set(0, topRimY - 0.4, 0);
+    centerKeyLight.position.set(0, topRimY + 3.0, 5.5);
+    centerKeyLight.target.position.set(0, topRimY - 0.5, 0);
     centerKeyLight.target.updateMatrixWorld();
     centerRimLight.position.set(0, topRimY + 0.6, 1.2);
   }
