@@ -182,6 +182,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
      MODEL LOADING (JPCS & BSU logos)
      ======================================================== */
   let jpcsWrapper = null;
+  let jpcsLandingPivot = null;
+  let jpcsCounterQuat = new THREE.Quaternion();
   let bsuWrapper = null;
   let jpcsMaxDim = 1;
   let bsuMaxDim = 1;
@@ -226,28 +228,31 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     });
   }
 
-  // 1. Load JPCS Logo
+  // 1. Load JPCS Logo (untouched raw model for login, landing pivot for flat spin on landing)
   loader.load(
     'assets/3d models/JPCS logo.glb',
     (gltf) => {
       const model = gltf.scene;
 
-      // Reset any baked node tilt so the logo faces the screen directly flat
-      model.traverse((child) => {
-        if (child.isObject3D && child !== model) {
-          child.rotation.set(0, 0, 0);
-          child.quaternion.identity();
-          child.position.set(0, 0, 0);
-        }
-      });
-
-      // Center pivot
+      // Center pivot exactly as in original login code (do NOT reset child nodes!)
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
       model.position.sub(center);
 
+      // Find the child node's baked quaternion so we can counter-tilt ONLY on landing
+      model.traverse((child) => {
+        if (child.isMesh && child.parent) {
+          jpcsCounterQuat.copy(child.quaternion).invert();
+        }
+      });
+
+      // jpcsLandingPivot: handles flat orientation & front-face spin on landing ONLY.
+      // On login, its quaternion is pure identity (0 effect).
+      jpcsLandingPivot = new THREE.Group();
+      jpcsLandingPivot.add(model);
+
       jpcsWrapper = new THREE.Group();
-      jpcsWrapper.add(model);
+      jpcsWrapper.add(jpcsLandingPivot);
 
       const size = box.getSize(new THREE.Vector3());
       jpcsMaxDim = Math.max(size.x, size.y, size.z) || 1;
@@ -271,13 +276,13 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     }
   );
 
-  // 2. Load BSU Logo
+  // 2. Load BSU Logo (untouched raw model for login)
   loader.load(
     'assets/3d models/BSU logo.glb',
     (gltf) => {
       const model = gltf.scene;
 
-      // Center pivot
+      // Center pivot exactly as in original login code
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
       model.position.sub(center);
@@ -372,12 +377,18 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   });
 
   /* ========================================================
-     CURSOR TRACKING (for Login View)
+     CURSOR TRACKING (Original login interactive tracking)
      ======================================================== */
   const cursor = { x: 0, y: 0 };
   const currentCursor = { x: 0, y: 0 };
   const MAX_ROT = THREE.MathUtils.degToRad(12);
   const LERP_FACTOR = 0.06;
+  let introStarted = false;
+  let introProgress = 0;
+
+  window.addEventListener('3d-models-loaded', () => {
+    setTimeout(() => { introStarted = true; }, 400);
+  });
 
   window.addEventListener('mousemove', (e) => {
     cursor.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -407,6 +418,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   let lastFrameTime = 0;
   const PERF_INTERVAL = 1000 / 30;
   let landingSpinZ = 0;
+  const identityQuat = new THREE.Quaternion(); // Identity (0, 0, 0, 1)
 
   function animate(now) {
     requestAnimationFrame(animate);
@@ -436,19 +448,47 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     shadowPlane.position.y     = THREE.MathUtils.lerp(-4.0, -1.7, viewBlend);
     reflectionPlane.position.y = THREE.MathUtils.lerp(-3.99, -1.69, viewBlend);
 
-    // ── Update cursor tracking ──
+    // ── Original Login Rotation & Cursor Tracking ──
     currentCursor.x += (cursor.x - currentCursor.x) * LERP_FACTOR;
     currentCursor.y += (cursor.y - currentCursor.y) * LERP_FACTOR;
     const targetRotY = THREE.MathUtils.clamp(currentCursor.x * MAX_ROT, -MAX_ROT, MAX_ROT);
     const targetRotX = THREE.MathUtils.clamp(currentCursor.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
 
-    // ── Continuous 360° front face spin around Z-axis (directly facing screen flat) ──
+    let loginRotX = 0;
+    if (!introStarted) {
+      loginRotX = Math.PI / 4;
+    } else {
+      if (introProgress < 1) introProgress += 0.012;
+      const eased = 1 - Math.pow(1 - introProgress, 4);
+      const startX = Math.PI / 4;
+      loginRotX = startX + (targetRotX - startX) * eased;
+    }
+
+    // ── Continuous 360° front face spin around Z-axis (Landing only) ──
     if (!isPerfMode) {
       landingSpinZ -= 0.0035; // Clockwise 360° spin of the front face
       if (landingSpinZ < -Math.PI * 2) landingSpinZ += Math.PI * 2;
     }
 
-    // ── Update JPCS Model ──
+    // Compute landing flat rotation quaternion: counter-tilt baked angle + spin around Z
+    const qSpin = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), landingSpinZ);
+    const landingQuat = qSpin.multiply(jpcsCounterQuat);
+
+    // ── Apply Landing-only rotation to jpcsLandingPivot (identity on login) ──
+    if (jpcsLandingPivot) {
+      if (viewBlend <= 0.001) {
+        // Pure landing: flat facing screen, 360° front face spin
+        jpcsLandingPivot.quaternion.copy(landingQuat);
+      } else if (viewBlend >= 0.999) {
+        // Pure login: identity quaternion, 0 effect on original model orientation!
+        jpcsLandingPivot.quaternion.copy(identityQuat);
+      } else {
+        // Smooth transition
+        jpcsLandingPivot.quaternion.slerpQuaternions(landingQuat, identityQuat, viewBlend);
+      }
+    }
+
+    // ── Update JPCS Wrapper (Login rotation matches original login page exactly) ──
     if (jpcsWrapper) {
       // Position interpolation
       const targetX = THREE.MathUtils.lerp(0, -loginXOffset, viewBlend);
@@ -463,23 +503,13 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
       );
       jpcsWrapper.scale.setScalar(targetScaleVal);
 
-      // Rotation interpolation: from flat 360° front-face spin to login cursor tracking
-      if (viewBlend < 0.05) {
-        // Pure landing: facing screen directly flat (X=0, Y=0), rotating the front face (Z)
-        jpcsWrapper.rotation.set(0, 0, landingSpinZ);
-      } else if (viewBlend > 0.95) {
-        // Pure login: cursor tracking
-        jpcsWrapper.rotation.set(targetRotX, targetRotY, 0);
-      } else {
-        // Transition: smoothly blend from flat face spin to login cursor tracking
-        const rotZ = THREE.MathUtils.lerp(landingSpinZ, 0, viewBlend);
-        const rotY = THREE.MathUtils.lerp(0, targetRotY, viewBlend);
-        const rotX = THREE.MathUtils.lerp(0, targetRotX, viewBlend);
-        jpcsWrapper.rotation.set(rotX, rotY, rotZ);
-      }
+      // Wrapper rotation: 0 on landing, exact original login rotation on login!
+      const curRotX = THREE.MathUtils.lerp(0, loginRotX, viewBlend);
+      const curRotY = THREE.MathUtils.lerp(0, targetRotY, viewBlend);
+      jpcsWrapper.rotation.set(curRotX, curRotY, 0);
     }
 
-    // ── Update BSU Model ──
+    // ── Update BSU Wrapper (Exact original login rotation) ──
     if (bsuWrapper) {
       // Position: slides from right into position (loginXOffset, 0, 0)
       const bsuStartX = 12.0;
@@ -498,8 +528,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
       // Visible only when transitioning or in login
       bsuWrapper.visible = viewBlend > 0.01;
 
-      // Rotation: follows cursor tracking in login
-      bsuWrapper.rotation.set(targetRotX, targetRotY, 0);
+      // Exact original login rotation
+      bsuWrapper.rotation.set(loginRotX, targetRotY, 0);
     }
 
     // ── Render ──
