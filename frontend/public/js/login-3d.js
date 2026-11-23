@@ -460,8 +460,11 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     const targetRotX = THREE.MathUtils.clamp(currentCursor.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
 
     // Landing cursor reaction: subtle interactive tilt and parallax following mouse
+    // Upper part tilted slightly to the back so it looks more flat in perspective
+    const landingBasePitch = -THREE.MathUtils.degToRad(16);
     const landingTiltY = THREE.MathUtils.clamp(currentCursor.x * THREE.MathUtils.degToRad(8), -0.14, 0.14);
     const landingTiltX = THREE.MathUtils.clamp(-currentCursor.y * THREE.MathUtils.degToRad(6), -0.11, 0.11);
+    const landingRotX = landingBasePitch + landingTiltX;
     const landingParallaxX = currentCursor.x * 0.18;
     const landingParallaxY = -currentCursor.y * 0.08;
 
@@ -514,8 +517,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
       );
       jpcsWrapper.scale.setScalar(targetScaleVal);
 
-      // Wrapper rotation: reacts to cursor on landing, exact original login rotation on login!
-      const curRotX = THREE.MathUtils.lerp(landingTiltX, loginRotX, viewBlend);
+      // Wrapper rotation: reacts to cursor + tilted back on landing, exact original login rotation on login!
+      const curRotX = THREE.MathUtils.lerp(landingRotX, loginRotX, viewBlend);
       const curRotY = THREE.MathUtils.lerp(landingTiltY, targetRotY, viewBlend);
       jpcsWrapper.rotation.set(curRotX, curRotY, 0);
     }
