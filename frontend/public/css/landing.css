@@ -104,10 +104,12 @@
 }
 
 .landing-title-accent {
-  background: linear-gradient(135deg, #d3ac77 0%, #f2dab2 50%, #d28447 100%);
+  background: linear-gradient(135deg, #ffd89b 0%, #f7c06d 40%, #d4af37 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-shadow: none !important;
+  display: inline-block;
 }
 
 .landing-desc {
@@ -166,77 +168,107 @@
   transform: translateX(4px);
 }
 
-/* ── Login Card Transition Overrides ── */
+/* ── Login Card Reveal Transition ── */
 .login-container {
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  will-change: opacity, transform, clip-path, filter;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              clip-path 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.7s ease-out;
 }
 
 .login-container.initial-hidden {
   display: none !important;
   opacity: 0 !important;
-  transform: scale(0.92) !important;
+  transform: translateY(28px) scale(0.95) !important;
+  clip-path: inset(18% 20% 18% 20% round 32px) !important;
+  filter: blur(14px) !important;
   pointer-events: none !important;
 }
 
 .login-container.transition-enter-prepare {
   opacity: 0 !important;
-  transform: scale(0.92) !important;
+  transform: translateY(28px) scale(0.95) !important;
+  clip-path: inset(18% 20% 18% 20% round 32px) !important;
+  filter: blur(14px) !important;
   pointer-events: none !important;
 }
 
 .login-container.transition-enter-active {
   opacity: 1 !important;
-  transform: scale(1) !important;
+  transform: translateY(0) scale(1) !important;
+  clip-path: inset(0% 0% 0% 0% round var(--radius-xl)) !important;
+  filter: blur(0px) !important;
   pointer-events: auto !important;
 }
 
 .login-container.transition-exit-active {
   opacity: 0 !important;
-  transform: scale(0.92) !important;
+  transform: translateY(20px) scale(0.96) !important;
+  clip-path: inset(14% 18% 14% 18% round 28px) !important;
+  filter: blur(10px) !important;
   pointer-events: none !important;
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              clip-path 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.5s ease-out;
 }
 
-/* ── Return Back Button on Login View ── */
+html.performance-mode .login-container {
+  clip-path: none !important;
+  filter: none !important;
+}
+
+html.performance-mode .landing-screen {
+  filter: none !important;
+}
+
+/* ── Return Back Button on Login View (Clean Arrow Only, No Background or Border) ── */
 .login-back-btn {
   position: absolute;
-  top: 24px;
-  left: 36px;
+  top: 26px;
+  left: 32px;
   z-index: 30;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  border-radius: var(--radius-pill);
-  background: rgba(22, 18, 14, 0.65);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  color: var(--text-secondary);
-  font-family: var(--font-primary);
-  font-size: 0.85rem;
-  font-weight: 500;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
+  color: #A6A096;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   opacity: 0;
-  transform: translateX(-8px);
+  transform: translateX(-10px);
   pointer-events: none;
 }
 
 .login-back-btn.visible {
-  opacity: 1;
+  opacity: 0.75;
   transform: translateX(0);
   pointer-events: auto;
 }
 
 .login-back-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: rgba(212, 175, 55, 0.5);
+  opacity: 1;
   color: #FFFFFF;
-  transform: translateX(-2px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.2);
+  transform: translateX(-5px);
+}
+
+.login-back-btn:active {
+  transform: translateX(-2px) scale(0.92);
+}
+
+.login-back-btn svg,
+.login-back-btn i {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.2px;
 }
 
 .login-back-btn:active {

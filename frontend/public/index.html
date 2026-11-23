@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/landing.css?v=2.0">
+  <link rel="stylesheet" href="css/landing.css?v=2.1">
   <style>
     .login-wrapper {
       min-height: 100vh;
@@ -96,7 +96,6 @@
       border-radius: var(--radius-xl);
       overflow: hidden;
       box-shadow: var(--shadow-card), 0 0 60px rgba(212,175,55,0.06);
-      animation: fadeInUp 0.6s ease-out;
     }
 
     .login-brand {
@@ -383,7 +382,6 @@
     <!-- Return to Landing Page Button (Visible on Login View) -->
     <button type="button" class="login-back-btn" id="btn-back-to-landing" aria-label="Back to Home">
       <i data-lucide="arrow-left"></i>
-      <span>Back</span>
     </button>
 
     <!-- 3D Philippine 20-Peso Coin Canvas -->
@@ -406,13 +404,13 @@
 
         <!-- Heading -->
         <h1 class="landing-title">
-          Every Peso Accounted For.<br>
-          <span class="landing-title-accent">A Clearer View of Your Organization's Finances.</span>
+          Advancing Financial Transparency for 
+          <span class="landing-title-accent">JPCS.</span>
         </h1>
 
         <!-- Description -->
         <p class="landing-desc">
-          Track funds, monitor transactions, and understand how your organization's money is managed — all in one place.
+          A centralized platform for managing organizational funds, monitoring financial transactions, and promoting accountability within the Junior Philippine Computer Society.
         </p>
 
         <!-- Single Primary Action Button -->
@@ -605,39 +603,41 @@
         return;
       }
 
-      // Phase 1: Landing UI floats up and fades
+      // Phase 1: Landing UI floats up and dissolves smoothly
       if (landingScreen) {
         landingScreen.classList.add('exiting');
         landingScreen.classList.remove('entering');
       }
 
-      // Prepare login container: make visible, distant (scale 0.92) & transparent
+      // Prepare login container with reveal state
       if (loginContainer) {
         loginContainer.classList.remove('initial-hidden', 'transition-exit-active');
         loginContainer.classList.add('transition-enter-prepare');
         loginContainer.style.display = 'flex';
       }
 
-      // Show back button
+      // Show clean arrow back button
       if (loginBackBtn) loginBackBtn.classList.add('visible');
 
       // Force layout reflow
       void (loginContainer && loginContainer.offsetWidth);
 
-      // Phase 2: Scale from distant to full size and fade in smoothly
-      setTimeout(() => {
-        if (loginContainer) {
-          loginContainer.classList.remove('transition-enter-prepare');
-          loginContainer.classList.add('transition-enter-active');
-        }
-      }, 140);
+      // Phase 2: Smooth cinematic reveal expansion
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (loginContainer) {
+            loginContainer.classList.remove('transition-enter-prepare');
+            loginContainer.classList.add('transition-enter-active');
+          }
+        });
+      });
 
       // Phase 3: Transition complete
       setTimeout(() => {
         if (landingScreen) landingScreen.style.display = 'none';
         const emailInput = document.getElementById('email');
         if (emailInput) emailInput.focus();
-      }, 800);
+      }, 850);
     }
 
     function transitionToLanding(instant = false) {
