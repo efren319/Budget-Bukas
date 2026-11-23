@@ -232,6 +232,15 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     (gltf) => {
       const model = gltf.scene;
 
+      // Reset any baked node tilt so the logo faces the screen directly flat
+      model.traverse((child) => {
+        if (child.isObject3D && child !== model) {
+          child.rotation.set(0, 0, 0);
+          child.quaternion.identity();
+          child.position.set(0, 0, 0);
+        }
+      });
+
       // Center pivot
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
@@ -397,7 +406,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
      ======================================================== */
   let lastFrameTime = 0;
   const PERF_INTERVAL = 1000 / 30;
-  let landingSpinY = 0;
+  let landingSpinZ = 0;
 
   function animate(now) {
     requestAnimationFrame(animate);
@@ -433,10 +442,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     const targetRotY = THREE.MathUtils.clamp(currentCursor.x * MAX_ROT, -MAX_ROT, MAX_ROT);
     const targetRotX = THREE.MathUtils.clamp(currentCursor.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
 
-    // ── Continuous 360° turntable spin for Landing view (around vertical Y-axis) ──
+    // ── Continuous 360° front face spin around Z-axis (directly facing screen flat) ──
     if (!isPerfMode) {
-      landingSpinY += 0.005; // Full 360° revolution every ~20s
-      if (landingSpinY > Math.PI * 2) landingSpinY -= Math.PI * 2;
+      landingSpinZ -= 0.0035; // Clockwise 360° spin of the front face
+      if (landingSpinZ < -Math.PI * 2) landingSpinZ += Math.PI * 2;
     }
 
     // ── Update JPCS Model ──
@@ -454,18 +463,19 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
       );
       jpcsWrapper.scale.setScalar(targetScaleVal);
 
-      // Rotation interpolation: from landing 360° spin to login cursor tracking
+      // Rotation interpolation: from flat 360° front-face spin to login cursor tracking
       if (viewBlend < 0.05) {
-        // Pure landing: upright, 360° turntable spin around vertical Y axis
-        jpcsWrapper.rotation.set(0, landingSpinY, 0);
+        // Pure landing: facing screen directly flat (X=0, Y=0), rotating the front face (Z)
+        jpcsWrapper.rotation.set(0, 0, landingSpinZ);
       } else if (viewBlend > 0.95) {
         // Pure login: cursor tracking
         jpcsWrapper.rotation.set(targetRotX, targetRotY, 0);
       } else {
-        // Transition: smoothly blend rotation
-        const rotY = THREE.MathUtils.lerp(landingSpinY, targetRotY, viewBlend);
+        // Transition: smoothly blend from flat face spin to login cursor tracking
+        const rotZ = THREE.MathUtils.lerp(landingSpinZ, 0, viewBlend);
+        const rotY = THREE.MathUtils.lerp(0, targetRotY, viewBlend);
         const rotX = THREE.MathUtils.lerp(0, targetRotX, viewBlend);
-        jpcsWrapper.rotation.set(rotX, rotY, 0);
+        jpcsWrapper.rotation.set(rotX, rotY, rotZ);
       }
     }
 
