@@ -337,18 +337,23 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     const frustumH = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
     const frustumW = frustumH * camera.aspect;
 
-    // Responsive landing settings for JPCS centerpiece
-    const landingDiam = Math.min(5.6, Math.max(3.6, frustumW * 0.44));
+    // Responsive landing settings for JPCS centerpiece:
+    // Large, majestic coin rising from the bottom edge
+    const landingDiam = Math.min(9.5, Math.max(5.8, frustumW * 0.76));
     landingScaleJPCS = landingDiam;
 
-    // Centerpiece Y position: rises up from bottom, top ~55% of height visible
-    landingPosY = -(frustumH / 2) + (landingDiam * 0.38);
+    // Position: Top rim of the coin sits at ~28% from the bottom of the screen,
+    // safely below the hero text and "Get Started" button with clear void spacing.
+    const topRimY = -(frustumH * 0.20);
+    landingPosY = topRimY - (landingDiam / 2);
 
     // Responsive login offsets
     loginXOffset = Math.min(4.8, frustumW * 0.42);
 
-    centerKeyLight.target.position.set(0, landingPosY, 0);
+    centerKeyLight.position.set(0, topRimY + 3.2, 5.5);
+    centerKeyLight.target.position.set(0, topRimY - 0.4, 0);
     centerKeyLight.target.updateMatrixWorld();
+    centerRimLight.position.set(0, topRimY + 0.6, 1.2);
   }
 
   window.addEventListener('resize', updateDimensions);
@@ -448,11 +453,17 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     shadowPlane.position.y     = THREE.MathUtils.lerp(-4.0, -1.7, viewBlend);
     reflectionPlane.position.y = THREE.MathUtils.lerp(-3.99, -1.69, viewBlend);
 
-    // ── Original Login Rotation & Cursor Tracking ──
+    // ── Cursor Tracking (both Landing tilt & Login pose) ──
     currentCursor.x += (cursor.x - currentCursor.x) * LERP_FACTOR;
     currentCursor.y += (cursor.y - currentCursor.y) * LERP_FACTOR;
     const targetRotY = THREE.MathUtils.clamp(currentCursor.x * MAX_ROT, -MAX_ROT, MAX_ROT);
     const targetRotX = THREE.MathUtils.clamp(currentCursor.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
+
+    // Landing cursor reaction: subtle interactive tilt and parallax following mouse
+    const landingTiltY = THREE.MathUtils.clamp(currentCursor.x * THREE.MathUtils.degToRad(8), -0.14, 0.14);
+    const landingTiltX = THREE.MathUtils.clamp(-currentCursor.y * THREE.MathUtils.degToRad(6), -0.11, 0.11);
+    const landingParallaxX = currentCursor.x * 0.18;
+    const landingParallaxY = -currentCursor.y * 0.08;
 
     let loginRotX = 0;
     if (!introStarted) {
@@ -488,11 +499,11 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
       }
     }
 
-    // ── Update JPCS Wrapper (Login rotation matches original login page exactly) ──
+    // ── Update JPCS Wrapper (Cursor-reactive on landing, original login rotation on login) ──
     if (jpcsWrapper) {
-      // Position interpolation
-      const targetX = THREE.MathUtils.lerp(0, -loginXOffset, viewBlend);
-      const targetY = THREE.MathUtils.lerp(landingPosY, 0, viewBlend);
+      // Position interpolation with subtle landing parallax
+      const targetX = THREE.MathUtils.lerp(landingParallaxX, -loginXOffset, viewBlend);
+      const targetY = THREE.MathUtils.lerp(landingPosY + landingParallaxY, 0, viewBlend);
       jpcsWrapper.position.set(targetX, targetY, 0);
 
       // Scale interpolation
@@ -503,9 +514,9 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
       );
       jpcsWrapper.scale.setScalar(targetScaleVal);
 
-      // Wrapper rotation: 0 on landing, exact original login rotation on login!
-      const curRotX = THREE.MathUtils.lerp(0, loginRotX, viewBlend);
-      const curRotY = THREE.MathUtils.lerp(0, targetRotY, viewBlend);
+      // Wrapper rotation: reacts to cursor on landing, exact original login rotation on login!
+      const curRotX = THREE.MathUtils.lerp(landingTiltX, loginRotX, viewBlend);
+      const curRotY = THREE.MathUtils.lerp(landingTiltY, targetRotY, viewBlend);
       jpcsWrapper.rotation.set(curRotX, curRotY, 0);
     }
 
