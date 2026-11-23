@@ -10,15 +10,15 @@
 :root {
   /* 👈 1. TOTAL ROW HEIGHT (Hardcodes both the Transactions card & Left column)
      Default: 530px. Both columns will always match this exact height. */
-  --fa-total-height: 530px;
+  --fa-total-height: 450px;
 
   /* 👈 2. EACH HEATMAP CARD HEIGHT (Income Activity & Expense Activity)
      Default: 257px. (Calculated as: (530px total - 16px gap) / 2 = 257px) */
-  --fa-heatmap-card-height: 257px;
+  --fa-heatmap-card-height: 300px;
 
   /* 👈 3. TRANSACTIONS CARD WIDTH
      Default: 350px. Change this if you want the transactions card wider or narrower. */
-  --fa-tx-card-width: 350px;
+  --fa-tx-card-width: 540px;
 
   /* 👈 4. TRANSACTIONS LIST SCROLLABLE HEIGHT
      Default: 425px. The scrollable area for transaction items inside the card. */

@@ -104,7 +104,7 @@
 }
 
 .landing-title-accent {
-  background: linear-gradient(135deg, #ffd89b 0%, #f7c06d 40%, #d4af37 100%);
+  background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-light) 50%, var(--gold) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
