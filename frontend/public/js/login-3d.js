@@ -1,101 +1,65 @@
 /**
- * PondoSync Login — 3D Background Logo
- * Cinematic rendering with strong bloom glow, soft shadows,
- * reflective ground plane, and cursor-driven rotation.
+ * PondoSync — 3D Philippine 20-Peso Coin Centerpiece
+ * Minimalist luxury rendering with golden rim glow, soft bloom,
+ * and smooth cinematic transitions between Landing and Login screens.
  */
 
 import * as THREE from 'three';
-import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
-import { EffectComposer }  from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass }      from 'three/addons/postprocessing/RenderPass.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 (function () {
   'use strict';
 
-  /* ---------- bail on small screens ---------- */
-  const MQ_MIN = 900;
-  if (window.innerWidth < MQ_MIN) {
-     window.dispatchEvent(new Event('3d-models-loaded'));
-     return;
-  }
+  const MODEL_PATH = 'assets/3d models/20 pesos.glb';
 
-  /* ========================================================
-     CONFIGURATION
-     ======================================================== */
-  const MODELS = [
-    {
-      path: 'assets/3d models/JPCS logo.glb',
-      xOffset: -4.8, // Further left
-      scale: 3.8    // Bigger
-    },
-    {
-      path: 'assets/3d models/BSU logo.glb',
-      xOffset: 4.8,  // Further right
-      scale: 4.2    // Bigger
-    }
-  ];
-  
-  const MAX_ROT_DEG    = 12;
-  const MAX_ROT        = THREE.MathUtils.degToRad(MAX_ROT_DEG);
-  const LERP_FACTOR    = 0.06;
-  const MODEL_Y_OFFSET = 0;
-
-  /* ========================================================
-     CANVAS + RENDERER
-     ======================================================== */
   const canvas = document.getElementById('login-3d-canvas');
-  if (!canvas) {
-     window.dispatchEvent(new Event('3d-models-loaded'));
-     return;
-  }
+  if (!canvas) return;
+
+  const container = canvas.parentElement || document.body;
 
   let isPerfMode = Boolean(window.PondoSyncPerf && window.PondoSyncPerf.isEnabled());
 
+  /* ========================================================
+     RENDERER SETUP
+     ======================================================== */
   const renderer = new THREE.WebGLRenderer({
     canvas,
-    alpha: true, // Will be overridden by composer, but we use mix-blend-mode in CSS
+    alpha: true,
     antialias: !isPerfMode,
     powerPreference: isPerfMode ? 'default' : 'high-performance'
   });
   renderer.setPixelRatio(isPerfMode ? 1 : Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.6;           // cinematic darkness
+  renderer.toneMappingExposure = 0.65;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.autoUpdate = !isPerfMode;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  
-  // Set clear color to pure black, we will use mix-blend-mode: screen in CSS to make it transparent
   renderer.setClearColor(0x000000, 1);
 
   /* ========================================================
      SCENE + CAMERA
      ======================================================== */
-  const scene  = new THREE.Scene();
-  // Adjust camera to see wider field for both logos
+  const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  camera.position.set(0, 0, 8); // Moved back slightly to fit larger logos
+  camera.position.set(0, 0, 7.5);
 
   /* ========================================================
-     DARK ENVIRONMENT MAP
-     Provides subtle reflections without brightening the scene.
+     DARK ENVIRONMENT MAP FOR SPECULAR REFLECTION
      ======================================================== */
   const pmrem = new THREE.PMREMGenerator(renderer);
   pmrem.compileEquirectangularShader();
 
-  // Procedural dark environment — a dim warm-tinted sphere
   const envScene = new THREE.Scene();
   envScene.add(new THREE.Mesh(
     new THREE.SphereGeometry(5, 32, 16),
-    new THREE.MeshBasicMaterial({
-      color: 0x0c0a10,
-      side: THREE.BackSide
-    })
+    new THREE.MeshBasicMaterial({ color: 0x0c0a10, side: THREE.BackSide })
   ));
-  // Add a tiny warm light inside to create a subtle gradient
-  const envLight = new THREE.PointLight(0xdaa555, 0.3, 10);
+  const envLight = new THREE.PointLight(0xdaa555, 0.4, 10);
   envLight.position.set(2, 2, 0);
   envScene.add(envLight);
 
@@ -104,233 +68,200 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
   pmrem.dispose();
 
   /* ========================================================
-     LIGHTING — balanced cinematic
-     Reduced intensity, even spread, no harsh contrast.
+     LIGHTING — Golden Rim & Surface Relief Highlights
      ======================================================== */
+  scene.add(new THREE.AmbientLight(0x1a1410, 0.7));
 
-  /* --- Ambient: dim warm fill --- */
-  scene.add(new THREE.AmbientLight(0x1e1822, 0.6));
+  // 1. Top Rim Spotlight — produces the golden rim halo seen in reference image
+  const rimLightTop = new THREE.SpotLight(0xffdf88, 7.5, 30, Math.PI / 3, 0.5, 1.2);
+  rimLightTop.position.set(0, 3.5, -1.8);
+  rimLightTop.target.position.set(0, 0, 0);
+  scene.add(rimLightTop);
+  scene.add(rimLightTop.target);
 
-  /* --- Key lights: softer angled spot, warm gold --- */
-  const keyLightRight = new THREE.SpotLight(
-    0xdaa555, 2.0, 30, Math.PI / 3, 0.8, 1.8
-  );
-  keyLightRight.position.set(6, 4, 5);
-  keyLightRight.target.position.set(4.8, 0, 0);
-  keyLightRight.castShadow = true;
-  keyLightRight.shadow.mapSize.set(1024, 1024);
-  keyLightRight.shadow.bias = -0.0004;
-  keyLightRight.shadow.radius = 6;
-  scene.add(keyLightRight);
-  scene.add(keyLightRight.target);
+  // 2. Secondary Top Edge Light for soft glow
+  const rimPoint = new THREE.PointLight(0xd4af37, 3.2, 16, 1.6);
+  rimPoint.position.set(0, 2.0, -1.5);
+  scene.add(rimPoint);
 
-  const keyLightLeft = new THREE.SpotLight(
-    0xdaa555, 2.0, 30, Math.PI / 3, 0.8, 1.8
-  );
-  keyLightLeft.position.set(-6, 4, 5);
-  keyLightLeft.target.position.set(-4.8, 0, 0);
-  keyLightLeft.castShadow = true;
-  keyLightLeft.shadow.mapSize.set(1024, 1024);
-  keyLightLeft.shadow.bias = -0.0004;
-  keyLightLeft.shadow.radius = 6;
-  scene.add(keyLightLeft);
-  scene.add(keyLightLeft.target);
+  // 3. Key Light — warm gold, lights up the embossed letters & sun on front face
+  const keyLight = new THREE.SpotLight(0xdaa555, 4.2, 35, Math.PI / 2.5, 0.75, 1.8);
+  keyLight.position.set(0, 4.5, 7.0);
+  keyLight.target.position.set(0, -1.5, 0);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(1024, 1024);
+  keyLight.shadow.bias = -0.0004;
+  scene.add(keyLight);
+  scene.add(keyLight.target);
 
-  /* --- Fill light: gentle opposite side --- */
-  const fillLight = new THREE.DirectionalLight(0x8a7a6a, 0.4);
-  fillLight.position.set(0, 2, 4);
+  // 4. Fill Light — gentle opposite side illumination
+  const fillLight = new THREE.DirectionalLight(0x8a7a6a, 0.45);
+  fillLight.position.set(-5, 1, 5);
   scene.add(fillLight);
 
-  /* --- Rim lights: subtle gold edge --- */
-  const rimTop = new THREE.PointLight(0xd4af37, 0.8, 20, 2);
-  rimTop.position.set(0, 3, -4);
-  scene.add(rimTop);
-
   /* ========================================================
-     SHADOW-CATCHING GROUND PLANE
-     Gives the model a grounded, physically-placed feel.
+     POST-PROCESSING (UnrealBloomPass for Golden Bloom)
      ======================================================== */
-  const shadowPlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(16, 8),
-    new THREE.ShadowMaterial({ opacity: 0.25, color: 0x000000 })
-  );
-  shadowPlane.rotation.x = -Math.PI / 2;
-  shadowPlane.position.y = -1.7;
-  shadowPlane.receiveShadow = true;
-  scene.add(shadowPlane);
-
-  /* ========================================================
-     REFLECTIVE FLOOR (very subtle)
-     Low-opacity mirror plane under the model for grounding.
-     ======================================================== */
-  const reflectionPlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(16, 8),
-    new THREE.MeshStandardMaterial({
-      color: 0x0c0a10,
-      metalness: 0.95,
-      roughness: 0.6,
-      transparent: true,
-      opacity: 0.12,
-      envMap: envMap,
-      envMapIntensity: 0.4
-    })
-  );
-  reflectionPlane.rotation.x = -Math.PI / 2;
-  reflectionPlane.position.y = -1.69;            // just above shadow plane
-  reflectionPlane.receiveShadow = true;
-  scene.add(reflectionPlane);
-
-  /* ========================================================
-     POST-PROCESSING — Bloom (emission glow)
-     ======================================================== */
-  const container = canvas.parentElement;
-
   const composer = new EffectComposer(renderer);
   composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
 
-  // Bloom: Lowered strength so it doesn't wash out the models
   const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(container.clientWidth, container.clientHeight),
-    0.45,     // strength — reduced significantly to prevent wash-out
-    1.1,      // radius — increased spread for a bigger, softer glow
-    0.65      // threshold — only emissive/bright areas bloom
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    0.48,   // strength — rich gold glow on coin rim
+    1.1,    // radius
+    0.60    // threshold
   );
   bloomPass.enabled = !isPerfMode;
   composer.addPass(bloomPass);
 
-  // OutputPass handles color space conversion after bloom
   const outputPass = new OutputPass();
   composer.addPass(outputPass);
 
   /* ========================================================
-     LOAD MODELS
+     MODEL LOADING (20 pesos.glb ONLY)
      ======================================================== */
-  const loadedModels = [];
+  let coinWrapper = null;
+  let modelMaxDim = 1;
+  let baseY = -3.5;
+  let exitY = -12.0;
+  let currentY = -3.5;
+  let targetY = -3.5;
+  let coinDiameter = 6.6;
+
   const loader = new GLTFLoader();
-  
-  let loadedCount = 0;
-  const checkFinished = () => {
-    loadedCount++;
-    if (loadedCount === MODELS.length) {
+
+  loader.load(
+    MODEL_PATH,
+    (gltf) => {
+      const model = gltf.scene;
+
+      // Center model pivot
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+
+      coinWrapper = new THREE.Group();
+      coinWrapper.add(model);
+
+      const size = box.getSize(new THREE.Vector3());
+      modelMaxDim = Math.max(size.x, size.y, size.z) || 1;
+
+      // Enhance metallic materials
+      model.traverse((child) => {
+        if (!child.isMesh) return;
+        child.castShadow = true;
+        child.receiveShadow = true;
+
+        const mat = child.material;
+        if (mat) {
+          if (mat.metalness !== undefined) mat.metalness = Math.min(mat.metalness + 0.15, 0.96);
+          if (mat.roughness !== undefined) mat.roughness = Math.max(mat.roughness - 0.08, 0.22);
+          mat.envMap = envMap;
+          mat.envMapIntensity = 1.35;
+          if (mat.emissive && mat.emissiveIntensity !== undefined) {
+            mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 1.3, 0.6);
+          }
+          mat.needsUpdate = true;
+        }
+      });
+
+      // Subtle tilted-back angle so face looks up toward lights
+      coinWrapper.rotation.x = Math.PI / 5.5; // ~32 deg tilt
+
+      scene.add(coinWrapper);
+      updateDimensions();
+
+      window.dispatchEvent(new Event('3d-models-loaded'));
+    },
+    undefined,
+    (err) => {
+      console.warn('[login-3d] Error loading 20 pesos coin model:', err);
       window.dispatchEvent(new Event('3d-models-loaded'));
     }
-  };
-
-  MODELS.forEach((config) => {
-    loader.load(
-      config.path,
-      (gltf) => {
-        const model = gltf.scene;
-
-        /* centre pivot */
-        const box    = new THREE.Box3().setFromObject(model);
-        const center = box.getCenter(new THREE.Vector3());
-        model.position.sub(center);
-
-        /* wrap in a container for easier positioning */
-        const wrapper = new THREE.Group();
-        wrapper.add(model);
-
-        /* scale to desired size */
-        const size   = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        wrapper.scale.setScalar(config.scale / maxDim);
-
-        wrapper.position.x = config.xOffset;
-        wrapper.position.y = MODEL_Y_OFFSET;
-
-        /* enhance materials for cinematic response */
-        model.traverse((child) => {
-          if (!child.isMesh) return;
-
-          child.castShadow = true;
-          child.receiveShadow = true;
-
-          const mat = child.material;
-          if (!mat) return;
-
-          /* subtle metallic + reflection boost */
-          if (mat.metalness !== undefined) {
-            mat.metalness = Math.min(mat.metalness + 0.1, 0.9);
-          }
-          if (mat.roughness !== undefined) {
-            mat.roughness = Math.max(mat.roughness - 0.05, 0.25);
-          }
-
-          /* environment reflection — boosted for bigger specular highlights */
-          mat.envMap = envMap;
-          mat.envMapIntensity = 0.65;
-
-          /* Subtle emission boost for bloom to catch */
-          if (mat.emissive && mat.emissiveIntensity !== undefined) {
-            mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 1.2, 0.5);
-          }
-
-          mat.needsUpdate = true;
-        });
-
-        scene.add(wrapper);
-        loadedModels.push(wrapper);
-        checkFinished();
-      },
-      undefined,
-      (err) => {
-        console.warn(`[login-3d] Model load error (${config.path}):`, err);
-        checkFinished();
-      }
-    );
-  });
+  );
 
   /* ========================================================
-     CURSOR TRACKING
+     RESPONSIVE POSITIONING & SIZING
      ======================================================== */
-  const cursor  = { x: 0, y: 0 };
-  const current = { x: 0, y: 0 };
-  let introStarted = false;
-  let introProgress = 0;
+  function updateDimensions() {
+    const w = container.clientWidth || window.innerWidth;
+    const h = container.clientHeight || window.innerHeight;
 
-  window.addEventListener('3d-models-loaded', () => {
-    // Start the cinematic intro animation
-    setTimeout(() => { introStarted = true; }, 400);
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    cursor.x = (e.clientX / window.innerWidth)  * 2 - 1;
-    cursor.y = (e.clientY / window.innerHeight) * 2 - 1;
-  });
-
-  /* ========================================================
-     RESIZE HANDLER
-     ======================================================== */
-  function resize() {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
     renderer.setSize(w, h);
     composer.setSize(w, h);
     bloomPass.resolution.set(w, h);
     camera.aspect = w / h;
-    
-    // Adjust camera position based on aspect ratio to keep both logos in view
-    if (camera.aspect < 1.5) {
-      camera.position.z = 10; // Move back on narrower screens
-    } else {
-      camera.position.z = 8;
-    }
-    
     camera.updateProjectionMatrix();
+
+    if (!coinWrapper) return;
+
+    // Calculate visible frustum dimensions at Z = 0
+    const frustumHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
+    const frustumWidth = frustumHeight * camera.aspect;
+
+    // Responsive coin diameter:
+    // Large centerpiece on desktop, fits comfortably on mobile
+    coinDiameter = Math.min(6.8, Math.max(3.8, frustumWidth * 0.88));
+    coinWrapper.scale.setScalar(coinDiameter / modelMaxDim);
+
+    // Position center so top rim reaches ~45% from viewport bottom:
+    // topRimY = baseY + (coinDiameter / 2)
+    // We want topRimY = - (frustumHeight / 2) + frustumHeight * 0.44
+    baseY = - (frustumHeight / 2) + (frustumHeight * 0.44) - (coinDiameter / 2);
+    exitY = - (frustumHeight / 2) - coinDiameter - 2;
+
+    if (!isExited && !isTransitioning) {
+      currentY = baseY;
+      targetY = baseY;
+      coinWrapper.position.y = currentY;
+    } else if (isExited && !isTransitioning) {
+      currentY = exitY;
+      targetY = exitY;
+      coinWrapper.position.y = currentY;
+    }
   }
 
-  resize();
-  window.addEventListener('resize', () => {
-    if (window.innerWidth < MQ_MIN) {
-      container.style.display = 'none';
-      return;
+  window.addEventListener('resize', updateDimensions);
+
+  /* ========================================================
+     CURSOR PARALLAX
+     ======================================================== */
+  const cursor = { x: 0, y: 0 };
+  const current = { x: 0, y: 0 };
+
+  window.addEventListener('mousemove', (e) => {
+    cursor.x = (e.clientX / window.innerWidth) * 2 - 1;
+    cursor.y = (e.clientY / window.innerHeight) * 2 - 1;
+  });
+
+  /* ========================================================
+     TRANSITION STATE HANDLING
+     ======================================================== */
+  let isExited = false;
+  let isTransitioning = false;
+  let isRendering = true;
+
+  window.addEventListener('pondo-coin-exit', () => {
+    isTransitioning = true;
+    isExited = false;
+    targetY = exitY;
+    if (!isRendering) {
+      isRendering = true;
+      requestAnimationFrame(animate);
     }
-    container.style.display = '';
-    resize();
+  });
+
+  window.addEventListener('pondo-coin-enter', () => {
+    isTransitioning = true;
+    isExited = false;
+    targetY = baseY;
+    if (!isRendering) {
+      isRendering = true;
+      requestAnimationFrame(animate);
+    }
   });
 
   /* ========================================================
@@ -338,18 +269,12 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
      ======================================================== */
   function applyPerfMode(perf) {
     isPerfMode = perf;
-    if (bloomPass) {
-      bloomPass.enabled = !perf;
-    }
-    if (renderer) {
-      const dpr = perf ? 1 : Math.min(window.devicePixelRatio, 2);
-      renderer.setPixelRatio(dpr);
-      if (composer) composer.setPixelRatio(dpr);
-      renderer.shadowMap.autoUpdate = !perf;
-      if (!perf) {
-        renderer.shadowMap.needsUpdate = true;
-      }
-    }
+    bloomPass.enabled = !perf;
+    const dpr = perf ? 1 : Math.min(window.devicePixelRatio, 2);
+    renderer.setPixelRatio(dpr);
+    composer.setPixelRatio(dpr);
+    renderer.shadowMap.autoUpdate = !perf;
+    if (!perf) renderer.shadowMap.needsUpdate = true;
   }
 
   window.addEventListener('pondosync-perf-change', (e) => {
@@ -357,15 +282,18 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
   });
 
   /* ========================================================
-     RENDER LOOP — uses composer or direct render
+     ANIMATION & RENDER LOOP
      ======================================================== */
+  const baseRotX = Math.PI / 5.5; // ~32 deg tilt
   let lastFrameTime = 0;
-  const PERF_INTERVAL = 1000 / 30; // 30 FPS cap in performance mode
+  const PERF_INTERVAL = 1000 / 30;
 
   function animate(now) {
+    if (!isRendering) return;
+
     requestAnimationFrame(animate);
 
-    // Pause rendering entirely when browser tab is hidden
+    // Pause when tab hidden
     if (document.hidden) return;
 
     // Frame rate throttle in performance mode
@@ -375,28 +303,37 @@ import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
       lastFrameTime = now - (elapsed % PERF_INTERVAL);
     }
 
-    current.x += (cursor.x - current.x) * LERP_FACTOR;
-    current.y += (cursor.y - current.y) * LERP_FACTOR;
+    // Cursor tracking lerp
+    current.x += (cursor.x - current.x) * 0.05;
+    current.y += (cursor.y - current.y) * 0.05;
 
-    loadedModels.forEach(model => {
-      const targetRotY = THREE.MathUtils.clamp(current.x * MAX_ROT, -MAX_ROT, MAX_ROT);
-      const targetRotX = THREE.MathUtils.clamp(current.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
-
-      if (!introStarted) {
-        // Initial cinematic pose: looking down
-        model.rotation.x = Math.PI / 4; 
-        model.rotation.y = targetRotY;
+    if (coinWrapper) {
+      // Smooth vertical movement for login transition (down / up)
+      const dy = targetY - currentY;
+      if (Math.abs(dy) > 0.005) {
+        currentY += dy * 0.085;
+        coinWrapper.position.y = currentY;
       } else {
-        // Smoothly animate from 45deg down to active rotation
-        if (introProgress < 1) introProgress += 0.012; // Adjusted speed for luxury feel
-        
-        const eased = 1 - Math.pow(1 - introProgress, 4); // Quartic ease-out
-        const startX = Math.PI / 4;
-        
-        model.rotation.x = startX + (targetRotX - startX) * eased;
-        model.rotation.y = targetRotY;
+        currentY = targetY;
+        coinWrapper.position.y = currentY;
+        if (targetY === exitY) {
+          isExited = true;
+          isTransitioning = false;
+          // When fully off-screen on the login page, stop rendering to save GPU/CPU!
+          isRendering = false;
+        } else {
+          isExited = false;
+          isTransitioning = false;
+        }
       }
-    });
+
+      // Natural subtle oscillation (paused in performance mode)
+      const oscillation = isPerfMode ? 0 : Math.sin(Date.now() * 0.0007) * 0.22;
+
+      // Cursor parallax and subtle rotation
+      coinWrapper.rotation.y = (current.x * 0.15) + oscillation;
+      coinWrapper.rotation.x = baseRotX + (current.y * 0.06);
+    }
 
     if (isPerfMode) {
       renderer.render(scene, camera);
