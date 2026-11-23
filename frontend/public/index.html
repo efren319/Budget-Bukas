@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/landing.css?v=1.0">
+  <link rel="stylesheet" href="css/landing.css?v=1.1">
   <style>
     .login-wrapper {
       min-height: 100vh;
@@ -393,17 +393,6 @@
 
     <!-- ── Minimalist Landing Page Screen ── -->
     <section class="landing-screen" id="landing-screen">
-      <!-- Top Navigation -->
-      <nav class="landing-nav">
-        <div class="landing-nav-brand">
-          <img src="assets/logos/logo.png" alt="PondoSync" class="landing-nav-logo">
-          <span class="landing-nav-name">PondoSync</span>
-        </div>
-        <div class="landing-nav-right">
-          <button type="button" class="landing-nav-login" id="btn-nav-login">Login</button>
-        </div>
-      </nav>
-
       <!-- Centered Introduction Hero -->
       <div class="landing-hero">
         <!-- Dual Logos Badge (BSU & JPCS) -->
@@ -591,6 +580,7 @@
       const landingScreen = document.getElementById('landing-screen');
       const loginContainer = document.getElementById('login-container');
       const loginBackBtn = document.getElementById('btn-back-to-landing');
+      const container3D = document.getElementById('login-3d-container');
 
       if (!instant) {
         try { history.pushState({ view: 'login' }, '', '#login'); } catch (e) {}
@@ -601,6 +591,7 @@
 
       if (instant) {
         if (landingScreen) landingScreen.style.display = 'none';
+        if (container3D) container3D.style.display = 'none';
         if (loginContainer) {
           loginContainer.classList.remove('initial-hidden', 'transition-enter-prepare', 'transition-exit-active');
           loginContainer.classList.add('transition-enter-active');
@@ -639,9 +630,10 @@
         }
       }, 140);
 
-      // Phase 3: Transition complete
+      // Phase 3: Transition complete — ensure 3D model does NOT show up on login page
       setTimeout(() => {
         if (landingScreen) landingScreen.style.display = 'none';
+        if (container3D) container3D.style.display = 'none';
         const emailInput = document.getElementById('email');
         if (emailInput) emailInput.focus();
       }, 800);
@@ -654,8 +646,12 @@
       const landingScreen = document.getElementById('landing-screen');
       const loginContainer = document.getElementById('login-container');
       const loginBackBtn = document.getElementById('btn-back-to-landing');
+      const container3D = document.getElementById('login-3d-container');
 
       try { history.pushState({ view: 'landing' }, '', window.location.pathname); } catch (e) {}
+
+      // Make 3D container visible again for the landing screen
+      if (container3D) container3D.style.display = '';
 
       // Signal 3D coin to rise back to bottom-center
       window.dispatchEvent(new CustomEvent('pondo-coin-enter'));
@@ -707,9 +703,8 @@
       }, 800);
     }
 
-    // Attach click events to both Get Started and Nav Login buttons
+    // Attach click events to Get Started and Back buttons
     document.getElementById('btn-get-started')?.addEventListener('click', () => transitionToLogin());
-    document.getElementById('btn-nav-login')?.addEventListener('click', () => transitionToLogin());
     document.getElementById('btn-back-to-landing')?.addEventListener('click', () => transitionToLanding());
 
     // Allow clicking brand on login card to return to landing
@@ -739,7 +734,7 @@
   </script>
 
   <!-- 3D Background Logo Script -->
-  <script type="module" src="js/login-3d.js"></script>
+  <script type="module" src="js/login-3d.js?v=1.1"></script>
 
   <!-- Dust Particle Physics System -->
   <script src="js/dust-particles.js"></script>

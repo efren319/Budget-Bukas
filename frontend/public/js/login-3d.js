@@ -1,7 +1,7 @@
 /**
  * PondoSync — 3D Philippine 20-Peso Coin Centerpiece
- * Minimalist luxury rendering with golden rim glow, soft bloom,
- * and smooth cinematic transitions between Landing and Login screens.
+ * Minimalist luxury rendering with coin directly facing the screen,
+ * 360-degree face rotation around its normal, and clean transitions.
  */
 
 import * as THREE from 'three';
@@ -35,21 +35,21 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   renderer.setPixelRatio(isPerfMode ? 1 : Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.65;
+  renderer.toneMappingExposure = 0.72;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.autoUpdate = !isPerfMode;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.setClearColor(0x000000, 1);
 
   /* ========================================================
-     SCENE + CAMERA
+     SCENE + CAMERA (Orthographic / Focused Perspective)
      ======================================================== */
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   camera.position.set(0, 0, 7.5);
 
   /* ========================================================
-     DARK ENVIRONMENT MAP FOR SPECULAR REFLECTION
+     DARK ENVIRONMENT MAP FOR SPECULAR METALLIC HIGHLIGHTS
      ======================================================== */
   const pmrem = new THREE.PMREMGenerator(renderer);
   pmrem.compileEquirectangularShader();
@@ -59,7 +59,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     new THREE.SphereGeometry(5, 32, 16),
     new THREE.MeshBasicMaterial({ color: 0x0c0a10, side: THREE.BackSide })
   ));
-  const envLight = new THREE.PointLight(0xdaa555, 0.4, 10);
+  const envLight = new THREE.PointLight(0xdaa555, 0.45, 10);
   envLight.position.set(2, 2, 0);
   envScene.add(envLight);
 
@@ -68,39 +68,30 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   pmrem.dispose();
 
   /* ========================================================
-     LIGHTING — Golden Rim & Surface Relief Highlights
+     LIGHTING — Directly Facing Illumination
      ======================================================== */
-  scene.add(new THREE.AmbientLight(0x1a1410, 0.7));
+  scene.add(new THREE.AmbientLight(0x221a14, 0.85));
 
-  // 1. Top Rim Spotlight — produces the golden rim halo seen in reference image
-  const rimLightTop = new THREE.SpotLight(0xffdf88, 7.5, 30, Math.PI / 3, 0.5, 1.2);
-  rimLightTop.position.set(0, 3.5, -1.8);
-  rimLightTop.target.position.set(0, 0, 0);
-  scene.add(rimLightTop);
-  scene.add(rimLightTop.target);
-
-  // 2. Secondary Top Edge Light for soft glow
-  const rimPoint = new THREE.PointLight(0xd4af37, 3.2, 16, 1.6);
-  rimPoint.position.set(0, 2.0, -1.5);
-  scene.add(rimPoint);
-
-  // 3. Key Light — warm gold, lights up the embossed letters & sun on front face
-  const keyLight = new THREE.SpotLight(0xdaa555, 4.2, 35, Math.PI / 2.5, 0.75, 1.8);
-  keyLight.position.set(0, 4.5, 7.0);
-  keyLight.target.position.set(0, -1.5, 0);
+  // 1. Key Light: Warm golden spotlight from slightly in front and above
+  const keyLight = new THREE.SpotLight(0xffd577, 4.8, 30, Math.PI / 2.2, 0.7, 1.4);
+  keyLight.position.set(0, 3.5, 7.0);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(1024, 1024);
   keyLight.shadow.bias = -0.0004;
   scene.add(keyLight);
-  scene.add(keyLight.target);
 
-  // 4. Fill Light — gentle opposite side illumination
-  const fillLight = new THREE.DirectionalLight(0x8a7a6a, 0.45);
-  fillLight.position.set(-5, 1, 5);
+  // 2. Top Rim Light: Bright highlight on the upper circular rim
+  const rimLightTop = new THREE.SpotLight(0xffdf88, 7.0, 25, Math.PI / 3, 0.5, 1.2);
+  rimLightTop.position.set(0, 2.8, 2.5);
+  scene.add(rimLightTop);
+
+  // 3. Fill Light: Soft directional ambient fill from left
+  const fillLight = new THREE.DirectionalLight(0xd4af37, 0.55);
+  fillLight.position.set(-4, 0, 5);
   scene.add(fillLight);
 
   /* ========================================================
-     POST-PROCESSING (UnrealBloomPass for Golden Bloom)
+     POST-PROCESSING (UnrealBloomPass for Soft Golden Glow)
      ======================================================== */
   const composer = new EffectComposer(renderer);
   composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -110,7 +101,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.48,   // strength — rich gold glow on coin rim
+    0.42,   // strength
     1.1,    // radius
     0.60    // threshold
   );
@@ -121,15 +112,27 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   composer.addPass(outputPass);
 
   /* ========================================================
-     MODEL LOADING (20 pesos.glb ONLY)
+     MODEL HIERARCHY
+     coinWrapper (position Y & responsive scale)
+       └── coinSpinGroup (rotates 360 degrees around Z axis)
+             └── coinParallaxGroup (subtle cursor parallax)
+                   └── coinMesh (aligned directly facing camera)
      ======================================================== */
-  let coinWrapper = null;
+  let coinWrapper = new THREE.Group();
+  let coinSpinGroup = new THREE.Group();
+  let coinParallaxGroup = new THREE.Group();
+
+  coinSpinGroup.add(coinParallaxGroup);
+  coinWrapper.add(coinSpinGroup);
+  scene.add(coinWrapper);
+
   let modelMaxDim = 1;
   let baseY = -3.5;
-  let exitY = -12.0;
+  let exitY = -14.0;
   let currentY = -3.5;
   let targetY = -3.5;
-  let coinDiameter = 6.6;
+  let coinDiameter = 6.2;
+  const SPIN_SPEED = 0.0035; // Speed for 360-degree face rotation
 
   const loader = new GLTFLoader();
 
@@ -138,41 +141,64 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     (gltf) => {
       const model = gltf.scene;
 
-      // Center model pivot
-      const box = new THREE.Box3().setFromObject(model);
-      const center = box.getCenter(new THREE.Vector3());
-      model.position.sub(center);
-
-      coinWrapper = new THREE.Group();
-      coinWrapper.add(model);
-
-      const size = box.getSize(new THREE.Vector3());
-      modelMaxDim = Math.max(size.x, size.y, size.z) || 1;
-
-      // Enhance metallic materials
+      // Extract the mesh and enhance its materials
+      let meshObj = null;
       model.traverse((child) => {
-        if (!child.isMesh) return;
-        child.castShadow = true;
-        child.receiveShadow = true;
+        if (child.isMesh) {
+          meshObj = child;
+          child.castShadow = true;
+          child.receiveShadow = true;
 
-        const mat = child.material;
-        if (mat) {
-          if (mat.metalness !== undefined) mat.metalness = Math.min(mat.metalness + 0.15, 0.96);
-          if (mat.roughness !== undefined) mat.roughness = Math.max(mat.roughness - 0.08, 0.22);
-          mat.envMap = envMap;
-          mat.envMapIntensity = 1.35;
-          if (mat.emissive && mat.emissiveIntensity !== undefined) {
-            mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 1.3, 0.6);
+          const mat = child.material;
+          if (mat) {
+            if (mat.metalness !== undefined) mat.metalness = Math.min(mat.metalness + 0.15, 0.96);
+            if (mat.roughness !== undefined) mat.roughness = Math.max(mat.roughness - 0.08, 0.22);
+            mat.envMap = envMap;
+            mat.envMapIntensity = 1.35;
+            if (mat.emissive && mat.emissiveIntensity !== undefined) {
+              mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 1.3, 0.6);
+            }
+            mat.needsUpdate = true;
           }
-          mat.needsUpdate = true;
         }
       });
 
-      // Subtle tilted-back angle so face looks up toward lights
-      coinWrapper.rotation.x = Math.PI / 5.5; // ~32 deg tilt
+      if (meshObj) {
+        // Reset raw node transform from Blender
+        meshObj.position.set(0, 0, 0);
+        meshObj.scale.set(1, 1, 1);
 
-      scene.add(coinWrapper);
+        // Center geometry buffer so origin (0,0,0) is exactly at the coin disc center
+        meshObj.geometry.computeBoundingBox();
+        meshObj.geometry.center();
+
+        // Exact rotation matrix to make face DIRECTLY face the camera (+Z)
+        // and REPUBLIKA NG PILIPINAS upright (+Y):
+        // Rotation: rx = -PI/2, ry = 0, rz = 0
+        meshObj.rotation.set(-Math.PI / 2, 0, 0);
+
+        // Compute size from centered geometry
+        meshObj.geometry.computeBoundingBox();
+        const bbox = meshObj.geometry.boundingBox;
+        const size = bbox.getSize(new THREE.Vector3());
+        // In this orientation, X and Y are the diameter (2.7088), Z is the thickness (0.13)
+        modelMaxDim = Math.max(size.x, size.y) || 2.7;
+
+        coinParallaxGroup.add(meshObj);
+      } else {
+        coinParallaxGroup.add(model);
+      }
+
       updateDimensions();
+
+      // If initial page state is login, immediately move coin to exit position
+      if (window.location.hash === '#login') {
+        currentY = exitY;
+        targetY = exitY;
+        coinWrapper.position.y = currentY;
+        container.style.display = 'none';
+        isRendering = false;
+      }
 
       window.dispatchEvent(new Event('3d-models-loaded'));
     },
@@ -204,14 +230,17 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
     // Responsive coin diameter:
     // Large centerpiece on desktop, fits comfortably on mobile
-    coinDiameter = Math.min(6.8, Math.max(3.8, frustumWidth * 0.88));
+    coinDiameter = Math.min(6.2, Math.max(3.8, frustumWidth * 0.88));
     coinWrapper.scale.setScalar(coinDiameter / modelMaxDim);
 
-    // Position center so top rim reaches ~45% from viewport bottom:
+    // Position center so top rim reaches ~42% from viewport bottom:
     // topRimY = baseY + (coinDiameter / 2)
-    // We want topRimY = - (frustumHeight / 2) + frustumHeight * 0.44
-    baseY = - (frustumHeight / 2) + (frustumHeight * 0.44) - (coinDiameter / 2);
-    exitY = - (frustumHeight / 2) - coinDiameter - 2;
+    // We want topRimY = - (frustumHeight / 2) + frustumHeight * 0.42
+    baseY = - (frustumHeight / 2) + (frustumHeight * 0.42) - (coinDiameter / 2);
+    exitY = - (frustumHeight / 2) - coinDiameter - 3;
+
+    keyLight.target.position.set(0, baseY + (coinDiameter / 4), 0);
+    rimLightTop.target.position.set(0, baseY + (coinDiameter / 2), 0);
 
     if (!isExited && !isTransitioning) {
       currentY = baseY;
@@ -248,6 +277,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     isTransitioning = true;
     isExited = false;
     targetY = exitY;
+    container.style.display = '';
     if (!isRendering) {
       isRendering = true;
       requestAnimationFrame(animate);
@@ -258,6 +288,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     isTransitioning = true;
     isExited = false;
     targetY = baseY;
+    container.style.display = '';
     if (!isRendering) {
       isRendering = true;
       requestAnimationFrame(animate);
@@ -284,7 +315,6 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   /* ========================================================
      ANIMATION & RENDER LOOP
      ======================================================== */
-  const baseRotX = Math.PI / 5.5; // ~32 deg tilt
   let lastFrameTime = 0;
   const PERF_INTERVAL = 1000 / 30;
 
@@ -293,7 +323,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
     requestAnimationFrame(animate);
 
-    // Pause when tab hidden
+    // Pause when tab is hidden
     if (document.hidden) return;
 
     // Frame rate throttle in performance mode
@@ -307,33 +337,35 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     current.x += (cursor.x - current.x) * 0.05;
     current.y += (cursor.y - current.y) * 0.05;
 
-    if (coinWrapper) {
-      // Smooth vertical movement for login transition (down / up)
-      const dy = targetY - currentY;
-      if (Math.abs(dy) > 0.005) {
-        currentY += dy * 0.085;
-        coinWrapper.position.y = currentY;
+    // 1. Vertical entry/exit animation
+    const dy = targetY - currentY;
+    if (Math.abs(dy) > 0.005) {
+      currentY += dy * 0.085;
+      coinWrapper.position.y = currentY;
+    } else {
+      currentY = targetY;
+      coinWrapper.position.y = currentY;
+      if (targetY === exitY) {
+        isExited = true;
+        isTransitioning = false;
+        // When fully exited on the login page: HIDE CONTAINER & STOP RENDERING!
+        container.style.display = 'none';
+        isRendering = false;
       } else {
-        currentY = targetY;
-        coinWrapper.position.y = currentY;
-        if (targetY === exitY) {
-          isExited = true;
-          isTransitioning = false;
-          // When fully off-screen on the login page, stop rendering to save GPU/CPU!
-          isRendering = false;
-        } else {
-          isExited = false;
-          isTransitioning = false;
-        }
+        isExited = false;
+        isTransitioning = false;
       }
-
-      // Natural subtle oscillation (paused in performance mode)
-      const oscillation = isPerfMode ? 0 : Math.sin(Date.now() * 0.0007) * 0.22;
-
-      // Cursor parallax and subtle rotation
-      coinWrapper.rotation.y = (current.x * 0.15) + oscillation;
-      coinWrapper.rotation.x = baseRotX + (current.y * 0.06);
     }
+
+    // 2. 360-Degree Continuous Face Rotation (around Z normal axis)
+    // The coin face stays directly facing the screen while spinning 360 degrees
+    if (!isPerfMode) {
+      coinSpinGroup.rotation.z = (coinSpinGroup.rotation.z + SPIN_SPEED) % (Math.PI * 2);
+    }
+
+    // 3. Subtle cursor parallax tilt (kept very subtle so face stays directly facing screen)
+    coinParallaxGroup.rotation.x = current.y * 0.035;
+    coinParallaxGroup.rotation.y = current.x * 0.035;
 
     if (isPerfMode) {
       renderer.render(scene, camera);
