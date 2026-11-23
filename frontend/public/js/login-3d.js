@@ -1,7 +1,12 @@
 /**
- * PondoSync — 3D Philippine 20-Peso Coin Centerpiece
- * Minimalist luxury rendering with coin directly facing the screen,
- * 360-degree face rotation around its normal, and clean transitions.
+ * PondoSync — 3D Background & Landing Centerpiece
+ * 
+ * - Landing View: Features the 3D JPCS logo as the primary centerpiece,
+ *   centered at the bottom, rotating 360° around the vertical Y-axis (turntable)
+ *   with warm golden illumination.
+ * - Login View: Displays BOTH 3D logos (JPCS on left, BSU on right) flanking
+ *   the login card, with cursor-driven interaction, soft shadows, and reflective ground.
+ * - Smooth cinematic lerp transitions between Landing and Login screens.
  */
 
 import * as THREE from 'three';
@@ -14,17 +19,18 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 (function () {
   'use strict';
 
-  const MODEL_PATH = 'assets/3d models/20 pesos.glb';
-
   const canvas = document.getElementById('login-3d-canvas');
-  if (!canvas) return;
+  if (!canvas) {
+    window.dispatchEvent(new Event('3d-models-loaded'));
+    return;
+  }
 
   const container = canvas.parentElement || document.body;
 
   let isPerfMode = Boolean(window.PondoSyncPerf && window.PondoSyncPerf.isEnabled());
 
   /* ========================================================
-     RENDERER SETUP
+     RENDERER
      ======================================================== */
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -35,21 +41,21 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   renderer.setPixelRatio(isPerfMode ? 1 : Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.72;
+  renderer.toneMappingExposure = 0.65;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.autoUpdate = !isPerfMode;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.setClearColor(0x000000, 1);
 
   /* ========================================================
-     SCENE + CAMERA (Orthographic / Focused Perspective)
+     SCENE + CAMERA
      ======================================================== */
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  camera.position.set(0, 0, 7.5);
+  camera.position.set(0, 0, 8);
 
   /* ========================================================
-     DARK ENVIRONMENT MAP FOR SPECULAR METALLIC HIGHLIGHTS
+     ENVIRONMENT MAP — warm dark sphere for subtle reflections
      ======================================================== */
   const pmrem = new THREE.PMREMGenerator(renderer);
   pmrem.compileEquirectangularShader();
@@ -59,39 +65,100 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     new THREE.SphereGeometry(5, 32, 16),
     new THREE.MeshBasicMaterial({ color: 0x0c0a10, side: THREE.BackSide })
   ));
-  const envLight = new THREE.PointLight(0xdaa555, 0.45, 10);
-  envLight.position.set(2, 2, 0);
-  envScene.add(envLight);
+  const envPt = new THREE.PointLight(0xdaa555, 0.4, 10);
+  envPt.position.set(2, 2, 0);
+  envScene.add(envPt);
 
   const envMap = pmrem.fromScene(envScene, 0, 0.1, 100).texture;
   scene.environment = envMap;
   pmrem.dispose();
 
   /* ========================================================
-     LIGHTING — Directly Facing Illumination
+     LIGHTING — Balanced cinematic gold lighting
      ======================================================== */
-  scene.add(new THREE.AmbientLight(0x221a14, 0.85));
 
-  // 1. Key Light: Warm golden spotlight from slightly in front and above
-  const keyLight = new THREE.SpotLight(0xffd577, 4.8, 30, Math.PI / 2.2, 0.7, 1.4);
-  keyLight.position.set(0, 3.5, 7.0);
-  keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(1024, 1024);
-  keyLight.shadow.bias = -0.0004;
-  scene.add(keyLight);
+  // Ambient: warm dim fill
+  const ambientLight = new THREE.AmbientLight(0x221a16, 0.7);
+  scene.add(ambientLight);
 
-  // 2. Top Rim Light: Bright highlight on the upper circular rim
-  const rimLightTop = new THREE.SpotLight(0xffdf88, 7.0, 25, Math.PI / 3, 0.5, 1.2);
-  rimLightTop.position.set(0, 2.8, 2.5);
-  scene.add(rimLightTop);
+  // Left Key Light (JPCS in login position)
+  const keyLightLeft = new THREE.SpotLight(0xdaa555, 2.0, 32, Math.PI / 3, 0.8, 1.8);
+  keyLightLeft.position.set(-6, 4, 5);
+  keyLightLeft.target.position.set(-4.8, 0, 0);
+  keyLightLeft.castShadow = true;
+  keyLightLeft.shadow.mapSize.set(1024, 1024);
+  keyLightLeft.shadow.bias = -0.0004;
+  keyLightLeft.shadow.radius = 6;
+  scene.add(keyLightLeft);
+  scene.add(keyLightLeft.target);
 
-  // 3. Fill Light: Soft directional ambient fill from left
-  const fillLight = new THREE.DirectionalLight(0xd4af37, 0.55);
-  fillLight.position.set(-4, 0, 5);
+  // Right Key Light (BSU in login position)
+  const keyLightRight = new THREE.SpotLight(0xdaa555, 2.0, 32, Math.PI / 3, 0.8, 1.8);
+  keyLightRight.position.set(6, 4, 5);
+  keyLightRight.target.position.set(4.8, 0, 0);
+  keyLightRight.castShadow = true;
+  keyLightRight.shadow.mapSize.set(1024, 1024);
+  keyLightRight.shadow.bias = -0.0004;
+  keyLightRight.shadow.radius = 6;
+  scene.add(keyLightRight);
+  scene.add(keyLightRight.target);
+
+  // Center Key Spotlight (illuminates JPCS on Landing page)
+  const centerKeyLight = new THREE.SpotLight(0xf5d080, 2.8, 30, Math.PI / 3, 0.6, 1.5);
+  centerKeyLight.position.set(0, 3.5, 6);
+  centerKeyLight.target.position.set(0, -1.8, 0);
+  centerKeyLight.castShadow = true;
+  centerKeyLight.shadow.mapSize.set(1024, 1024);
+  centerKeyLight.shadow.bias = -0.0004;
+  scene.add(centerKeyLight);
+  scene.add(centerKeyLight.target);
+
+  // Center Top Rim Light (golden rim highlight for landing centerpiece)
+  const centerRimLight = new THREE.PointLight(0xffe090, 1.8, 16, 2);
+  centerRimLight.position.set(0, 3.2, 1.5);
+  scene.add(centerRimLight);
+
+  // Fill Light: soft overall warmth
+  const fillLight = new THREE.DirectionalLight(0x8a7a6a, 0.4);
+  fillLight.position.set(0, 2, 4);
   scene.add(fillLight);
 
+  // Top Rim Light behind models
+  const rimTop = new THREE.PointLight(0xd4af37, 0.8, 20, 2);
+  rimTop.position.set(0, 3, -4);
+  scene.add(rimTop);
+
   /* ========================================================
-     POST-PROCESSING (UnrealBloomPass for Soft Golden Glow)
+     GROUND PLANES (Shadow & Reflection)
+     ======================================================== */
+  const shadowPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 8),
+    new THREE.ShadowMaterial({ opacity: 0.28, color: 0x000000 })
+  );
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = -1.7;
+  shadowPlane.receiveShadow = true;
+  scene.add(shadowPlane);
+
+  const reflectionPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 8),
+    new THREE.MeshStandardMaterial({
+      color: 0x0c0a10,
+      metalness: 0.95,
+      roughness: 0.6,
+      transparent: true,
+      opacity: 0.12,
+      envMap: envMap,
+      envMapIntensity: 0.4
+    })
+  );
+  reflectionPlane.rotation.x = -Math.PI / 2;
+  reflectionPlane.position.y = -1.69;
+  reflectionPlane.receiveShadow = true;
+  scene.add(reflectionPlane);
+
+  /* ========================================================
+     POST-PROCESSING — Bloom Glow
      ======================================================== */
   const composer = new EffectComposer(renderer);
   composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -100,10 +167,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   composer.addPass(renderPass);
 
   const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    new THREE.Vector2(container.clientWidth, container.clientHeight),
     0.42,   // strength
     1.1,    // radius
-    0.60    // threshold
+    0.65    // threshold
   );
   bloomPass.enabled = !isPerfMode;
   composer.addPass(bloomPass);
@@ -112,100 +179,123 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   composer.addPass(outputPass);
 
   /* ========================================================
-     MODEL HIERARCHY
-     coinWrapper (position Y & responsive scale)
-       └── coinSpinGroup (rotates 360 degrees around Z axis)
-             └── coinParallaxGroup (subtle cursor parallax)
-                   └── coinMesh (aligned directly facing camera)
+     MODEL LOADING (JPCS & BSU logos)
      ======================================================== */
-  let coinWrapper = new THREE.Group();
-  let coinSpinGroup = new THREE.Group();
-  let coinParallaxGroup = new THREE.Group();
+  let jpcsWrapper = null;
+  let bsuWrapper = null;
+  let jpcsMaxDim = 1;
+  let bsuMaxDim = 1;
 
-  coinSpinGroup.add(coinParallaxGroup);
-  coinWrapper.add(coinSpinGroup);
-  scene.add(coinWrapper);
+  // Sizing & position configuration
+  const LOGIN_SCALE_JPCS = 3.8;
+  const LOGIN_SCALE_BSU  = 4.2;
 
-  let modelMaxDim = 1;
-  let baseY = -3.5;
-  let exitY = -14.0;
-  let currentY = -3.5;
-  let targetY = -3.5;
-  let coinDiameter = 6.2;
-  const SPIN_SPEED = 0.0035; // Speed for 360-degree face rotation
+  let landingScaleJPCS = 4.8;
+  let landingPosY = -1.8;
+  let loginXOffset = 4.8;
 
   const loader = new GLTFLoader();
+  let loadedCount = 0;
 
+  function onModelsReady() {
+    updateDimensions();
+    window.dispatchEvent(new Event('3d-models-loaded'));
+  }
+
+  function setupModelMaterials(model) {
+    model.traverse((child) => {
+      if (!child.isMesh) return;
+      child.castShadow = true;
+      child.receiveShadow = true;
+
+      const mat = child.material;
+      if (!mat) return;
+
+      if (mat.metalness !== undefined) {
+        mat.metalness = Math.min(mat.metalness + 0.1, 0.92);
+      }
+      if (mat.roughness !== undefined) {
+        mat.roughness = Math.max(mat.roughness - 0.05, 0.22);
+      }
+      mat.envMap = envMap;
+      mat.envMapIntensity = 0.8;
+      if (mat.emissive && mat.emissiveIntensity !== undefined) {
+        mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 1.2, 0.5);
+      }
+      mat.needsUpdate = true;
+    });
+  }
+
+  // 1. Load JPCS Logo
   loader.load(
-    MODEL_PATH,
+    'assets/3d models/JPCS logo.glb',
     (gltf) => {
       const model = gltf.scene;
 
-      // Extract the mesh and enhance its materials
-      let meshObj = null;
-      model.traverse((child) => {
-        if (child.isMesh) {
-          meshObj = child;
-          child.castShadow = true;
-          child.receiveShadow = true;
+      // Center pivot
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center);
 
-          const mat = child.material;
-          if (mat) {
-            if (mat.metalness !== undefined) mat.metalness = Math.min(mat.metalness + 0.15, 0.96);
-            if (mat.roughness !== undefined) mat.roughness = Math.max(mat.roughness - 0.08, 0.22);
-            mat.envMap = envMap;
-            mat.envMapIntensity = 1.35;
-            if (mat.emissive && mat.emissiveIntensity !== undefined) {
-              mat.emissiveIntensity = Math.max(mat.emissiveIntensity * 1.3, 0.6);
-            }
-            mat.needsUpdate = true;
-          }
-        }
-      });
+      jpcsWrapper = new THREE.Group();
+      jpcsWrapper.add(model);
 
-      if (meshObj) {
-        // Reset raw node transform from Blender
-        meshObj.position.set(0, 0, 0);
-        meshObj.scale.set(1, 1, 1);
+      const size = box.getSize(new THREE.Vector3());
+      jpcsMaxDim = Math.max(size.x, size.y, size.z) || 1;
 
-        // Center geometry buffer so origin (0,0,0) is exactly at the coin disc center
-        meshObj.geometry.computeBoundingBox();
-        meshObj.geometry.center();
+      setupModelMaterials(model);
 
-        // Exact rotation matrix to make face DIRECTLY face the camera (+Z)
-        // and REPUBLIKA NG PILIPINAS upright (+Y):
-        // Rotation: rx = -PI/2, ry = 0, rz = 0
-        meshObj.rotation.set(-Math.PI / 2, 0, 0);
+      // Start at landing position
+      jpcsWrapper.position.set(0, landingPosY, 0);
+      jpcsWrapper.scale.setScalar(landingScaleJPCS / jpcsMaxDim);
 
-        // Compute size from centered geometry
-        meshObj.geometry.computeBoundingBox();
-        const bbox = meshObj.geometry.boundingBox;
-        const size = bbox.getSize(new THREE.Vector3());
-        // In this orientation, X and Y are the diameter (2.7088), Z is the thickness (0.13)
-        modelMaxDim = Math.max(size.x, size.y) || 2.7;
+      scene.add(jpcsWrapper);
 
-        coinParallaxGroup.add(meshObj);
-      } else {
-        coinParallaxGroup.add(model);
-      }
-
-      updateDimensions();
-
-      // If initial page state is login, immediately move coin to exit position
-      if (window.location.hash === '#login') {
-        currentY = exitY;
-        targetY = exitY;
-        coinWrapper.position.y = currentY;
-        container.style.display = 'none';
-        isRendering = false;
-      }
-
-      window.dispatchEvent(new Event('3d-models-loaded'));
+      loadedCount++;
+      if (loadedCount === 2) onModelsReady();
     },
     undefined,
     (err) => {
-      console.warn('[login-3d] Error loading 20 pesos coin model:', err);
-      window.dispatchEvent(new Event('3d-models-loaded'));
+      console.warn('[login-3d] Error loading JPCS logo:', err);
+      loadedCount++;
+      if (loadedCount === 2) onModelsReady();
+    }
+  );
+
+  // 2. Load BSU Logo
+  loader.load(
+    'assets/3d models/BSU logo.glb',
+    (gltf) => {
+      const model = gltf.scene;
+
+      // Center pivot
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+
+      bsuWrapper = new THREE.Group();
+      bsuWrapper.add(model);
+
+      const size = box.getSize(new THREE.Vector3());
+      bsuMaxDim = Math.max(size.x, size.y, size.z) || 1;
+
+      setupModelMaterials(model);
+
+      // Start off-screen
+      bsuWrapper.position.set(12, 0, 0);
+      bsuWrapper.scale.setScalar(LOGIN_SCALE_BSU / bsuMaxDim);
+      bsuWrapper.visible = false;
+
+      scene.add(bsuWrapper);
+
+      loadedCount++;
+      if (loadedCount === 2) onModelsReady();
+    },
+    undefined,
+    (err) => {
+      console.warn('[login-3d] Error loading BSU logo:', err);
+      loadedCount++;
+      if (loadedCount === 2) onModelsReady();
     }
   );
 
@@ -220,79 +310,69 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     composer.setSize(w, h);
     bloomPass.resolution.set(w, h);
     camera.aspect = w / h;
+
+    // Adjust camera distance for screen aspect ratio
+    if (camera.aspect < 1.5) {
+      camera.position.z = 10;
+    } else {
+      camera.position.z = 8;
+    }
     camera.updateProjectionMatrix();
 
-    if (!coinWrapper) return;
+    // Compute visible frustum at Z = 0
+    const frustumH = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
+    const frustumW = frustumH * camera.aspect;
 
-    // Calculate visible frustum dimensions at Z = 0
-    const frustumHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
-    const frustumWidth = frustumHeight * camera.aspect;
+    // Responsive landing settings for JPCS centerpiece
+    const landingDiam = Math.min(5.6, Math.max(3.6, frustumW * 0.44));
+    landingScaleJPCS = landingDiam;
 
-    // Responsive coin diameter:
-    // Large centerpiece on desktop, fits comfortably on mobile
-    coinDiameter = Math.min(6.2, Math.max(3.8, frustumWidth * 0.88));
-    coinWrapper.scale.setScalar(coinDiameter / modelMaxDim);
+    // Centerpiece Y position: rises up from bottom, top ~55% of height visible
+    landingPosY = -(frustumH / 2) + (landingDiam * 0.38);
 
-    // Position center so top rim reaches ~42% from viewport bottom:
-    // topRimY = baseY + (coinDiameter / 2)
-    // We want topRimY = - (frustumHeight / 2) + frustumHeight * 0.42
-    baseY = - (frustumHeight / 2) + (frustumHeight * 0.42) - (coinDiameter / 2);
-    exitY = - (frustumHeight / 2) - coinDiameter - 3;
+    // Responsive login offsets
+    loginXOffset = Math.min(4.8, frustumW * 0.42);
 
-    keyLight.target.position.set(0, baseY + (coinDiameter / 4), 0);
-    rimLightTop.target.position.set(0, baseY + (coinDiameter / 2), 0);
-
-    if (!isExited && !isTransitioning) {
-      currentY = baseY;
-      targetY = baseY;
-      coinWrapper.position.y = currentY;
-    } else if (isExited && !isTransitioning) {
-      currentY = exitY;
-      targetY = exitY;
-      coinWrapper.position.y = currentY;
-    }
+    centerKeyLight.target.position.set(0, landingPosY, 0);
+    centerKeyLight.target.updateMatrixWorld();
   }
 
   window.addEventListener('resize', updateDimensions);
 
   /* ========================================================
-     CURSOR PARALLAX
+     VIEW STATE & TRANSITIONS
+     0 = Landing View (JPCS centerpiece at center-bottom, 360° spin)
+     1 = Login View (JPCS on left, BSU on right, cursor tracking)
+     ======================================================== */
+  const isInitialLogin = window.location.hash === '#login';
+  let targetViewBlend = isInitialLogin ? 1.0 : 0.0;
+  let viewBlend = targetViewBlend;
+
+  window.addEventListener('pondo-view-login', () => {
+    targetViewBlend = 1.0;
+  });
+  window.addEventListener('pondo-coin-exit', () => {
+    targetViewBlend = 1.0;
+  });
+
+  window.addEventListener('pondo-view-landing', () => {
+    targetViewBlend = 0.0;
+  });
+  window.addEventListener('pondo-coin-enter', () => {
+    targetViewBlend = 0.0;
+  });
+
+  /* ========================================================
+     CURSOR TRACKING (for Login View)
      ======================================================== */
   const cursor = { x: 0, y: 0 };
-  const current = { x: 0, y: 0 };
+  const currentCursor = { x: 0, y: 0 };
+  const MAX_ROT = THREE.MathUtils.degToRad(12);
+  const LERP_FACTOR = 0.06;
 
   window.addEventListener('mousemove', (e) => {
     cursor.x = (e.clientX / window.innerWidth) * 2 - 1;
     cursor.y = (e.clientY / window.innerHeight) * 2 - 1;
-  });
-
-  /* ========================================================
-     TRANSITION STATE HANDLING
-     ======================================================== */
-  let isExited = false;
-  let isTransitioning = false;
-  let isRendering = true;
-
-  window.addEventListener('pondo-coin-exit', () => {
-    isTransitioning = true;
-    isExited = false;
-    targetY = exitY;
-    container.style.display = '';
-    if (!isRendering) {
-      isRendering = true;
-      requestAnimationFrame(animate);
-    }
-  });
-
-  window.addEventListener('pondo-coin-enter', () => {
-    isTransitioning = true;
-    isExited = false;
-    targetY = baseY;
-    container.style.display = '';
-    if (!isRendering) {
-      isRendering = true;
-      requestAnimationFrame(animate);
-    }
   });
 
   /* ========================================================
@@ -313,60 +393,106 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   });
 
   /* ========================================================
-     ANIMATION & RENDER LOOP
+     RENDER LOOP
      ======================================================== */
   let lastFrameTime = 0;
   const PERF_INTERVAL = 1000 / 30;
+  let landingSpinY = 0;
 
   function animate(now) {
-    if (!isRendering) return;
-
     requestAnimationFrame(animate);
 
-    // Pause when tab is hidden
     if (document.hidden) return;
 
-    // Frame rate throttle in performance mode
     if (isPerfMode && now) {
       const elapsed = now - lastFrameTime;
       if (elapsed < PERF_INTERVAL) return;
       lastFrameTime = now - (elapsed % PERF_INTERVAL);
     }
 
-    // Cursor tracking lerp
-    current.x += (cursor.x - current.x) * 0.05;
-    current.y += (cursor.y - current.y) * 0.05;
-
-    // 1. Vertical entry/exit animation
-    const dy = targetY - currentY;
-    if (Math.abs(dy) > 0.005) {
-      currentY += dy * 0.085;
-      coinWrapper.position.y = currentY;
+    // ── Smooth view interpolation ──
+    const dBlend = targetViewBlend - viewBlend;
+    if (Math.abs(dBlend) > 0.001) {
+      viewBlend += dBlend * 0.075;
     } else {
-      currentY = targetY;
-      coinWrapper.position.y = currentY;
-      if (targetY === exitY) {
-        isExited = true;
-        isTransitioning = false;
-        // When fully exited on the login page: HIDE CONTAINER & STOP RENDERING!
-        container.style.display = 'none';
-        isRendering = false;
+      viewBlend = targetViewBlend;
+    }
+
+    // ── Update lighting based on view blend ──
+    centerKeyLight.intensity = THREE.MathUtils.lerp(2.8, 0.2, viewBlend);
+    centerRimLight.intensity = THREE.MathUtils.lerp(1.8, 0.0, viewBlend);
+    keyLightLeft.intensity   = THREE.MathUtils.lerp(0.8, 2.0, viewBlend);
+    keyLightRight.intensity  = THREE.MathUtils.lerp(0.2, 2.0, viewBlend);
+
+    shadowPlane.position.y     = THREE.MathUtils.lerp(-4.0, -1.7, viewBlend);
+    reflectionPlane.position.y = THREE.MathUtils.lerp(-3.99, -1.69, viewBlend);
+
+    // ── Update cursor tracking ──
+    currentCursor.x += (cursor.x - currentCursor.x) * LERP_FACTOR;
+    currentCursor.y += (cursor.y - currentCursor.y) * LERP_FACTOR;
+    const targetRotY = THREE.MathUtils.clamp(currentCursor.x * MAX_ROT, -MAX_ROT, MAX_ROT);
+    const targetRotX = THREE.MathUtils.clamp(currentCursor.y * MAX_ROT * 0.7, -MAX_ROT * 0.7, MAX_ROT * 0.7);
+
+    // ── Continuous 360° turntable spin for Landing view (around vertical Y-axis) ──
+    if (!isPerfMode) {
+      landingSpinY += 0.005; // Full 360° revolution every ~20s
+      if (landingSpinY > Math.PI * 2) landingSpinY -= Math.PI * 2;
+    }
+
+    // ── Update JPCS Model ──
+    if (jpcsWrapper) {
+      // Position interpolation
+      const targetX = THREE.MathUtils.lerp(0, -loginXOffset, viewBlend);
+      const targetY = THREE.MathUtils.lerp(landingPosY, 0, viewBlend);
+      jpcsWrapper.position.set(targetX, targetY, 0);
+
+      // Scale interpolation
+      const targetScaleVal = THREE.MathUtils.lerp(
+        landingScaleJPCS / jpcsMaxDim,
+        LOGIN_SCALE_JPCS / jpcsMaxDim,
+        viewBlend
+      );
+      jpcsWrapper.scale.setScalar(targetScaleVal);
+
+      // Rotation interpolation: from landing 360° spin to login cursor tracking
+      if (viewBlend < 0.05) {
+        // Pure landing: upright, 360° turntable spin around vertical Y axis
+        jpcsWrapper.rotation.set(0, landingSpinY, 0);
+      } else if (viewBlend > 0.95) {
+        // Pure login: cursor tracking
+        jpcsWrapper.rotation.set(targetRotX, targetRotY, 0);
       } else {
-        isExited = false;
-        isTransitioning = false;
+        // Transition: smoothly blend rotation
+        const rotY = THREE.MathUtils.lerp(landingSpinY, targetRotY, viewBlend);
+        const rotX = THREE.MathUtils.lerp(0, targetRotX, viewBlend);
+        jpcsWrapper.rotation.set(rotX, rotY, 0);
       }
     }
 
-    // 2. 360-Degree Continuous Face Rotation (around Z normal axis)
-    // The coin face stays directly facing the screen while spinning 360 degrees
-    if (!isPerfMode) {
-      coinSpinGroup.rotation.z = (coinSpinGroup.rotation.z + SPIN_SPEED) % (Math.PI * 2);
+    // ── Update BSU Model ──
+    if (bsuWrapper) {
+      // Position: slides from right into position (loginXOffset, 0, 0)
+      const bsuStartX = 12.0;
+      const targetX = THREE.MathUtils.lerp(bsuStartX, loginXOffset, viewBlend);
+      const targetY = THREE.MathUtils.lerp(-0.8, 0, viewBlend);
+      bsuWrapper.position.set(targetX, targetY, 0);
+
+      // Scale: scales up from 0 to LOGIN_SCALE_BSU
+      const targetScaleVal = THREE.MathUtils.lerp(
+        0.001,
+        LOGIN_SCALE_BSU / bsuMaxDim,
+        viewBlend
+      );
+      bsuWrapper.scale.setScalar(targetScaleVal);
+
+      // Visible only when transitioning or in login
+      bsuWrapper.visible = viewBlend > 0.01;
+
+      // Rotation: follows cursor tracking in login
+      bsuWrapper.rotation.set(targetRotX, targetRotY, 0);
     }
 
-    // 3. Subtle cursor parallax tilt (kept very subtle so face stays directly facing screen)
-    coinParallaxGroup.rotation.x = current.y * 0.035;
-    coinParallaxGroup.rotation.y = current.x * 0.035;
-
+    // ── Render ──
     if (isPerfMode) {
       renderer.render(scene, camera);
     } else {
