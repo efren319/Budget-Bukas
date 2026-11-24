@@ -15,6 +15,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 (function () {
   'use strict';
@@ -45,7 +46,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.autoUpdate = !isPerfMode;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0x000000, 1);
+  renderer.setClearColor(0x000000, 0);
 
   /* ========================================================
      SCENE + CAMERA
@@ -78,7 +79,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
      ======================================================== */
 
   // Ambient: warm dim fill
-  const ambientLight = new THREE.AmbientLight(0x221a16, 0.7);
+  const ambientLight = new THREE.AmbientLight(0x2a1f18, 0.85);
   scene.add(ambientLight);
 
   // Left Key Light (JPCS in login position)
@@ -88,6 +89,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   keyLightLeft.castShadow = true;
   keyLightLeft.shadow.mapSize.set(1024, 1024);
   keyLightLeft.shadow.bias = -0.0004;
+  keyLightLeft.shadow.normalBias = 0.02;
   keyLightLeft.shadow.radius = 6;
   scene.add(keyLightLeft);
   scene.add(keyLightLeft.target);
@@ -99,17 +101,16 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   keyLightRight.castShadow = true;
   keyLightRight.shadow.mapSize.set(1024, 1024);
   keyLightRight.shadow.bias = -0.0004;
+  keyLightRight.shadow.normalBias = 0.02;
   keyLightRight.shadow.radius = 6;
   scene.add(keyLightRight);
   scene.add(keyLightRight.target);
 
-  // Center Key Spotlight (illuminates JPCS on Landing page)
-  const centerKeyLight = new THREE.SpotLight(0xf5d080, 2.8, 30, Math.PI / 3, 0.6, 1.5);
-  centerKeyLight.position.set(0, 3.5, 6);
+  // Center Key Spotlight (illuminates JPCS on Landing page cleanly without self-shadow acne)
+  const centerKeyLight = new THREE.SpotLight(0xf5d080, 3.0, 32, Math.PI / 2.6, 0.65, 1.4);
+  centerKeyLight.position.set(0, 3.5, 6.2);
   centerKeyLight.target.position.set(0, -1.8, 0);
-  centerKeyLight.castShadow = true;
-  centerKeyLight.shadow.mapSize.set(1024, 1024);
-  centerKeyLight.shadow.bias = -0.0004;
+  centerKeyLight.castShadow = false;
   scene.add(centerKeyLight);
   scene.add(centerKeyLight.target);
 
@@ -118,8 +119,13 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
   centerRimLight.position.set(0, 3.2, 1.5);
   scene.add(centerRimLight);
 
+  // Subtle Warm Golden Underglow Light (illuminates lower face & rim from below viewport)
+  const landingUnderLight = new THREE.PointLight(0xffcb66, 1.45, 20, 1.4);
+  landingUnderLight.position.set(0, -3.2, 2.8);
+  scene.add(landingUnderLight);
+
   // Fill Light: soft overall warmth
-  const fillLight = new THREE.DirectionalLight(0x8a7a6a, 0.4);
+  const fillLight = new THREE.DirectionalLight(0x9a8874, 0.55);
   fillLight.position.set(0, 2, 4);
   scene.add(fillLight);
 
@@ -172,8 +178,49 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     1.1,    // radius
     0.65    // threshold
   );
+  // Preserve transparent background outside bloom halos
+  if (Array.isArray(bloomPass.separableBlurMaterials)) {
+    bloomPass.separableBlurMaterials.forEach((material) => {
+      material.fragmentShader = material.fragmentShader.replace(
+        /gl_FragColor\s*=\s*vec4\s*\(\s*diffuseSum\s*\/\s*weightSum\s*,\s*1\.0\s*\)\s*;/,
+        `vec3 bloomOut = diffuseSum / weightSum;
+        float lumAlpha = clamp(max(bloomOut.r, max(bloomOut.g, bloomOut.b)), 0.0, 1.0);
+        gl_FragColor = vec4(bloomOut, lumAlpha);`
+      );
+      material.needsUpdate = true;
+    });
+  }
   bloomPass.enabled = !isPerfMode;
   composer.addPass(bloomPass);
+
+  // Preserve transparent background before OutputPass so OutputPass remains final
+  // (keeping ACESFilmicToneMapping + LinearToSRGB intact on screen).
+  const alphaPreservePass = new ShaderPass({
+    uniforms: {
+      tDiffuse: { value: null }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D tDiffuse;
+      varying vec2 vUv;
+      void main() {
+        vec4 texel = texture2D(tDiffuse, vUv);
+        vec3 c = max(texel.rgb, vec3(0.0));
+        vec3 low = c * 12.92;
+        vec3 high = pow(max(c, vec3(0.0031308)), vec3(0.41666)) * 1.055 - vec3(0.055);
+        vec3 srgbApprox = mix(high, low, vec3(lessThanEqual(c, vec3(0.0031308))));
+        float lumAlpha = max(srgbApprox.r, max(srgbApprox.g, srgbApprox.b));
+        gl_FragColor = vec4(texel.rgb, clamp(max(texel.a, lumAlpha), 0.0, 1.0));
+      }
+    `
+  });
+  composer.addPass(alphaPreservePass);
 
   const outputPass = new OutputPass();
   composer.addPass(outputPass);
@@ -208,7 +255,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     model.traverse((child) => {
       if (!child.isMesh) return;
       child.castShadow = true;
-      child.receiveShadow = true;
+      child.receiveShadow = false;
 
       const mat = child.material;
       if (!mat) return;
@@ -350,10 +397,11 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     // Responsive login offsets
     loginXOffset = Math.min(4.8, frustumW * 0.42);
 
-    centerKeyLight.position.set(0, topRimY + 3.0, 5.5);
-    centerKeyLight.target.position.set(0, topRimY - 0.5, 0);
+    centerKeyLight.position.set(0, topRimY + 2.8, 6.2);
+    centerKeyLight.target.position.set(0, landingPosY + (landingDiam * 0.28), 0);
     centerKeyLight.target.updateMatrixWorld();
-    centerRimLight.position.set(0, topRimY + 0.6, 1.2);
+    centerRimLight.position.set(0, topRimY + 0.6, 1.4);
+    landingUnderLight.position.set(0, topRimY - (landingDiam * 0.36), 2.8);
   }
 
   window.addEventListener('resize', updateDimensions);
@@ -409,7 +457,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     const dpr = perf ? 1 : Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(dpr);
     composer.setPixelRatio(dpr);
-    renderer.shadowMap.autoUpdate = !perf;
+    // Shadow autoUpdate is now managed dynamically in the render loop
+    // based on viewBlend + isPerfMode, so we just trigger a refresh here.
     if (!perf) renderer.shadowMap.needsUpdate = true;
   }
 
@@ -445,11 +494,27 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     }
 
     // ── Update lighting based on view blend ──
-    centerKeyLight.intensity = THREE.MathUtils.lerp(2.8, 0.2, viewBlend);
-    centerRimLight.intensity = THREE.MathUtils.lerp(1.8, 0.0, viewBlend);
-    keyLightLeft.intensity   = THREE.MathUtils.lerp(0.8, 2.0, viewBlend);
-    keyLightRight.intensity  = THREE.MathUtils.lerp(0.2, 2.0, viewBlend);
+    const underLightBreath = isPerfMode
+      ? 1.15
+      : 1.15 + 0.40 * (0.5 + 0.5 * Math.sin(((now || 0) * 0.001) * (Math.PI * 2 / 14)));
+    centerKeyLight.intensity    = THREE.MathUtils.lerp(3.0, 0.2, viewBlend);
+    centerRimLight.intensity    = THREE.MathUtils.lerp(1.8, 0.0, viewBlend);
+    landingUnderLight.intensity = THREE.MathUtils.lerp(underLightBreath, 0.0, viewBlend);
+    keyLightLeft.intensity      = THREE.MathUtils.lerp(0.8, 2.0, viewBlend);
+    keyLightRight.intensity     = THREE.MathUtils.lerp(0.2, 2.0, viewBlend);
 
+    // ── Dynamic shadow control: disable on landing to prevent screen-dependent artifacts ──
+    const needsShadows = viewBlend > 0.05;
+    keyLightLeft.castShadow = needsShadows;
+    keyLightRight.castShadow = needsShadows;
+    renderer.shadowMap.autoUpdate = needsShadows && !isPerfMode;
+    if (needsShadows && !isPerfMode) renderer.shadowMap.needsUpdate = true;
+
+    const showGround = viewBlend > 0.01;
+    shadowPlane.visible        = showGround;
+    reflectionPlane.visible    = showGround;
+    shadowPlane.material.opacity     = 0.28 * viewBlend;
+    reflectionPlane.material.opacity = 0.12 * viewBlend;
     shadowPlane.position.y     = THREE.MathUtils.lerp(-4.0, -1.7, viewBlend);
     reflectionPlane.position.y = THREE.MathUtils.lerp(-3.99, -1.69, viewBlend);
 

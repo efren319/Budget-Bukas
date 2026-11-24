@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/landing.css?v=2.1">
+  <link rel="stylesheet" href="css/landing.css?v=2.4">
   <style>
     .login-wrapper {
       min-height: 100vh;
@@ -347,7 +347,6 @@
       z-index: 1;
       pointer-events: none;
       overflow: hidden;
-      mix-blend-mode: screen; /* Makes black transparent, keeps bloom bright */
     }
 
     .login-3d-container canvas {
@@ -371,7 +370,7 @@
 <body>
   <!-- Loading Screen Overlay removed for modern skeleton/progressive load system -->
 
-  <div class="login-wrapper">
+  <div class="login-wrapper" id="login-wrapper">
     <!-- Performance Mode Toggle for Login & Landing -->
     <div class="login-perf-wrapper">
       <button type="button" class="topbar-action-btn perf-toggle-btn" id="perf-toggle-btn" role="switch" aria-checked="false" aria-label="Performance Mode">
@@ -383,6 +382,9 @@
     <button type="button" class="login-back-btn" id="btn-back-to-landing" aria-label="Back to Home">
       <i data-lucide="arrow-left"></i>
     </button>
+
+    <!-- Subtle Animated Golden Ambient Light (Behind 3D Coin on Landing) -->
+    <div class="landing-ambient-glow" id="landing-ambient-glow" aria-hidden="true"></div>
 
     <!-- 3D Philippine 20-Peso Coin Canvas -->
     <div class="login-3d-container" id="login-3d-container">
@@ -578,9 +580,12 @@
       if (currentView === 'login') return;
       currentView = 'login';
 
+      const loginWrapper = document.getElementById('login-wrapper');
       const landingScreen = document.getElementById('landing-screen');
       const loginContainer = document.getElementById('login-container');
       const loginBackBtn = document.getElementById('btn-back-to-landing');
+
+      if (loginWrapper) loginWrapper.classList.add('is-login-view');
 
       if (!instant) {
         try { history.pushState({ view: 'login' }, '', '#login'); } catch (e) {}
@@ -644,9 +649,12 @@
       if (currentView === 'landing') return;
       currentView = 'landing';
 
+      const loginWrapper = document.getElementById('login-wrapper');
       const landingScreen = document.getElementById('landing-screen');
       const loginContainer = document.getElementById('login-container');
       const loginBackBtn = document.getElementById('btn-back-to-landing');
+
+      if (loginWrapper) loginWrapper.classList.remove('is-login-view');
 
       try { history.pushState({ view: 'landing' }, '', window.location.pathname); } catch (e) {}
 
@@ -732,7 +740,7 @@
   </script>
 
   <!-- 3D Background Logo Script -->
-  <script type="module" src="js/login-3d.js?v=2.5"></script>
+  <script type="module" src="js/login-3d.js?v=2.8"></script>
 
   <!-- Dust Particle Physics System -->
   <script src="js/dust-particles.js"></script>
