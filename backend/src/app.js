@@ -29,6 +29,18 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static frontend files (public/ for HTML + assets, src/ for CSS + JS)
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
 
+// Health & pre-warm endpoint (wakes API process + PostgreSQL pool together)
+app.get('/api/health', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const pool = require('./config/db');
+    await pool.query('SELECT 1');
+    res.json({ success: true, status: 'ok' });
+  } catch (error) {
+    res.status(503).json({ success: false, status: 'degraded' });
+  }
+});
+
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));

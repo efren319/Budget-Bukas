@@ -1,6 +1,6 @@
 // ============================================
-// Cursor Glow — Simple Cursor Highlight
-// Clean and optimized for performance
+// Cursor Glow — On-Demand Cached Radial Sprite
+// Zero idle CPU/GPU usage when cursor stops moving
 // ============================================
 
 (function () {
@@ -9,6 +9,9 @@
   // Skip on touch devices or small screens
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0) return;
   if (window.matchMedia('(max-width: 768px)').matches) return;
+
+  const GLOW_RADIUS = 130;
+  const SPRITE_SIZE = GLOW_RADIUS * 2;
 
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -21,29 +24,74 @@
     height: '100vh',
     pointerEvents: 'none',
     zIndex: '9999',
-    willChange: 'transform',
     transition: 'opacity 0.3s ease'
   });
 
   document.body.appendChild(canvas);
 
+  // Pre-render the radial gradient once onto a tiny sprite canvas
+  const glowSprite = document.createElement('canvas');
+  glowSprite.width = SPRITE_SIZE;
+  glowSprite.height = SPRITE_SIZE;
+  const spriteCtx = glowSprite.getContext('2d');
+  const gradient = spriteCtx.createRadialGradient(
+    GLOW_RADIUS, GLOW_RADIUS, 0,
+    GLOW_RADIUS, GLOW_RADIUS, GLOW_RADIUS
+  );
+  gradient.addColorStop(0, 'rgba(212, 175, 55, 0.05)');
+  gradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
+  spriteCtx.fillStyle = gradient;
+  spriteCtx.fillRect(0, 0, SPRITE_SIZE, SPRITE_SIZE);
+
   let isPerfMode = Boolean(window.PondoSyncPerf && window.PondoSyncPerf.isEnabled());
+  let isAdaptiveLow = document.documentElement.classList.contains('adaptive-low-gpu');
   let isTabVisible = !document.hidden;
   let animId = null;
 
+  let width = 0;
+  let height = 0;
+  let mouseX = -9999;
+  let mouseY = -9999;
+  let lastDrawX = -9999;
+  let lastDrawY = -9999;
+  let hasActiveGlow = false;
+
+  function clearDirtyArea() {
+    if (lastDrawX > -GLOW_RADIUS && lastDrawY > -GLOW_RADIUS) {
+      ctx.clearRect(
+        lastDrawX - GLOW_RADIUS - 2,
+        lastDrawY - GLOW_RADIUS - 2,
+        SPRITE_SIZE + 4,
+        SPRITE_SIZE + 4
+      );
+      lastDrawX = -9999;
+      lastDrawY = -9999;
+    }
+  }
+
   function clearGlow() {
-    isMoving = false;
+    hasActiveGlow = false;
     mouseX = -9999;
     mouseY = -9999;
     if (width && height) {
       ctx.clearRect(0, 0, width, height);
     }
+    lastDrawX = -9999;
+    lastDrawY = -9999;
   }
 
-  function applyPerfMode(perf) {
-    isPerfMode = perf;
-    if (perf) {
-      if (animId) {
+  function isPaused() {
+    return isPerfMode || isAdaptiveLow || !isTabVisible;
+  }
+
+  function scheduleRender() {
+    if (isPaused() || animId !== null) return;
+    animId = requestAnimationFrame(renderFrame);
+  }
+
+  function syncVisibility() {
+    if (isPerfMode || isAdaptiveLow) {
+      if (animId !== null) {
         cancelAnimationFrame(animId);
         animId = null;
       }
@@ -55,82 +103,75 @@
       canvas.style.display = 'block';
       canvas.style.visibility = 'visible';
       canvas.style.opacity = '1';
-      if (!animId && isTabVisible) {
-        animId = requestAnimationFrame(animate);
+      if (hasActiveGlow && isTabVisible) {
+        scheduleRender();
       }
     }
   }
 
-  if (isPerfMode) {
-    canvas.style.display = 'none';
-    canvas.style.visibility = 'hidden';
-    canvas.style.opacity = '0';
+  if (isPerfMode || isAdaptiveLow) {
+    syncVisibility();
   }
 
   window.addEventListener('pondosync-perf-change', (e) => {
-    applyPerfMode(e.detail.enabled);
+    isPerfMode = Boolean(e.detail && e.detail.enabled);
+    syncVisibility();
+  });
+
+  window.addEventListener('pondosync-adaptive-low-gpu', (e) => {
+    isAdaptiveLow = Boolean(e.detail && e.detail.enabled);
+    syncVisibility();
   });
 
   document.addEventListener('visibilitychange', () => {
     isTabVisible = !document.hidden;
-    if (isTabVisible && !isPerfMode && !animId) {
-      animId = requestAnimationFrame(animate);
+    if (!isTabVisible && animId !== null) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    } else if (isTabVisible && hasActiveGlow && !isPaused()) {
+      scheduleRender();
     }
   });
 
-  let width, height;
-  let mouseX = -9999;
-  let mouseY = -9999;
-  let isMoving = false;
-
-  // Resize handler
   function resize() {
     width = window.innerWidth;
     height = window.innerHeight;
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    if (isPerfMode) {
-      ctx.clearRect(0, 0, width, height);
+    // Soft glow needs no >1x DPR pixel scaling
+    canvas.width = width;
+    canvas.height = height;
+    lastDrawX = -9999;
+    lastDrawY = -9999;
+    if (!isPaused() && hasActiveGlow) {
+      scheduleRender();
     }
   }
 
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', resize, { passive: true });
   resize();
 
-  // Track mouse position (completely bypassed when in Performance Mode)
   window.addEventListener('mousemove', (e) => {
-    if (isPerfMode) return;
+    if (isPaused()) return;
     mouseX = e.clientX;
     mouseY = e.clientY;
-    isMoving = true;
-  });
+    hasActiveGlow = true;
+    scheduleRender();
+  }, { passive: true });
 
-  // Main loop
-  function animate() {
-    if (isPerfMode || !isTabVisible) {
-      animId = null;
-      ctx.clearRect(0, 0, width, height);
+  document.addEventListener('mouseleave', () => {
+    hasActiveGlow = false;
+    clearDirtyArea();
+  }, { passive: true });
+
+  function renderFrame() {
+    animId = null;
+    if (isPaused() || !hasActiveGlow) {
+      clearDirtyArea();
       return;
     }
 
-    ctx.clearRect(0, 0, width, height);
-
-    // Add a central soft glow at cursor (smaller radius)
-    if (isMoving) {
-      const centralAlpha = 0.05;
-      const glowRadius = 130; 
-      const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, glowRadius);
-      gradient.addColorStop(0, `rgba(212, 175, 55, ${centralAlpha})`);
-      gradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(mouseX - glowRadius, mouseY - glowRadius, glowRadius * 2, glowRadius * 2);
-    }
-
-    animId = requestAnimationFrame(animate);
-  }
-
-  if (!isPerfMode && isTabVisible) {
-    animId = requestAnimationFrame(animate);
+    clearDirtyArea();
+    ctx.drawImage(glowSprite, mouseX - GLOW_RADIUS, mouseY - GLOW_RADIUS);
+    lastDrawX = mouseX;
+    lastDrawY = mouseY;
   }
 })();

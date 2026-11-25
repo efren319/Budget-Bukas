@@ -489,7 +489,7 @@ async function deleteUserAccount(userId) {
     
     const confirmed = await showConfirm(
       "Permanently Delete Account", 
-      "Are you sure you want to delete this account? Their email will be freed up for re-registration, but their name will remain on past transactions to preserve the financial records."
+      "Are you sure you want to permanently delete this account from the database? Their email will be freed immediately while past financial records remain preserved."
     );
 
     if (!confirmed) {
@@ -502,8 +502,8 @@ async function deleteUserAccount(userId) {
     const res = await apiRequest(`/users/${userId}`, { method: 'DELETE' });
     
     if (res && res.success) {
-      console.log('✅ User deleted and email freed!');
-      showToast('User permanently removed. Email has been freed.', 'success');
+      console.log('✅ User deleted from database!');
+      showToast('User permanently deleted from the database.', 'success');
       loadAdminUsers();
     }
   } catch (error) {

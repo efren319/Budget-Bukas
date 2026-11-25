@@ -28,6 +28,12 @@
     })();
   </script>
   <script src="js/performance-manager.js"></script>
+  <link rel="preconnect" href="https://budgetbukas-api.onrender.com" crossorigin>
+  <link rel="dns-prefetch" href="https://budgetbukas-api.onrender.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js">
+  <link rel="preload" href="assets/3d%20models/JPCS%20logo.glb" as="fetch" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -46,7 +52,7 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/landing.css?v=2.4">
+  <link rel="stylesheet" href="css/landing.css?v=2.2">
   <style>
     .login-wrapper {
       min-height: 100vh;
@@ -84,6 +90,13 @@
     @keyframes floatSlow {
       0%, 100% { transform: translate(0, 0); }
       50% { transform: translate(30px, -20px); }
+    }
+
+    html.performance-mode .login-wrapper::before,
+    html.performance-mode .login-wrapper::after,
+    html.adaptive-low-gpu .login-wrapper::before,
+    html.adaptive-low-gpu .login-wrapper::after {
+      animation: none !important;
     }
 
     .login-container {
@@ -347,6 +360,7 @@
       z-index: 1;
       pointer-events: none;
       overflow: hidden;
+      mix-blend-mode: screen; /* Makes black transparent, keeps bloom bright */
     }
 
     .login-3d-container canvas {
@@ -569,8 +583,23 @@
       }
     });
 
+    let lastApiWarmup = 0;
+    function warmUpApi() {
+      const now = Date.now();
+      if (now - lastApiWarmup < 25000) return;
+      const base = window.API_URL || 'http://localhost:3000/api';
+      lastApiWarmup = now;
+      fetch(`${base}/health`, { method: 'GET', cache: 'no-store' }).catch(() => {});
+    }
+
     if (localStorage.getItem('bb_token')) {
       window.location.href = '/dashboard.html';
+    } else {
+      warmUpApi();
+      document.getElementById('btn-get-started')?.addEventListener('pointerenter', warmUpApi, { passive: true });
+      document.getElementById('btn-get-started')?.addEventListener('click', warmUpApi, { passive: true });
+      document.getElementById('auth-form')?.addEventListener('pointerenter', warmUpApi, { passive: true });
+      document.getElementById('auth-form')?.addEventListener('focusin', warmUpApi, { passive: true });
     }
 
     // ── Transition Between Landing Page and Login Card ──
@@ -740,7 +769,7 @@
   </script>
 
   <!-- 3D Background Logo Script -->
-  <script type="module" src="js/login-3d.js?v=2.8"></script>
+  <script type="module" src="js/login-3d.js?v=2.5"></script>
 
   <!-- Dust Particle Physics System -->
   <script src="js/dust-particles.js"></script>

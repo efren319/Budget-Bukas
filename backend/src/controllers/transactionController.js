@@ -14,10 +14,60 @@ const transactionValidation = [
   body('category').if(body('type').equals('expense')).notEmpty().withMessage('Category required for expense')
 ];
 
+/**
+ * Build shared SQL WHERE filter clause and bound parameters for transaction queries.
+ * Uses case-insensitive ILIKE for category/source/description and exact match for numeric amounts.
+ */
+function buildTransactionFilters({ type, category, startDate, endDate, search }) {
+  const clauses = [];
+  const params = [];
+
+  if (type) {
+    clauses.push('t.type = ?');
+    params.push(type);
+  }
+  if (category) {
+    clauses.push('e.category = ?');
+    params.push(category);
+  }
+  if (startDate) {
+    clauses.push('t.date >= ?');
+    params.push(startDate);
+  }
+  if (endDate) {
+    clauses.push('t.date <= ?');
+    params.push(endDate);
+  }
+
+  const trimmedSearch = typeof search === 'string' ? search.trim() : '';
+  if (trimmedSearch) {
+    const escaped = trimmedSearch.replace(/[!%_]/g, '!$&');
+    const searchVal = `%${escaped}%`;
+    const normalizedAmount = trimmedSearch.replace(/^₱\s*/i, '').replace(/,/g, '').trim();
+    const isNumeric = /^(?:\d+(?:\.\d+)?|\.\d+)$/.test(normalizedAmount);
+    const parsedAmount = isNumeric ? Number(normalizedAmount) : NaN;
+    const hasExactAmount = isNumeric && Number.isFinite(parsedAmount) && parsedAmount >= 0 && parsedAmount <= 999999999.99;
+
+    if (hasExactAmount) {
+      clauses.push("(i.source ILIKE ? ESCAPE '!' OR e.description ILIKE ? ESCAPE '!' OR e.category ILIKE ? ESCAPE '!' OR t.amount = ?)");
+      params.push(searchVal, searchVal, searchVal, parsedAmount);
+    } else {
+      clauses.push("(i.source ILIKE ? ESCAPE '!' OR e.description ILIKE ? ESCAPE '!' OR e.category ILIKE ? ESCAPE '!')");
+      params.push(searchVal, searchVal, searchVal);
+    }
+  }
+
+  return {
+    filterSql: clauses.length > 0 ? ` AND ${clauses.join(' AND ')}` : '',
+    filterParams: params
+  };
+}
+
 // GET /api/transactions — List all (with filters)
 async function getAll(req, res) {
   try {
-    const { type, category, startDate, endDate, search, sort, order, page, limit } = req.query;
+    const { sort, order, page, limit } = req.query;
+    const { filterSql, filterParams } = buildTransactionFilters(req.query);
 
     let sql = `
       SELECT 
@@ -31,32 +81,9 @@ async function getAll(req, res) {
       LEFT JOIN income i ON i.transaction_id = t.id
       LEFT JOIN expenses e ON e.transaction_id = t.id
       LEFT JOIN receipts r ON r.expense_id = e.id
-      WHERE 1=1
+      WHERE 1=1${filterSql}
     `;
-    const params = [];
-
-    // Apply filters
-    if (type) {
-      sql += ' AND t.type = ?';
-      params.push(type);
-    }
-    if (category) {
-      sql += ' AND e.category = ?';
-      params.push(category);
-    }
-    if (startDate) {
-      sql += ' AND t.date >= ?';
-      params.push(startDate);
-    }
-    if (endDate) {
-      sql += ' AND t.date <= ?';
-      params.push(endDate);
-    }
-    if (search) {
-      sql += ' AND (i.source LIKE ? OR e.description LIKE ? OR e.category LIKE ?)';
-      const searchVal = `%${search}%`;
-      params.push(searchVal, searchVal, searchVal);
-    }
+    const params = [...filterParams];
 
     // Sorting
     const allowedSortCols = {
@@ -80,38 +107,14 @@ async function getAll(req, res) {
     const [rows] = await pool.query(sql, params);
 
     // Get total count for pagination (matching all filters)
-    let countSql = `
+    const countSql = `
       SELECT COUNT(*) AS total 
       FROM transactions t
       LEFT JOIN income i ON i.transaction_id = t.id
       LEFT JOIN expenses e ON e.transaction_id = t.id
-      WHERE 1=1
+      WHERE 1=1${filterSql}
     `;
-    const countParams = [];
-
-    if (type) {
-      countSql += ' AND t.type = ?';
-      countParams.push(type);
-    }
-    if (category) {
-      countSql += ' AND e.category = ?';
-      countParams.push(category);
-    }
-    if (startDate) {
-      countSql += ' AND t.date >= ?';
-      countParams.push(startDate);
-    }
-    if (endDate) {
-      countSql += ' AND t.date <= ?';
-      countParams.push(endDate);
-    }
-    if (search) {
-      countSql += ' AND (i.source LIKE ? OR e.description LIKE ? OR e.category LIKE ?)';
-      const searchVal = `%${search}%`;
-      countParams.push(searchVal, searchVal, searchVal);
-    }
-
-    const [countResult] = await pool.query(countSql, countParams);
+    const [countResult] = await pool.query(countSql, filterParams);
 
     res.json({
       success: true,

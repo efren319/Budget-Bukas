@@ -182,7 +182,6 @@ html.performance-mode .premium-table-container,
 html.performance-mode .member-card,
 html.performance-mode .sidebar,
 html.performance-mode .topbar.topbar-scrolled,
-html.performance-mode .notification-panel,
 html.performance-mode .modal-content,
 html.performance-mode .login-container,
 html.performance-mode .login-brand {
@@ -228,8 +227,7 @@ html.performance-mode .member-card {
 .premium-card,
 .date-filter-card,
 .topbar,
-.sidebar,
-.notification-panel {
+.sidebar {
   transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 

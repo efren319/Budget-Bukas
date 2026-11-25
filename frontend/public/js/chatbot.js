@@ -12,10 +12,7 @@
   let currentPage = 'dashboard';
   let aiMode = 'ai'; // 'ai' or 'offline'
   let pendingEdit = null; // { type: 'fullpage' | 'widget', row, widgetWrapper, text }
-  let formatPrefs = { graph: false, table: true, list: true }; // '+' toggle menu preferences
-  let geminiUsageStatus = null;
-  let geminiUsageRefreshBusy = false;
-  let geminiUsageRefreshQueued = false;
+  let formatPrefs = { graph: false, table: true, overview: true }; // '+' toggle menu preferences
 
   function cancelEdit() {
     if (!pendingEdit) return;
@@ -107,9 +104,6 @@
 
     // ---- AI Mode Toggles ----
     initAIModeToggles();
-
-    // ---- Gemini quota and usage indicator ----
-    initGeminiUsageIndicator();
 
     // ---- Format Toggle ('+' button) ----
     initFormatToggles();
@@ -307,306 +301,6 @@
     observePageChanges();
   }
 
-  function initGeminiUsageIndicator() {
-    const trigger = document.getElementById('gemini-usage-trigger');
-    const panel = document.getElementById('gemini-usage-panel');
-    const container = document.getElementById('gemini-usage-indicator');
-
-    if (trigger && panel) {
-      // Clicking the floating Gemini button toggles the usage panel
-      trigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = panel.classList.toggle('open');
-        trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      });
-
-      // Prevent clicks inside panel from closing it
-      panel.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-
-      // Clicking outside the panel closes it
-      document.addEventListener('click', (e) => {
-        if (panel.classList.contains('open')) {
-          const target = e.target;
-          if (container && !container.contains(target)) {
-            panel.classList.remove('open');
-            trigger.setAttribute('aria-expanded', 'false');
-          }
-        }
-      });
-
-      // Escape key closes it
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && panel.classList.contains('open')) {
-          panel.classList.remove('open');
-          trigger.setAttribute('aria-expanded', 'false');
-        }
-      });
-
-      // Open by default so the user immediately sees the panel
-      panel.classList.add('open');
-      trigger.setAttribute('aria-expanded', 'true');
-    }
-
-    renderGeminiUsageStatus(null);
-    refreshGeminiUsageStatus();
-
-    setInterval(() => {
-      const chatbotPage = document.getElementById('page-chatbot');
-      if (document.visibilityState === 'visible' && chatbotPage?.classList.contains('active')) {
-        refreshGeminiUsageStatus();
-      }
-    }, 30000);
-  }
-
-  async function refreshGeminiUsageStatus() {
-    if (geminiUsageRefreshBusy) {
-      geminiUsageRefreshQueued = true;
-      return;
-    }
-
-    geminiUsageRefreshBusy = true;
-    try {
-      const result = await apiGet('/chatbot/usage');
-      if (result?.success && result.data) renderGeminiUsageStatus(result.data);
-    } catch (error) {
-      renderGeminiUsageStatus(null, 'Usage and quota status could not be loaded.');
-    } finally {
-      geminiUsageRefreshBusy = false;
-      if (geminiUsageRefreshQueued) {
-        geminiUsageRefreshQueued = false;
-        setTimeout(refreshGeminiUsageStatus, 250);
-      }
-    }
-  }
-
-  function formatUsageCount(value) {
-    const number = Number(value);
-    return Number.isFinite(number)
-      ? number.toLocaleString(undefined, { maximumFractionDigits: 2 })
-      : 'Unavailable';
-  }
-
-  function formatResetTime(value) {
-    if (!value) return 'Unavailable';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Unavailable';
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = months[date.getMonth()];
-    const day = date.getDate();
-    const year = date.getFullYear();
-    let hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const minutesFormatted = minutes < 10 ? '0' + minutes : minutes;
-    return `${month} ${day}, ${year} • ${hours}:${minutesFormatted} ${ampm}`;
-  }
-
-  function applyQuotaRestrictionToInputs(isBlocked, resetText = '') {
-    const sendEmpty = document.getElementById('ai-send-empty');
-    const sendActive = document.getElementById('ai-send-active');
-    const sendWidget = document.getElementById('chat-widget-send');
-    const inputEmpty = document.getElementById('ai-input-field-empty');
-    const inputActive = document.getElementById('ai-input-field-active');
-    const inputWidget = document.getElementById('chat-widget-input-field');
-
-    const shouldDisable = isBlocked && aiMode === 'ai';
-
-    [sendEmpty, sendActive, sendWidget].forEach(btn => {
-      if (!btn) return;
-      if (shouldDisable) {
-        btn.disabled = true;
-        btn.setAttribute('aria-disabled', 'true');
-        btn.style.opacity = '0.4';
-        btn.style.cursor = 'not-allowed';
-        btn.title = `Gemini AI quota is nearly exhausted (<= 5% remaining). Requests are paused.${resetText ? ` Expected reset: ${resetText}` : ''}`;
-      } else {
-        btn.disabled = false;
-        btn.removeAttribute('aria-disabled');
-        btn.style.opacity = '';
-        btn.style.cursor = '';
-        btn.title = 'Send';
-      }
-    });
-
-    [inputEmpty, inputActive, inputWidget].forEach(inp => {
-      if (!inp) return;
-      if (shouldDisable) {
-        if (!inp.hasAttribute('data-normal-placeholder')) {
-          inp.setAttribute('data-normal-placeholder', inp.placeholder || '');
-        }
-        inp.placeholder = `AI quota nearly exhausted (<= 5%). Switch to Offline mode or wait for reset...`;
-      } else if (inp.hasAttribute('data-normal-placeholder')) {
-        inp.placeholder = inp.getAttribute('data-normal-placeholder');
-      }
-    });
-  }
-
-  function renderGeminiUsageStatus(status, loadError = null) {
-    if (!status && geminiUsageStatus) status = geminiUsageStatus;
-    else geminiUsageStatus = status;
-
-    const quota = status?.quota || {};
-    const selected = quota.selectedMetric || null;
-    const hasVerifiedQuota = quota.availability === 'available' && Number.isFinite(quota.percentRemaining);
-
-    const percentRemaining = hasVerifiedQuota
-      ? Math.min(100, Math.max(0, quota.percentRemaining))
-      : null;
-    const percentUsed = hasVerifiedQuota
-      ? (Number.isFinite(quota.percentUsed) ? Math.min(100, Math.max(0, quota.percentUsed)) : Math.max(0, 100 - percentRemaining))
-      : null;
-
-    const isBlocked = Boolean(status?.blocked);
-
-    // 1. Header status (dot + text)
-    const statusDot = document.getElementById('gemini-status-dot');
-    const statusText = document.getElementById('gemini-status-text');
-    if (statusDot && statusText) {
-      statusDot.className = 'gemini-status-dot';
-      statusText.className = 'gemini-status-text';
-      if (isBlocked) {
-        statusDot.classList.add('blocked');
-        statusText.classList.add('blocked');
-        statusText.textContent = 'Paused';
-      } else if (status?.availability === 'rate_limited') {
-        statusDot.classList.add('rate-limited');
-        statusText.classList.add('rate-limited');
-        statusText.textContent = 'Limited';
-      } else {
-        statusText.textContent = 'Live';
-      }
-    }
-
-    // 2. Usage Visualization: Donut on left, Progress bar on right
-    const donutFill = document.getElementById('gemini-donut-progress');
-    const percentLabel = document.getElementById('gemini-usage-percent');
-    const remainingLabel = document.getElementById('gemini-usage-remaining');
-    const barFill = document.getElementById('gemini-usage-bar');
-
-    const CIRCUMFERENCE = 245.044; // 2 * Math.PI * 39
-
-    if (donutFill) {
-      donutFill.classList.toggle('blocked', isBlocked);
-      if (percentUsed !== null) {
-        const offset = Math.max(0, CIRCUMFERENCE - (CIRCUMFERENCE * (percentUsed / 100)));
-        donutFill.style.strokeDashoffset = offset;
-      } else {
-        donutFill.style.strokeDashoffset = CIRCUMFERENCE; // empty
-      }
-    }
-
-    if (percentLabel) {
-      percentLabel.textContent = percentUsed !== null ? `${Math.round(percentUsed)}%` : '—';
-    }
-
-    if (remainingLabel) {
-      remainingLabel.textContent = percentRemaining !== null
-        ? `${Math.round(percentRemaining)}% Remaining`
-        : 'Unavailable';
-    }
-
-    if (barFill) {
-      barFill.classList.toggle('blocked', isBlocked);
-      barFill.style.width = percentUsed !== null ? `${percentUsed}%` : '0%';
-    }
-
-    // 3. Information rows
-    const setText = (id, text) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = text;
-    };
-
-    setText('gemini-usage-model', status?.currentModel || 'Unavailable');
-
-    if (selected && percentUsed !== null) {
-      const countFormatted = formatUsageCount(selected.limit);
-      const dimension = selected.dimension ? selected.dimension.toLowerCase() : 'requests';
-      setText('gemini-usage-count', `${Math.round(percentUsed)}% of ${countFormatted} ${dimension}`);
-    } else {
-      setText('gemini-usage-count', 'Unavailable');
-    }
-
-    const resetTimeFormatted = selected?.resetAt ? formatResetTime(selected.resetAt) : 'Unavailable';
-    setText('gemini-usage-reset', resetTimeFormatted);
-
-    // 4. Availability Section
-    const availText = document.getElementById('gemini-usage-status');
-    const availIcon = document.getElementById('gemini-avail-icon');
-    if (availText) {
-      availText.className = 'gemini-avail-text';
-      if (isBlocked) {
-        availText.classList.add('blocked');
-        availText.textContent = 'AI quota exhausted';
-        if (availIcon) {
-          availIcon.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" fill="#EF4444"/>
-              <path d="M12 7V13" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="12" cy="16.5" r="1" fill="#FFFFFF"/>
-            </svg>
-          `;
-        }
-      } else if (status?.availability === 'rate_limited') {
-        availText.classList.add('rate-limited');
-        availText.textContent = 'AI rate limited';
-        if (availIcon) {
-          availIcon.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" fill="#EAB308"/>
-              <path d="M12 7V13" stroke="#121212" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="12" cy="16.5" r="1" fill="#121212"/>
-            </svg>
-          `;
-        }
-      } else if (!status || status?.availability === 'unavailable') {
-        availText.textContent = 'AI unavailable';
-        if (availIcon) {
-          availIcon.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" fill="#6B7280"/>
-              <path d="M12 7V13" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="12" cy="16.5" r="1" fill="#FFFFFF"/>
-            </svg>
-          `;
-        }
-      } else {
-        availText.textContent = 'AI is available';
-        if (availIcon) {
-          availIcon.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" fill="#22C55E"/>
-              <path d="M8 12.5L10.5 15L16 9.5" stroke="#121212" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          `;
-        }
-      }
-    }
-
-    // 5. Warning banner & 5% restriction handling
-    const warning = document.getElementById('gemini-usage-warning');
-    if (warning) {
-      const shouldWarn = isBlocked || status?.availability === 'rate_limited';
-      warning.classList.toggle('hidden', !shouldWarn);
-      if (isBlocked) {
-        const resetNotice = selected?.resetAt ? ` Expected reset: ${resetTimeFormatted}.` : '';
-        warning.textContent = `The verified Gemini quota is at or below 5% remaining. Gemini AI requests are paused.${resetNotice}`;
-      } else if (shouldWarn) {
-        warning.textContent = 'Gemini recently returned a rate-limit response. Official quota data may be delayed; the verified ledger remains available.';
-      }
-    }
-
-    // 6. Disable or enable AI submission functionality when quota <= 5%
-    applyQuotaRestrictionToInputs(isBlocked, resetTimeFormatted !== 'Unavailable' ? resetTimeFormatted : '');
-  }
-
-  function isGeminiQuotaBlocked() {
-    return Boolean(geminiUsageStatus?.blocked);
-  }
-
   // ---- AI Mode Toggle Logic ----
   function initAIModeToggles() {
     const toggleEmpty = document.getElementById('ai-mode-toggle-empty');
@@ -623,7 +317,6 @@
         t.title = aiMode === 'ai' ? 'AI Mode: Active (Click to switch to Ledger Engine)' : 'AI Mode: Inactive (Click to activate AI)';
       });
       if (typeof lucide !== 'undefined') lucide.createIcons();
-      applyQuotaRestrictionToInputs(isGeminiQuotaBlocked(), document.getElementById('gemini-usage-reset')?.textContent || '');
     }
 
     function handleToggle() {
@@ -640,9 +333,9 @@
 
   // ---- Format Toggle ('+' button) & Active Tags Logic ----
   const formatMeta = {
-    graph: { label: 'Graph', icon: 'bar-chart-3' },
-    table: { label: 'Table', icon: 'table' },
-    list:  { label: 'List',  icon: 'list' }
+    graph:    { label: 'Graph',    icon: 'bar-chart-3' },
+    table:    { label: 'Table',    icon: 'table' },
+    overview: { label: 'Overview', icon: 'layout-dashboard' }
   };
 
   function renderActiveFormatTags() {
@@ -1030,12 +723,6 @@
   //  FULL-PAGE CHAT LOGIC
   // ==========================================================
   function handleFullPageSend(message, options = {}) {
-    if (aiMode === 'ai' && isGeminiQuotaBlocked() && !options.force) {
-      const warning = document.getElementById('gemini-usage-warning');
-      if (warning) warning.classList.remove('hidden');
-      return;
-    }
-
     // If user was editing a message, commit the edit by removing that message and all below it
     if (pendingEdit && pendingEdit.type === 'fullpage' && pendingEdit.row) {
       const rowToReplace = pendingEdit.row;
@@ -1071,8 +758,8 @@
     sendToAPI(message, sendOpts).then(result => {
       typingEl.remove();
 
-      // If user is in AI mode and both AI engines failed, show the interactive modal
-      if (aiMode === 'ai' && !isGeminiQuotaBlocked() && (!result || result.source === 'offline')) {
+      // If user is in AI mode and offline fallback was used, show the interactive modal
+      if (aiMode === 'ai' && (!result || result.source === 'offline')) {
         showAiUnavailableModal(message, result, false);
         return;
       }
@@ -1645,12 +1332,6 @@
     const messagesEl = document.getElementById('chat-widget-messages');
     if (!messagesEl) return;
 
-    if (aiMode === 'ai' && isGeminiQuotaBlocked() && !options.force) {
-      const warning = document.getElementById('gemini-usage-warning');
-      if (warning) warning.classList.remove('hidden');
-      return;
-    }
-
     if (pendingEdit && pendingEdit.type === 'widget' && pendingEdit.widgetWrapper) {
       const wrapperToReplace = pendingEdit.widgetWrapper;
       pendingEdit = null;
@@ -1693,8 +1374,8 @@
     sendToAPI(message, widgetSendOpts).then(result => {
       typing.remove();
 
-      // If user is in AI mode and both AI engines failed, show interactive modal
-      if (aiMode === 'ai' && !isGeminiQuotaBlocked() && (!result || result.source === 'offline')) {
+      // If user is in AI mode and offline fallback was used, show interactive modal
+      if (aiMode === 'ai' && (!result || result.source === 'offline')) {
         showAiUnavailableModal(message, result, true);
         return;
       }
@@ -1781,34 +1462,18 @@
         ...options
       };
 
-      if (isGeminiQuotaBlocked()) payload.mode = 'offline_only';
-
       const data = await apiPost('/chatbot/query', payload);
 
       if (data && data.success) {
-        if (data.data.usageStatus) renderGeminiUsageStatus(data.data.usageStatus);
-        // The backend gate is authoritative when the browser's last poll was stale.
-        if (data.data.reason === 'quota_low') {
-          renderGeminiUsageStatus({
-            ...(geminiUsageStatus || {}),
-            ...(data.data.usageStatus || {}),
-            blocked: true,
-            availability: 'quota_limited',
-            warning: data.data.quotaWarning || 'The verified Gemini quota is at or below 5% remaining.'
-          });
-        }
-        refreshGeminiUsageStatus();
         if (data.data.response) {
           chatHistory.push({ role: 'user', parts: [{ text: message }] });
           chatHistory.push({ role: 'model', parts: [{ text: data.data.response }] });
         }
         return data.data;
       }
-      refreshGeminiUsageStatus();
       return null;
     } catch (err) {
       console.error('[Chatbot] API Error:', err);
-      refreshGeminiUsageStatus();
       return null;
     }
   }
@@ -2723,6 +2388,7 @@
     let inBlockquote = false;
     let blockquoteLines = [];
     let hasGeneratedChart = false;
+    let hasGeneratedOverview = false;
 
     function flushList() {
       if (inList && listItems.length > 0) {
@@ -2735,13 +2401,8 @@
           }
         }
 
-        if (!formatPrefs.list) {
-          // List toggle OFF -> combine into fluent paragraph text
-          blocks.push(`<p class="chat-p">${listItems.map(item => formatInlineMarkdown(item)).join('; ')}.</p>`);
-        } else {
-          const tag = listType === 'ol' ? 'ol' : 'ul';
-          blocks.push(`<${tag} class="chat-list chat-${tag}">${listItems.map(item => `<li class="chat-list-item">${formatInlineMarkdown(item)}</li>`).join('')}</${tag}>`);
-        }
+        const tag = listType === 'ol' ? 'ol' : 'ul';
+        blocks.push(`<${tag} class="chat-list chat-${tag}">${listItems.map(item => `<li class="chat-list-item">${formatInlineMarkdown(item)}</li>`).join('')}</${tag}>`);
         listItems = [];
         inList = false;
       }
@@ -2757,10 +2418,11 @@
 
     function flushTable() {
       if (inTable && tableHeaders.length > 0) {
-        const compOverview = formatPrefs.table ? renderPeriodComparisonOverview(tableHeaders, tableRows) : null;
+        const compOverview = formatPrefs.overview ? renderPeriodComparisonOverview(tableHeaders, tableRows) : null;
         if (compOverview) {
           // Render side-by-side period overview cards directly without generating a duplicate chart
           blocks.push(compOverview);
+          hasGeneratedOverview = true;
         } else {
           // 1. Generate chart strictly ONLY if graph toggle is ON (at most once per response)
           let chartHtml = '';
@@ -2769,17 +2431,15 @@
             if (chartHtml) hasGeneratedChart = true;
           }
 
-          // 2. Render table (or list fallback if table toggle is OFF)
-          if (!formatPrefs.table) {
-            const listHtml = renderTableAsList(tableHeaders, tableRows);
-            blocks.push(chartHtml + listHtml);
+          // 2. Render overview summary box (when overview toggle is ON), table, or list fallback
+          const summaryBox = formatPrefs.overview ? renderSummaryBox(tableHeaders, tableRows) : null;
+          if (summaryBox) {
+            blocks.push(chartHtml + summaryBox);
+            hasGeneratedOverview = true;
+          } else if (!formatPrefs.table) {
+            blocks.push(chartHtml + renderTableAsList(tableHeaders, tableRows));
           } else {
-            const summaryBox = renderSummaryBox(tableHeaders, tableRows);
-            if (summaryBox) {
-              blocks.push(chartHtml + summaryBox);
-            } else {
-              blocks.push(chartHtml + renderDataTable(tableHeaders, tableRows));
-            }
+            blocks.push(chartHtml + renderDataTable(tableHeaders, tableRows));
           }
         }
 
@@ -2908,23 +2568,41 @@
     flushBlockquote();
     flushTable();
 
-    // If graph toggle is ON but no graph could be generated (single scalar metric, empty data, or non-comparative text)
-    if (formatPrefs.graph && !hasGeneratedChart) {
-      const lowerText = text.toLowerCase();
-      const alreadyExplains = lowerText.includes('graph') && (
-        lowerText.includes('not available') || 
-        lowerText.includes('could not') || 
-        lowerText.includes('cannot be') || 
-        lowerText.includes('no graph') ||
-        lowerText.includes('walang graph')
+    // Shared unavailable format notice helper (reuses .chat-no-graph-notice styling)
+    const lowerText = text.toLowerCase();
+    function appendFormatUnavailableNotice(keyword, title, description) {
+      const alreadyExplains = lowerText.includes(keyword) && (
+        lowerText.includes('not available') ||
+        lowerText.includes('could not') ||
+        lowerText.includes('cannot be') ||
+        lowerText.includes(`no ${keyword}`) ||
+        lowerText.includes(`walang ${keyword}`)
       );
       if (!alreadyExplains) {
         blocks.push(`
 <div class="chat-no-graph-notice">
   <i data-lucide="info"></i>
-  <span><strong>Graph Not Available:</strong> A visual chart could not be generated for this inquiry because the response contains only a single metric, summary figure, or non-comparative details without multiple categories or time-series points to plot.</span>
+  <span><strong>${escapeHTML(title)}:</strong> ${escapeHTML(description)}</span>
 </div>`);
       }
+    }
+
+    // If graph toggle is ON but no graph could be generated
+    if (formatPrefs.graph && !hasGeneratedChart) {
+      appendFormatUnavailableNotice(
+        'graph',
+        'Graph Not Available',
+        'A visual chart could not be generated for this inquiry because the response contains only a single metric, summary figure, or non-comparative details without multiple categories or time-series points to plot.'
+      );
+    }
+
+    // If overview toggle is ON but no overview could be generated
+    if (formatPrefs.overview && !hasGeneratedOverview && !/^#{1,6}\s+.*overview/im.test(text)) {
+      appendFormatUnavailableNotice(
+        'overview',
+        'Overview Not Available',
+        'A financial overview could not be generated for this inquiry because the requested data does not contain summary financial figures or period totals to summarize.'
+      );
     }
 
     // Re-insert code blocks

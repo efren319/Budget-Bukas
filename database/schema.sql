@@ -23,6 +23,8 @@ CREATE TABLE users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_users_lower_email ON users (LOWER(email));
+
 -- Function to handle automated updated_at
 CREATE OR REPLACE FUNCTION update_timestamp()
 RETURNS TRIGGER AS $$
@@ -46,10 +48,10 @@ CREATE TABLE transactions (
   type VARCHAR(20) NOT NULL CHECK (type IN ('income', 'expense')),
   amount DECIMAL(12,2) NOT NULL CHECK (amount > 0),
   date DATE NOT NULL,
-  user_id INT NOT NULL,
+  user_id INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_transactions_date ON transactions(date);
@@ -131,7 +133,7 @@ CREATE OR REPLACE FUNCTION audit_insert_fn()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO audit_log (action, table_name, record_id, user_info)
-  VALUES ('INSERT', 'transactions', NEW.id, 'user_id:' || NEW.user_id);
+  VALUES ('INSERT', 'transactions', NEW.id, 'user_id:' || COALESCE(NEW.user_id::TEXT, 'none'));
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -144,7 +146,7 @@ CREATE OR REPLACE FUNCTION audit_update_fn()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO audit_log (action, table_name, record_id, user_info)
-  VALUES ('UPDATE', 'transactions', NEW.id, 'user_id:' || NEW.user_id);
+  VALUES ('UPDATE', 'transactions', NEW.id, 'user_id:' || COALESCE(NEW.user_id::TEXT, 'none'));
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -157,7 +159,7 @@ CREATE OR REPLACE FUNCTION audit_delete_fn()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO audit_log (action, table_name, record_id, user_info)
-  VALUES ('DELETE', 'transactions', OLD.id, 'user_id:' || OLD.user_id);
+  VALUES ('DELETE', 'transactions', OLD.id, 'user_id:' || COALESCE(OLD.user_id::TEXT, 'none'));
   RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;

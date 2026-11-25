@@ -7,29 +7,27 @@
 .landing-ambient-glow {
   position: absolute;
   left: 50%;
-  bottom: -12vh;
-  width: min(1760px, 148vw);
-  height: clamp(500px, 76vh, 820px);
+  bottom: -10vh;
+  width: min(1560px, 136vw);
+  height: clamp(480px, 72vh, 780px);
   z-index: 0;
   pointer-events: none;
   transform: translate3d(-50%, 0, 0);
   will-change: transform, opacity;
-  /* Wide diffused warm gold -> amber bronze -> void atmosphere emerging from bottom center */
   background: radial-gradient(
-    ellipse 58% 72% at 50% 92%,
-    rgba(255, 214, 118, 0.54) 0%,
-    rgba(236, 174, 68, 0.42) 18%,
-    rgba(202, 134, 42, 0.28) 36%,
-    rgba(154, 92, 26, 0.15) 54%,
-    rgba(104, 58, 16, 0.06) 72%,
-    rgba(58, 30, 8, 0.016) 86%,
-    transparent 96%
+    ellipse 58% 76% at 50% 94%,
+    rgba(218, 166, 72, 0.20) 0%,
+    rgba(196, 140, 54, 0.16) 18%,
+    rgba(164, 108, 38, 0.11) 36%,
+    rgba(122, 74, 24, 0.058) 54%,
+    rgba(78, 44, 14, 0.022) 70%,
+    rgba(42, 22, 8, 0.006) 82%,
+    transparent 92%
   );
-  animation: landingGlowBreathe 14s ease-in-out infinite;
+  animation: landingGlowBreathe 12s ease-in-out infinite;
   transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Inner golden light core that gently shifts upward, downward, and widens out of phase */
 .landing-ambient-glow::before {
   content: '';
   position: absolute;
@@ -37,38 +35,34 @@
   pointer-events: none;
   will-change: transform, opacity;
   background: radial-gradient(
-    ellipse 44% 66% at 50% 96%,
-    rgba(255, 228, 152, 0.42) 0%,
-    rgba(238, 178, 76, 0.26) 26%,
-    rgba(182, 116, 38, 0.11) 50%,
-    rgba(112, 64, 18, 0.03) 72%,
-    transparent 88%
+    ellipse 40% 68% at 50% 98%,
+    rgba(242, 206, 126, 0.16) 0%,
+    rgba(218, 166, 72, 0.11) 24%,
+    rgba(176, 118, 44, 0.055) 48%,
+    rgba(118, 72, 24, 0.018) 68%,
+    transparent 84%
   );
-  animation: landingGlowInnerShift 18s ease-in-out -5s infinite;
+  animation: landingGlowInnerShift 15s ease-in-out -4s infinite;
 }
 
 @keyframes landingGlowBreathe {
   0%, 100% {
-    transform: translate3d(-50%, 24px, 0) scale(0.95, 0.90);
-    opacity: 0.74;
+    transform: translate3d(-50%, 10px, 0) scale(0.97, 0.94);
+    opacity: 0.72;
   }
   50% {
-    transform: translate3d(-50%, -26px, 0) scale(1.06, 1.12);
+    transform: translate3d(-50%, -16px, 0) scale(1.03, 1.06);
     opacity: 1;
   }
 }
 
 @keyframes landingGlowInnerShift {
   0%, 100% {
-    transform: translate3d(-1.5%, 22px, 0) scale(0.93, 0.90);
-    opacity: 0.68;
+    transform: translate3d(0, 10px, 0) scale(0.96, 0.93);
+    opacity: 0.65;
   }
-  35% {
-    transform: translate3d(1.5%, -14px, 0) scale(1.05, 1.07);
-    opacity: 0.94;
-  }
-  65% {
-    transform: translate3d(-0.8%, -24px, 0) scale(1.08, 1.10);
+  50% {
+    transform: translate3d(0, -14px, 0) scale(1.04, 1.07);
     opacity: 1;
   }
 }
@@ -82,30 +76,32 @@
   animation-play-state: paused;
 }
 
-html.performance-mode .landing-ambient-glow {
+html.performance-mode .landing-ambient-glow,
+html.adaptive-low-gpu .landing-ambient-glow {
   animation: none !important;
   will-change: auto;
   transform: translate3d(-50%, 0, 0) !important;
-  opacity: 0.72;
+  opacity: 0.78;
 }
 
-html.performance-mode .landing-ambient-glow::before {
+html.performance-mode .landing-ambient-glow::before,
+html.adaptive-low-gpu .landing-ambient-glow::before {
   animation: none !important;
   will-change: auto;
   transform: none !important;
-  opacity: 0.65;
+  opacity: 0.70;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .landing-ambient-glow {
     animation: none !important;
     transform: translate3d(-50%, 0, 0) !important;
-    opacity: 0.72;
+    opacity: 0.78;
   }
   .landing-ambient-glow::before {
     animation: none !important;
     transform: none !important;
-    opacity: 0.65;
+    opacity: 0.70;
   }
 }
 

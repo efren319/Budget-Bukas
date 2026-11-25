@@ -2,7 +2,6 @@
 // Auth Controller
 // Handles registration, login, and profile
 // ============================================
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
@@ -20,12 +19,15 @@ const upload = multer({
   }
 });
 
-// Auto-migrate: add avatar_data and avatar_mime columns if missing
+const { hashPassword, verifyPassword, needsRehash } = require('../utils/password');
+
+// Auto-migrate: add avatar_data/avatar_mime columns and case-insensitive email index if missing
 async function migrateAvatarColumns() {
   try {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_data TEXT`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime VARCHAR(100)`);
-    console.log('✅ Avatar DB columns ready (avatar_data, avatar_mime)');
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_lower_email ON users (LOWER(email))`);
+    console.log('✅ Avatar DB columns & email index ready');
   } catch (e) {
     console.warn('Avatar migration note:', e.message);
   }
@@ -68,9 +70,10 @@ async function login(req, res) {
       });
     }
 
-    console.time('login-query');
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    console.timeEnd('login-query');
+    const [users] = await pool.query(
+      'SELECT id, name, email, password, role, position, avatar_url, must_change_password, is_active FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1',
+      [email.trim()]
+    );
 
     if (users.length === 0) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
@@ -83,10 +86,13 @@ async function login(req, res) {
       return res.status(403).json({ success: false, message: 'Account is deactivated. Contact administrator.' });
     }
 
-    // Verify password
-    console.time('login-bcrypt');
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.timeEnd('login-bcrypt');
+    // Verify password (supports native scrypt and legacy bcrypt hashes)
+    const isMatch = await verifyPassword(password, user.password);
+    if (isMatch && needsRehash(user.password)) {
+      hashPassword(password)
+        .then((newHash) => pool.query('UPDATE users SET password = ? WHERE id = ?', [newHash, user.id]))
+        .catch((err) => console.warn('Password rehash skipped:', err.message));
+    }
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
@@ -134,7 +140,7 @@ async function forceChangePassword(req, res) {
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await hashPassword(newPassword);
     
     // Update password and must_change_password flag
     await pool.query(
@@ -196,13 +202,13 @@ async function changePassword(req, res) {
 
     // Verify current password
     const [users] = await pool.query('SELECT password FROM users WHERE id = ?', [req.user.id]);
-    const isMatch = await bcrypt.compare(currentPassword, users[0].password);
+    const isMatch = await verifyPassword(currentPassword, users[0].password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await hashPassword(newPassword);
     await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, req.user.id]);
 
     res.json({ success: true, message: 'Password changed successfully.' });
@@ -222,7 +228,7 @@ async function forceChangePassword(req, res) {
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await hashPassword(newPassword);
     
     // Update password and must_change_password flag
     await pool.query(

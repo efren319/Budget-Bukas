@@ -39,6 +39,10 @@
   </script>
   <script src="js/performance-manager.js"></script>
 
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js">
+  <link rel="preload" href="assets/3d%20models/20%20pesos.glb" as="fetch" crossorigin media="(min-width: 900px)">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -132,34 +136,11 @@
             <span class="breadcrumb-current" id="breadcrumb-current">Dashboard</span>
           </div>
         </div>
-        <div class="topbar-center">
-          <div class="search-bar">
-            <i data-lucide="search"></i>
-            <input type="text" placeholder="Search transactions..." id="global-search">
-          </div>
-        </div>
         <div class="topbar-right">
           <!-- Performance Mode Toggle -->
           <button type="button" class="topbar-action-btn perf-toggle-btn" id="perf-toggle-btn" role="switch" aria-checked="false" aria-label="Performance Mode">
             <i data-lucide="gauge" class="perf-toggle-icon"></i>
           </button>
-
-          <div class="notification-wrapper" id="notification-wrapper">
-            <button class="topbar-action-btn notification-btn" id="notification-btn" aria-label="Notifications">
-              <i data-lucide="bell"></i>
-              <span class="notification-badge" id="notification-badge">3</span>
-            </button>
-            <div class="notification-panel panel-hidden" id="notification-panel">
-              <div class="notification-panel-header">
-                <h4>Notifications</h4>
-                <button class="notification-clear-btn" id="notification-clear-btn">Clear all</button>
-              </div>
-              <div class="notification-list" id="notification-list">
-                <!-- Notifications rendered by JS -->
-              </div>
-            </div>
-          </div>
-
 
           <div class="topbar-user loading-state" id="topbar-user-container">
             <div class="topbar-user-info">
@@ -335,7 +316,6 @@
               <svg class="analysis-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
               <h4>Analysis</h4>
             </div>
-            <a href="#" class="analysis-view-details" id="analysis-view-details">View Details</a>
           </div>
 
           <div class="analysis-metrics" id="analysis-metrics">
@@ -705,8 +685,8 @@
                       <span id="tx-source-display">Select Source</span>
                       <i data-lucide="chevron-down"></i>
                     </div>
-                    <div class="dropdown-menu" style="max-height: 220px; overflow-y: auto;">
-                      <div class="dropdown-options">
+                    <div class="dropdown-menu">
+                      <div class="dropdown-options" style="max-height: 220px;">
                         <div class="dropdown-item" data-value="Membership Fee">Membership Fee</div>
                         <div class="dropdown-item" data-value="Sponsorship">Sponsorship</div>
                         <div class="dropdown-item" data-value="Donation">Donation</div>
@@ -726,8 +706,8 @@
                       <span id="tx-category-display">Select Category</span>
                       <i data-lucide="chevron-down"></i>
                     </div>
-                    <div class="dropdown-menu" style="max-height: 220px; overflow-y: auto;">
-                      <div class="dropdown-options">
+                    <div class="dropdown-menu">
+                      <div class="dropdown-options" style="max-height: 220px;">
                         <div class="dropdown-item" data-value="Food & Beverages">Food & Beverages</div>
                         <div class="dropdown-item" data-value="Transportation">Transportation</div>
                         <div class="dropdown-item" data-value="Supplies">Supplies</div>
@@ -736,6 +716,7 @@
                         <div class="dropdown-item" data-value="Equipment">Equipment</div>
                         <div class="dropdown-item" data-value="Venue">Venue</div>
                         <div class="dropdown-item" data-value="Miscellaneous">Miscellaneous</div>
+                        <div class="dropdown-item" data-value="__custom__">Other (Custom Category)...</div>
                       </div>
                     </div>
                     <input type="hidden" id="tx-category">
@@ -744,6 +725,11 @@
                   <!-- Custom Source Input (revealed if user chooses Custom Source) -->
                   <div id="tx-source-custom-wrap" class="hidden" style="margin-top: 8px;">
                     <input type="text" id="tx-source-custom" class="tx-input-field" placeholder="Type custom income source..." style="height: 40px; font-size: 0.82rem;">
+                  </div>
+
+                  <!-- Custom Category Input (revealed if user chooses Custom Category) -->
+                  <div id="tx-category-custom-wrap" class="hidden" style="margin-top: 8px;">
+                    <input type="text" id="tx-category-custom" class="tx-input-field" placeholder="Type custom expense category..." style="height: 40px; font-size: 0.82rem;">
                   </div>
                 </div>
 
@@ -856,56 +842,59 @@
                 <input type="hidden" id="filter-type">
               </div>
 
-              <!-- Custom Date Range Picker Dropdown -->
-              <div class="custom-dropdown" id="date-range-picker-dropdown" style="width: 290px; position: relative;">
+              <!-- Custom Date Range Picker Dropdown (matches Financial Date Filter layout & function) -->
+              <div class="custom-dropdown rec-date-dropdown" id="date-range-picker-dropdown" style="width: 290px; position: relative;">
                 <div class="dropdown-trigger" id="date-range-trigger" style="padding: 10px 16px; font-size: 0.85rem; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
                   <span id="date-range-display">Select Date Range</span>
-                  <i data-lucide="calendar" style="width: 16px; height: 16px; color: #fff;"></i>
+                  <i data-lucide="calendar" class="rec-date-icon" style="width: 16px; height: 16px; color: #fff;"></i>
                 </div>
                 
-                <!-- Date Picker Panel (Side-by-side Dual Calendar) -->
-                <div class="dropdown-menu" id="date-range-panel" style="width: 520px; padding: 18px; display: none; flex-direction: column; gap: var(--space-md); background: rgba(18, 18, 18, 0.96); backdrop-filter: blur(30px); border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg), 0 0 20px rgba(212, 175, 55, 0.06); position: absolute; top: calc(100% + 8px); left: 0; z-index: 10000; pointer-events: auto;">
-                  <!-- Two Calendars Side-by-Side -->
-                  <div style="display: flex; gap: var(--space-lg); justify-content: space-between;">
-                    
-                    <!-- Left Calendar: Start Date -->
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
-                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                        <button type="button" class="btn-icon" id="cal-start-prev" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i></button>
-                        <span id="cal-start-month-year" style="font-weight: 600; font-size: 0.85rem; color: var(--gold-light);">—</span>
-                        <button type="button" class="btn-icon" id="cal-start-next" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i></button>
-                      </div>
-                      
-                      <div class="calendar-grid" id="cal-start-grid">
-                        <!-- Rendered by JS -->
-                      </div>
+                <!-- Date Picker Panel -->
+                <div class="dropdown-menu rec-date-panel" id="date-range-panel">
+                  <!-- Start Date & End Date Selectors -->
+                  <div class="fin-date-selectors-row">
+                    <div class="fin-date-selector-group">
+                      <span class="fin-date-label">Start</span>
+                      <button type="button" class="fin-date-btn active" id="rec-cal-start-btn" aria-label="Edit Start Date">
+                        <span id="rec-cal-start-display">Select date</span>
+                      </button>
                     </div>
-
-                    <!-- Right Calendar: End Date -->
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
-                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                        <button type="button" class="btn-icon" id="cal-end-prev" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i></button>
-                        <span id="cal-end-month-year" style="font-weight: 600; font-size: 0.85rem; color: var(--gold-light);">—</span>
-                        <button type="button" class="btn-icon" id="cal-end-next" style="width: 28px; height: 28px; border-radius: 50%;"><i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i></button>
-                      </div>
-                      
-                      <div class="calendar-grid" id="cal-end-grid">
-                        <!-- Rendered by JS -->
-                      </div>
+                    <div class="fin-date-arrow">→</div>
+                    <div class="fin-date-selector-group">
+                      <span class="fin-date-label">End</span>
+                      <button type="button" class="fin-date-btn" id="rec-cal-end-btn" aria-label="Edit End Date">
+                        <span id="rec-cal-end-display">Select date</span>
+                      </button>
                     </div>
                   </div>
 
-                  <!-- Footer / Status Info -->
-                  <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: 6px;">
-                    <div style="display: flex; flex-direction: column; gap: 2px; text-align: left;">
-                      <span id="date-range-days-count" style="font-size: 0.78rem; font-weight: 600; color: var(--gold);">No range selected</span>
-                      <span id="date-range-details" style="font-size: 0.72rem; color: var(--text-muted);">—</span>
+                  <!-- Interactive Calendar Widget -->
+                  <div class="fin-cal-widget" id="rec-cal-widget">
+                    <div class="fin-cal-header-nav">
+                      <button type="button" class="fin-cal-nav-arrow" id="rec-cal-prev-month" title="Previous Month" aria-label="Previous Month">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                      </button>
+                      <span class="fin-cal-title-nav" id="rec-cal-month-year">November 2026</span>
+                      <button type="button" class="fin-cal-nav-arrow" id="rec-cal-next-month" title="Next Month" aria-label="Next Month">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                      <button type="button" class="btn btn-secondary btn-sm" id="cal-btn-clear" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; height: 32px; background: rgba(255, 85, 85, 0.08); color: #ff5555; border: 1px solid rgba(255, 85, 85, 0.2);">Clear</button>
-                      <button type="button" class="btn btn-secondary btn-sm" id="cal-btn-cancel" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; height: 32px;">Cancel</button>
-                      <button type="button" class="btn btn-primary btn-sm" id="cal-btn-save" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; height: 32px;">Save</button>
+
+                    <div class="fin-cal-weekdays">
+                      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
                     </div>
+
+                    <div class="fin-cal-grid" id="rec-cal-grid">
+                      <!-- Rendered dynamically by JS -->
+                    </div>
+                  </div>
+
+                  <!-- Footer: Status + Clean Reset Button -->
+                  <div class="rec-date-footer">
+                    <span class="rec-date-status" id="rec-date-range-status">All dates</span>
+                    <button type="button" class="date-filter-reset-btn" id="rec-cal-reset-btn" title="Reset Date Range" aria-label="Reset Date Range">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </button>
                   </div>
                 </div>
 
@@ -914,13 +903,10 @@
                 <input type="hidden" id="filter-end">
               </div>
 
-              <div class="search-bar" style="max-width: 260px; width: 100%; margin: 0; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; height: 42px; display: flex; align-items: center; padding: 0 14px;">
+              <div class="search-bar" style="max-width: 320px; width: 100%; margin: 0; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; height: 42px; display: flex; align-items: center; padding: 0 14px;">
                 <i data-lucide="search" style="width: 16px; height: 16px; color: var(--text-muted); margin-right: 8px;"></i>
-                <input type="text" id="filter-search" placeholder="Search records..." style="background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 0.85rem; width: 100%;">
+                <input type="text" id="filter-search" placeholder="Search category, description, amount..." style="background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 0.85rem; width: 100%;">
               </div>
-              <button class="btn btn-secondary btn-sm" id="btn-apply-filters">
-                <i data-lucide="filter"></i> Filter
-              </button>
             </div>
           </div>
 
@@ -978,134 +964,6 @@
         <!-- ========== CHATBOT PAGE (ChatGPT-Style) ========== -->
         <section class="page page-chatbot" id="page-chatbot">
           <div class="ai-chat-wrapper" id="ai-chat-wrapper">
-            <!-- Floating Gemini AI Usage Indicator -->
-            <div class="gemini-usage-floating-container" id="gemini-usage-indicator">
-              <!-- Floating Usage Panel -->
-              <div class="gemini-usage-panel open" id="gemini-usage-panel" role="region" aria-label="Gemini AI Usage Panel">
-                <!-- Header -->
-                <div class="gemini-usage-header">
-                  <div class="gemini-usage-header-left">
-                    <svg class="gemini-sparkle-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z"/>
-                    </svg>
-                    <span class="gemini-usage-title">Gemini AI Usage</span>
-                  </div>
-                  <div class="gemini-usage-header-right">
-                    <span class="gemini-status-dot" id="gemini-status-dot"></span>
-                    <span class="gemini-status-text" id="gemini-status-text">Live</span>
-                  </div>
-                </div>
-
-                <!-- Usage Visualization -->
-                <div class="gemini-usage-viz">
-                  <!-- Circular Progress Donut on Left -->
-                  <div class="gemini-donut-wrap">
-                    <svg class="gemini-donut-svg" viewBox="0 0 96 96" width="96" height="96">
-                      <circle class="gemini-donut-track" cx="48" cy="48" r="39" />
-                      <circle class="gemini-donut-fill" id="gemini-donut-progress" cx="48" cy="48" r="39" />
-                    </svg>
-                    <div class="gemini-donut-content">
-                      <span class="gemini-donut-pct" id="gemini-usage-percent">—</span>
-                      <span class="gemini-donut-label">Used</span>
-                    </div>
-                  </div>
-
-                  <!-- Right Column: Remaining & Horizontal Progress Bar -->
-                  <div class="gemini-viz-right">
-                    <div class="gemini-remaining-label" id="gemini-usage-remaining">Unavailable</div>
-                    <div class="gemini-bar-track">
-                      <div class="gemini-bar-fill" id="gemini-usage-bar"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Subtle Divider -->
-                <div class="gemini-divider"></div>
-
-                <!-- Information Section -->
-                <div class="gemini-info-rows">
-                  <!-- Model Row -->
-                  <div class="gemini-info-row">
-                    <div class="gemini-info-label-group">
-                      <span class="gemini-info-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24">
-                          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.27 21.36 7.35 24 12 24z"/>
-                          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.27 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                        </svg>
-                      </span>
-                      <span class="gemini-row-label">Model</span>
-                    </div>
-                    <span class="gemini-row-value" id="gemini-usage-model">gemini-2.5-flash</span>
-                  </div>
-
-                  <!-- Usage Row -->
-                  <div class="gemini-info-row">
-                    <div class="gemini-info-label-group">
-                      <span class="gemini-info-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="#9CA3AF">
-                          <rect x="3" y="12" width="4" height="9" rx="1"/>
-                          <rect x="10" y="7" width="4" height="14" rx="1"/>
-                          <rect x="17" y="3" width="4" height="18" rx="1"/>
-                        </svg>
-                      </span>
-                      <span class="gemini-row-label">Usage</span>
-                    </div>
-                    <span class="gemini-row-value" id="gemini-usage-count">Unavailable</span>
-                  </div>
-
-                  <!-- Resets Row -->
-                  <div class="gemini-info-row">
-                    <div class="gemini-info-label-group">
-                      <span class="gemini-info-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                          <line x1="16" y1="2" x2="16" y2="6"/>
-                          <line x1="8" y1="2" x2="8" y2="6"/>
-                          <line x1="3" y1="10" x2="21" y2="10"/>
-                          <circle cx="8" cy="14" r="1" fill="#9CA3AF"/>
-                          <circle cx="12" cy="14" r="1" fill="#9CA3AF"/>
-                          <circle cx="16" cy="14" r="1" fill="#9CA3AF"/>
-                          <circle cx="8" cy="18" r="1" fill="#9CA3AF"/>
-                          <circle cx="12" cy="18" r="1" fill="#9CA3AF"/>
-                        </svg>
-                      </span>
-                      <span class="gemini-row-label">Resets</span>
-                    </div>
-                    <span class="gemini-row-value" id="gemini-usage-reset">Unavailable</span>
-                  </div>
-                </div>
-
-                <!-- Subtle Divider -->
-                <div class="gemini-divider"></div>
-
-                <!-- Availability Section -->
-                <div class="gemini-availability-row">
-                  <span class="gemini-avail-icon" id="gemini-avail-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" fill="#22C55E"/>
-                      <path d="M8 12.5L10.5 15L16 9.5" stroke="#121212" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </span>
-                  <span class="gemini-avail-text" id="gemini-usage-status">AI is available</span>
-                </div>
-
-                <!-- Hidden Diagnostics Elements (retained for backward compatibility) -->
-                <div class="hidden" id="gemini-usage-limit"></div>
-                <div class="hidden" id="gemini-usage-metrics"></div>
-                <p class="hidden" id="gemini-usage-source"></p>
-              </div>
-
-              <!-- Floating Circular Gemini Button (Bottom-Right) -->
-              <button class="gemini-floating-fab" id="gemini-usage-trigger" type="button" aria-label="Toggle Gemini AI Usage" aria-expanded="true" title="Gemini AI Usage">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z"/>
-                </svg>
-              </button>
-            </div>
-            <div class="ai-gemini-warning hidden" id="gemini-usage-warning" role="status" aria-live="polite"></div>
-
             <!-- EMPTY STATE (shown before first message) -->
             <div class="ai-empty-state" id="ai-empty-state">
               <div class="ai-empty-icon">
@@ -1133,8 +991,8 @@
                       <span class="ai-format-slider"></span>
                     </label>
                     <label class="ai-format-option">
-                      <span class="ai-format-option-info"><i data-lucide="list"></i> List</span>
-                      <input type="checkbox" class="ai-format-check" data-format="list" checked>
+                      <span class="ai-format-option-info"><i data-lucide="layout-dashboard"></i> Overview</span>
+                      <input type="checkbox" class="ai-format-check" data-format="overview" checked>
                       <span class="ai-format-slider"></span>
                     </label>
                   </div>
@@ -1204,8 +1062,8 @@
                       <span class="ai-format-slider"></span>
                     </label>
                     <label class="ai-format-option">
-                      <span class="ai-format-option-info"><i data-lucide="list"></i> List</span>
-                      <input type="checkbox" class="ai-format-check" data-format="list" checked>
+                      <span class="ai-format-option-info"><i data-lucide="layout-dashboard"></i> Overview</span>
+                      <input type="checkbox" class="ai-format-check" data-format="overview" checked>
                       <span class="ai-format-slider"></span>
                     </label>
                   </div>
@@ -1426,8 +1284,8 @@
             <span class="ai-format-slider"></span>
           </label>
           <label class="ai-format-option">
-            <span class="ai-format-option-info"><i data-lucide="list"></i> List</span>
-            <input type="checkbox" class="ai-format-check" data-format="list" checked>
+            <span class="ai-format-option-info"><i data-lucide="layout-dashboard"></i> Overview</span>
+            <input type="checkbox" class="ai-format-check" data-format="overview" checked>
             <span class="ai-format-slider"></span>
           </label>
         </div>

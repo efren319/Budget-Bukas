@@ -26,47 +26,23 @@ function initTransactionForm() {
     });
   });
 
-  // Source custom dropdown selection logic
-  const sourceItems = document.querySelectorAll('#tx-source-dropdown .dropdown-item');
-  const sourceHidden = document.getElementById('tx-source');
-  const sourceDisplay = document.getElementById('tx-source-display');
-  const sourceCustomWrap = document.getElementById('tx-source-custom-wrap');
-  const sourceCustomInput = document.getElementById('tx-source-custom');
-
-  sourceItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const val = item.dataset.value;
-      if (val === '__custom__') {
-        if (sourceCustomWrap) sourceCustomWrap.classList.remove('hidden');
-        if (sourceCustomInput) {
-          sourceCustomInput.focus();
-          if (sourceHidden) sourceHidden.value = sourceCustomInput.value.trim();
-        }
-        if (sourceDisplay) sourceDisplay.textContent = 'Custom Source';
-      } else {
-        if (sourceCustomWrap) sourceCustomWrap.classList.add('hidden');
-        if (sourceHidden) sourceHidden.value = val;
-        if (sourceDisplay) sourceDisplay.textContent = item.textContent.trim();
-      }
-    });
+  // Source & Category custom dropdown selection logic (both support "Other")
+  bindCustomSelectWithOther({
+    dropdownId: 'tx-source-dropdown',
+    hiddenId: 'tx-source',
+    displayId: 'tx-source-display',
+    customWrapId: 'tx-source-custom-wrap',
+    customInputId: 'tx-source-custom',
+    customLabel: 'Custom Source'
   });
 
-  if (sourceCustomInput) {
-    sourceCustomInput.addEventListener('input', (e) => {
-      if (sourceHidden) sourceHidden.value = e.target.value.trim();
-    });
-  }
-
-  // Category custom dropdown selection logic
-  const catItems = document.querySelectorAll('#tx-category-dropdown .dropdown-item');
-  const catHidden = document.getElementById('tx-category');
-  const catDisplay = document.getElementById('tx-category-display');
-  catItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const val = item.dataset.value;
-      if (catHidden) catHidden.value = val;
-      if (catDisplay) catDisplay.textContent = item.textContent.trim();
-    });
+  bindCustomSelectWithOther({
+    dropdownId: 'tx-category-dropdown',
+    hiddenId: 'tx-category',
+    displayId: 'tx-category-display',
+    customWrapId: 'tx-category-custom-wrap',
+    customInputId: 'tx-category-custom',
+    customLabel: 'Custom Category'
   });
 
   // Amount card click focus helper
@@ -109,6 +85,79 @@ function initTransactionForm() {
   initReceiptUpload();
 }
 
+function bindCustomSelectWithOther({ dropdownId, hiddenId, displayId, customWrapId, customInputId, customLabel }) {
+  const items = document.querySelectorAll(`#${dropdownId} .dropdown-item`);
+  const hiddenInput = document.getElementById(hiddenId);
+  const displayEl = document.getElementById(displayId);
+  const customWrap = document.getElementById(customWrapId);
+  const customInput = document.getElementById(customInputId);
+
+  items.forEach(item => {
+    item.addEventListener('click', () => {
+      const val = item.dataset.value;
+      if (val === '__custom__') {
+        if (customWrap) customWrap.classList.remove('hidden');
+        if (customInput) {
+          customInput.focus();
+          if (hiddenInput) hiddenInput.value = customInput.value.trim();
+        }
+        if (displayEl) displayEl.textContent = customLabel;
+      } else {
+        if (customWrap) customWrap.classList.add('hidden');
+        if (hiddenInput) hiddenInput.value = val;
+        if (displayEl) displayEl.textContent = item.textContent.trim();
+      }
+    });
+  });
+
+  if (customInput) {
+    customInput.addEventListener('input', (e) => {
+      if (hiddenInput) hiddenInput.value = e.target.value.trim();
+    });
+  }
+}
+
+function setCustomSelectWithOtherValue({ dropdownId, hiddenId, displayId, customWrapId, customInputId, customLabel, defaultDisplay, value }) {
+  const hiddenInput = document.getElementById(hiddenId);
+  const displayEl = document.getElementById(displayId);
+  const customWrap = document.getElementById(customWrapId);
+  const customInput = document.getElementById(customInputId);
+  const items = document.querySelectorAll(`#${dropdownId} .dropdown-item`);
+
+  if (!value) {
+    items.forEach(item => item.classList.remove('selected'));
+    if (hiddenInput) hiddenInput.value = '';
+    if (displayEl) displayEl.textContent = defaultDisplay;
+    if (customWrap) customWrap.classList.add('hidden');
+    if (customInput) customInput.value = '';
+    return;
+  }
+
+  let matched = false;
+  items.forEach(item => {
+    if (item.dataset.value === value && value !== '__custom__') {
+      matched = true;
+      item.classList.add('selected');
+    } else {
+      item.classList.remove('selected');
+    }
+  });
+
+  if (hiddenInput) hiddenInput.value = value;
+
+  if (matched) {
+    if (displayEl) displayEl.textContent = value;
+    if (customWrap) customWrap.classList.add('hidden');
+    if (customInput) customInput.value = '';
+  } else {
+    const customOption = document.querySelector(`#${dropdownId} .dropdown-item[data-value="__custom__"]`);
+    if (customOption) customOption.classList.add('selected');
+    if (displayEl) displayEl.textContent = customLabel;
+    if (customWrap) customWrap.classList.remove('hidden');
+    if (customInput) customInput.value = value;
+  }
+}
+
 function toggleTypeFields(type) {
   const switchWrap = document.getElementById('tx-type-switch');
   if (switchWrap) switchWrap.dataset.active = type;
@@ -119,6 +168,7 @@ function toggleTypeFields(type) {
   const srcDropdown = document.getElementById('tx-source-dropdown');
   const catDropdown = document.getElementById('tx-category-dropdown');
   const customSrcWrap = document.getElementById('tx-source-custom-wrap');
+  const customCatWrap = document.getElementById('tx-category-custom-wrap');
   const expenseOnly = document.getElementById('expense-only-fields');
 
   if (type === 'income') {
@@ -127,6 +177,10 @@ function toggleTypeFields(type) {
     if (label) label.textContent = 'Source';
     if (srcDropdown) srcDropdown.classList.remove('hidden');
     if (catDropdown) catDropdown.classList.add('hidden');
+    if (customCatWrap) customCatWrap.classList.add('hidden');
+    if (customSrcWrap && srcDropdown?.querySelector('.dropdown-item[data-value="__custom__"]')?.classList.contains('selected')) {
+      customSrcWrap.classList.remove('hidden');
+    }
     if (expenseOnly) expenseOnly.classList.add('collapsed');
   } else {
     if (expenseBtn) expenseBtn.classList.add('active');
@@ -135,6 +189,9 @@ function toggleTypeFields(type) {
     if (catDropdown) catDropdown.classList.remove('hidden');
     if (srcDropdown) srcDropdown.classList.add('hidden');
     if (customSrcWrap) customSrcWrap.classList.add('hidden');
+    if (customCatWrap && catDropdown?.querySelector('.dropdown-item[data-value="__custom__"]')?.classList.contains('selected')) {
+      customCatWrap.classList.remove('hidden');
+    }
     if (expenseOnly) expenseOnly.classList.remove('collapsed');
   }
 
@@ -173,7 +230,9 @@ async function handleTransactionSubmit(e) {
   if (type === 'income') {
     const sourceHidden = document.getElementById('tx-source');
     const customInput = document.getElementById('tx-source-custom');
-    const srcVal = (sourceHidden && sourceHidden.value) ? sourceHidden.value.trim() : (customInput ? customInput.value.trim() : '');
+    const srcVal = (sourceHidden && sourceHidden.value && sourceHidden.value !== '__custom__')
+      ? sourceHidden.value.trim()
+      : (customInput ? customInput.value.trim() : '');
     if (!srcVal) {
       showToast('Please select or enter the income source', 'error');
       return;
@@ -181,9 +240,12 @@ async function handleTransactionSubmit(e) {
     payload.source = srcVal;
   } else {
     const catHidden = document.getElementById('tx-category');
-    const catVal = catHidden ? catHidden.value.trim() : '';
+    const customCatInput = document.getElementById('tx-category-custom');
+    const catVal = (catHidden && catHidden.value && catHidden.value !== '__custom__')
+      ? catHidden.value.trim()
+      : (customCatInput ? customCatInput.value.trim() : '');
     if (!catVal) {
-      showToast('Please select an expense category', 'error');
+      showToast('Please select or enter an expense category', 'error');
       return;
     }
     payload.category = catVal;
@@ -267,22 +329,28 @@ function resetTransactionForm() {
   }
 
   // Reset custom category dropdown
-  setCustomDropdownValue('tx-category-dropdown', '');
-  const catDisplay = document.getElementById('tx-category-display');
-  if (catDisplay) catDisplay.textContent = 'Select Category';
-  const catHidden = document.getElementById('tx-category');
-  if (catHidden) catHidden.value = '';
+  setCustomSelectWithOtherValue({
+    dropdownId: 'tx-category-dropdown',
+    hiddenId: 'tx-category',
+    displayId: 'tx-category-display',
+    customWrapId: 'tx-category-custom-wrap',
+    customInputId: 'tx-category-custom',
+    customLabel: 'Custom Category',
+    defaultDisplay: 'Select Category',
+    value: ''
+  });
 
   // Reset custom source dropdown
-  setCustomDropdownValue('tx-source-dropdown', '');
-  const srcDisplay = document.getElementById('tx-source-display');
-  if (srcDisplay) srcDisplay.textContent = 'Select Source';
-  const srcHidden = document.getElementById('tx-source');
-  if (srcHidden) srcHidden.value = '';
-  const customSrcWrap = document.getElementById('tx-source-custom-wrap');
-  if (customSrcWrap) customSrcWrap.classList.add('hidden');
-  const customSrcInput = document.getElementById('tx-source-custom');
-  if (customSrcInput) customSrcInput.value = '';
+  setCustomSelectWithOtherValue({
+    dropdownId: 'tx-source-dropdown',
+    hiddenId: 'tx-source',
+    displayId: 'tx-source-display',
+    customWrapId: 'tx-source-custom-wrap',
+    customInputId: 'tx-source-custom',
+    customLabel: 'Custom Source',
+    defaultDisplay: 'Select Source',
+    value: ''
+  });
 
   // Reset receipt attachment bar
   const fileInput = document.getElementById('receipt-file');
@@ -326,35 +394,27 @@ function editTransaction(id) {
     }
 
     if (tx.type === 'income') {
-      const srcHidden = document.getElementById('tx-source');
-      if (srcHidden) srcHidden.value = tx.source || '';
-      const srcDisplay = document.getElementById('tx-source-display');
-      
-      let matched = false;
-      document.querySelectorAll('#tx-source-dropdown .dropdown-item').forEach(item => {
-        if (item.dataset.value === tx.source) {
-          matched = true;
-          item.classList.add('selected');
-        } else {
-          item.classList.remove('selected');
-        }
+      setCustomSelectWithOtherValue({
+        dropdownId: 'tx-source-dropdown',
+        hiddenId: 'tx-source',
+        displayId: 'tx-source-display',
+        customWrapId: 'tx-source-custom-wrap',
+        customInputId: 'tx-source-custom',
+        customLabel: 'Custom Source',
+        defaultDisplay: 'Select Source',
+        value: tx.source || ''
       });
-
-      if (matched) {
-        if (srcDisplay) srcDisplay.textContent = tx.source;
-        const customWrap = document.getElementById('tx-source-custom-wrap');
-        if (customWrap) customWrap.classList.add('hidden');
-      } else if (tx.source) {
-        if (srcDisplay) srcDisplay.textContent = 'Custom Source';
-        const customWrap = document.getElementById('tx-source-custom-wrap');
-        if (customWrap) customWrap.classList.remove('hidden');
-        const customInput = document.getElementById('tx-source-custom');
-        if (customInput) customInput.value = tx.source;
-      }
     } else {
-      setCustomDropdownValue('tx-category-dropdown', tx.category || '');
-      const catDisplay = document.getElementById('tx-category-display');
-      if (catDisplay && tx.category) catDisplay.textContent = tx.category;
+      setCustomSelectWithOtherValue({
+        dropdownId: 'tx-category-dropdown',
+        hiddenId: 'tx-category',
+        displayId: 'tx-category-display',
+        customWrapId: 'tx-category-custom-wrap',
+        customInputId: 'tx-category-custom',
+        customLabel: 'Custom Category',
+        defaultDisplay: 'Select Category',
+        value: tx.category || ''
+      });
       const descInput = document.getElementById('tx-description');
       if (descInput) descInput.value = tx.description || '';
     }
@@ -457,14 +517,35 @@ function initReceiptUpload() {
 // =============================================
 // RECORDS TABLE
 // =============================================
+let currentRecordsSort = 'date';
+let currentRecordsOrder = 'desc';
+let recordsRequestSeq = 0;
+
 function initRecords() {
   // Initialize Custom Date Range Picker dropdown
   initDateRangePicker();
 
-  // Apply filters button
-  const applyBtn = document.getElementById('btn-apply-filters');
-  if (applyBtn) {
-    applyBtn.addEventListener('click', () => loadRecords(1));
+  // Instant filter on Type dropdown change
+  const typeFilterInput = document.getElementById('filter-type');
+  if (typeFilterInput) {
+    typeFilterInput.addEventListener('change', () => loadRecords(1));
+  }
+
+  // Live debounced search + immediate Enter search
+  const searchInput = document.getElementById('filter-search');
+  if (searchInput) {
+    let searchDebounce = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => loadRecords(1), 300);
+    });
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(searchDebounce);
+        loadRecords(1);
+      }
+    });
   }
 
   // Sortable headers
@@ -482,20 +563,24 @@ function initRecords() {
   loadRecords();
 }
 
-async function loadRecords(page = 1, sort = 'date', order = 'desc') {
+async function loadRecords(page = 1, sort = currentRecordsSort, order = currentRecordsOrder) {
   const tbody = document.getElementById('records-tbody');
   if (!tbody) return;
+
+  currentRecordsSort = sort;
+  currentRecordsOrder = order;
+  const reqId = ++recordsRequestSeq;
 
   // Get filter values
   const type = document.getElementById('filter-type')?.value || '';
   const startDate = document.getElementById('filter-start')?.value || '';
   const endDate = document.getElementById('filter-end')?.value || '';
-  const search = document.getElementById('filter-search')?.value || '';
+  const search = (document.getElementById('filter-search')?.value || '').trim();
 
   let url = `/transactions?page=${page}&sort=${sort}&order=${order}&limit=7`;
-  if (type) url += `&type=${type}`;
-  if (startDate) url += `&startDate=${startDate}`;
-  if (endDate) url += `&endDate=${endDate}`;
+  if (type) url += `&type=${encodeURIComponent(type)}`;
+  if (startDate) url += `&startDate=${encodeURIComponent(startDate)}`;
+  if (endDate) url += `&endDate=${encodeURIComponent(endDate)}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
 
   // Show skeletons
@@ -514,6 +599,7 @@ async function loadRecords(page = 1, sort = 'date', order = 'desc') {
 
   try {
     const data = await apiGet(url);
+    if (reqId !== recordsRequestSeq) return;
     if (!data || !data.success) return;
 
     const { data: records, pagination } = data;
@@ -521,8 +607,8 @@ async function loadRecords(page = 1, sort = 'date', order = 'desc') {
     if (records.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No records found</td></tr>';
     } else {
+      tbody.classList.add('content-fade-in');
       tbody.innerHTML = records.map(r => {
-        tbody.classList.add('content-fade-in');
         const detail = r.type === 'income' ? (r.source || '—') : (r.category || '—');
         const desc = r.description || '—';
         const officerActions = isAdmin() ? `
@@ -560,6 +646,7 @@ async function loadRecords(page = 1, sort = 'date', order = 'desc') {
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
   } catch (error) {
+    if (reqId !== recordsRequestSeq) return;
     tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Error loading records</td></tr>';
   }
 }
@@ -602,59 +689,131 @@ function renderPagination(pagination, sort, order) {
 }
 
 // ============================================================================
-// DUAL-CALENDAR DATE RANGE PICKER CONTROLLER
+// RECORDS DATE RANGE PICKER (Financial Date Filter Layout & Auto-Apply)
 // ============================================================================
-let calStartYear, calStartMonth;
-let calEndYear, calEndMonth;
-let tempStartDate = null;
-let tempEndDate = null;
+let recCalViewYear = new Date().getFullYear();
+let recCalViewMonth = new Date().getMonth();
+let recSelectedStart = null;
+let recSelectedEnd = null;
+let recActiveEndpoint = 'start';
+
+function formatRecCalDisplayDate(ymdStr) {
+  if (!ymdStr) return '';
+  if (typeof formatCalDisplayDate === 'function') {
+    return formatCalDisplayDate(ymdStr);
+  }
+  const parts = ymdStr.split('-');
+  if (parts.length < 3) return ymdStr;
+  const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  return `${date.toLocaleString('en-US', { month: 'short' })} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
+function getTodayYMD() {
+  if (typeof dateToYMD === 'function') {
+    return dateToYMD(new Date());
+  }
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function syncRecDateFilterInputs(startStr, endStr) {
+  const startInput = document.getElementById('filter-start');
+  const endInput = document.getElementById('filter-end');
+  const displaySpan = document.getElementById('date-range-display');
+  const startBtnDisplay = document.getElementById('rec-cal-start-display');
+  const endBtnDisplay = document.getElementById('rec-cal-end-display');
+  const statusEl = document.getElementById('rec-date-range-status');
+
+  if (startStr && endStr) {
+    if (startInput) startInput.value = startStr;
+    if (endInput) endInput.value = endStr;
+
+    const startLabel = formatRecCalDisplayDate(startStr);
+    const endLabel = formatRecCalDisplayDate(endStr);
+
+    if (displaySpan) {
+      displaySpan.textContent = startStr === endStr ? startLabel : `${startLabel} → ${endLabel}`;
+      displaySpan.style.color = 'var(--text-primary)';
+    }
+    if (startBtnDisplay) startBtnDisplay.textContent = startLabel;
+    if (endBtnDisplay) endBtnDisplay.textContent = endLabel;
+
+    if (statusEl) {
+      const sParts = startStr.split('-').map(Number);
+      const eParts = endStr.split('-').map(Number);
+      const sDate = new Date(sParts[0], sParts[1] - 1, sParts[2]);
+      const eDate = new Date(eParts[0], eParts[1] - 1, eParts[2]);
+      const diffDays = Math.round(Math.abs(eDate - sDate) / 86400000) + 1;
+      statusEl.textContent = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} selected`;
+    }
+  } else {
+    if (startInput) startInput.value = '';
+    if (endInput) endInput.value = '';
+    if (displaySpan) {
+      displaySpan.textContent = 'Select Date Range';
+      displaySpan.style.color = 'var(--text-secondary)';
+    }
+    if (startBtnDisplay) startBtnDisplay.textContent = 'Select date';
+    if (endBtnDisplay) endBtnDisplay.textContent = 'Select date';
+    if (statusEl) statusEl.textContent = 'All dates';
+  }
+}
 
 function initDateRangePicker() {
+  const dropdown = document.getElementById('date-range-picker-dropdown');
   const trigger = document.getElementById('date-range-trigger');
   const panel = document.getElementById('date-range-panel');
-  const cancelBtn = document.getElementById('cal-btn-cancel');
-  const saveBtn = document.getElementById('cal-btn-save');
-  const clearBtn = document.getElementById('cal-btn-clear');
-  
-  if (!trigger || !panel) return;
+  const startBtn = document.getElementById('rec-cal-start-btn');
+  const endBtn = document.getElementById('rec-cal-end-btn');
+  const prevMonthBtn = document.getElementById('rec-cal-prev-month');
+  const nextMonthBtn = document.getElementById('rec-cal-next-month');
+  const resetBtn = document.getElementById('rec-cal-reset-btn');
+
+  if (!trigger || !panel || !dropdown) return;
+
+  function closePanel() {
+    panel.style.display = 'none';
+    dropdown.classList.remove('active');
+    if (typeof hideCalendarTooltip === 'function') hideCalendarTooltip();
+  }
 
   // Toggle panel display
   trigger.addEventListener('click', (e) => {
     e.stopPropagation();
     const isHidden = panel.style.display === 'none' || panel.style.display === '';
     if (isHidden) {
-      // Close all other dropdowns cleanly
       document.querySelectorAll('.dropdown-menu').forEach(d => {
-        // Only clear inline display if it was set to none by something else, but generally we rely on the .active class
-        if (d.id !== 'date-range-panel') d.style.display = ''; 
+        if (d.id !== 'date-range-panel') d.style.display = '';
       });
-      document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('active'));
-      
-      // Initialize temp values from hidden inputs
-      const startVal = document.getElementById('filter-start').value;
-      const endVal = document.getElementById('filter-end').value;
-      
-      tempStartDate = startVal ? new Date(startVal) : null;
-      tempEndDate = endVal ? new Date(endVal) : null;
-      
-      const now = new Date();
-      calStartYear = tempStartDate ? tempStartDate.getFullYear() : now.getFullYear();
-      calStartMonth = tempStartDate ? tempStartDate.getMonth() : now.getMonth();
-      
-      // Default end calendar to start calendar month, or next month if not set
-      if (tempEndDate) {
-        calEndYear = tempEndDate.getFullYear();
-        calEndMonth = tempEndDate.getMonth();
+      document.querySelectorAll('.custom-dropdown').forEach(d => {
+        if (d.id !== 'date-range-picker-dropdown') d.classList.remove('active');
+      });
+
+      const startVal = document.getElementById('filter-start')?.value || '';
+      const endVal = document.getElementById('filter-end')?.value || '';
+      recSelectedStart = startVal || null;
+      recSelectedEnd = endVal || null;
+
+      if (recSelectedEnd) {
+        const [eY, eM] = recSelectedEnd.split('-').map(Number);
+        recCalViewYear = eY;
+        recCalViewMonth = eM - 1;
+      } else if (recSelectedStart) {
+        const [sY, sM] = recSelectedStart.split('-').map(Number);
+        recCalViewYear = sY;
+        recCalViewMonth = sM - 1;
       } else {
-        calEndYear = calStartYear;
-        calEndMonth = calStartMonth;
+        const now = new Date();
+        recCalViewYear = now.getFullYear();
+        recCalViewMonth = now.getMonth();
       }
-      
+
+      syncRecDateFilterInputs(recSelectedStart, recSelectedEnd);
+      dropdown.classList.add('active');
       panel.style.display = 'flex';
-      renderBothCalendars();
-      updateCalFooter();
+      renderRecCalendar();
     } else {
-      panel.style.display = 'none';
+      closePanel();
     }
   });
 
@@ -663,112 +822,75 @@ function initDateRangePicker() {
     e.stopPropagation();
   });
 
-  // Close panel on clicking outside
-  document.addEventListener('click', () => {
-    panel.style.display = 'none';
+  // Close panel on outside click or Escape
+  document.addEventListener('click', closePanel);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel.style.display === 'flex') closePanel();
   });
 
-  // Prev / Next month buttons
-  document.getElementById('cal-start-prev').addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (calStartMonth === 0) {
-      calStartMonth = 11;
-      calStartYear--;
-    } else {
-      calStartMonth--;
-    }
-    renderBothCalendars();
-  });
-
-  document.getElementById('cal-start-next').addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (calStartMonth === 11) {
-      calStartMonth = 0;
-      calStartYear++;
-    } else {
-      calStartMonth++;
-    }
-    renderBothCalendars();
-  });
-
-  document.getElementById('cal-end-prev').addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (calEndMonth === 0) {
-      calEndMonth = 11;
-      calEndYear--;
-    } else {
-      calEndMonth--;
-    }
-    renderBothCalendars();
-  });
-
-  document.getElementById('cal-end-next').addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (calEndMonth === 11) {
-      calEndMonth = 0;
-      calEndYear++;
-    } else {
-      calEndMonth++;
-    }
-    renderBothCalendars();
-  });
-
-  // Clear button
-  if (clearBtn) {
-    clearBtn.addEventListener('click', (e) => {
+  if (startBtn) {
+    startBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      tempStartDate = null;
-      tempEndDate = null;
-      renderBothCalendars();
-      updateCalFooter();
+      recActiveEndpoint = 'start';
+      renderRecCalendar();
     });
   }
 
-  // Cancel button
-  cancelBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    panel.style.display = 'none';
-  });
+  if (endBtn) {
+    endBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      recActiveEndpoint = 'end';
+      renderRecCalendar();
+    });
+  }
 
-  // Save button
-  saveBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    // Save selections to hidden inputs
-    const startInput = document.getElementById('filter-start');
-    const endInput = document.getElementById('filter-end');
-    const displaySpan = document.getElementById('date-range-display');
-    
-    if (tempStartDate && tempEndDate) {
-      // Format to YYYY-MM-DD for backend
-      const startFmtBackend = tempStartDate.getFullYear() + '-' + String(tempStartDate.getMonth() + 1).padStart(2, '0') + '-' + String(tempStartDate.getDate()).padStart(2, '0');
-      const endFmtBackend = tempEndDate.getFullYear() + '-' + String(tempEndDate.getMonth() + 1).padStart(2, '0') + '-' + String(tempEndDate.getDate()).padStart(2, '0');
-      
-      startInput.value = startFmtBackend;
-      endInput.value = endFmtBackend;
-      
-      // Format to DD/MM/YYYY - DD/MM/YYYY for UI display
-      const startFmt = formatDateDMY(tempStartDate);
-      const endFmt = formatDateDMY(tempEndDate);
-      displaySpan.textContent = `${startFmt} - ${endFmt}`;
-      displaySpan.style.color = 'var(--text-primary)';
-    } else {
-      startInput.value = '';
-      endInput.value = '';
-      displaySpan.textContent = 'Select Date Range';
-      displaySpan.style.color = 'var(--text-secondary)';
-    }
-    
-    panel.style.display = 'none';
-    // User must click 'Filter' to apply, removed loadRecords(1) here
-  });
-}
+  if (prevMonthBtn) {
+    prevMonthBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      recCalViewMonth--;
+      if (recCalViewMonth < 0) {
+        recCalViewMonth = 11;
+        recCalViewYear--;
+      }
+      renderRecCalendar();
+    });
+  }
 
-// Date formatter helpers
-function formatDateDMY(date) {
-  const d = String(date.getDate()).padStart(2, '0');
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const y = date.getFullYear();
-  return `${d}/${m}/${y}`;
+  if (nextMonthBtn) {
+    nextMonthBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      recCalViewMonth++;
+      if (recCalViewMonth > 11) {
+        recCalViewMonth = 0;
+        recCalViewYear++;
+      }
+      renderRecCalendar();
+    });
+  }
+
+  // Reset button — clears date filter and applies immediately
+  if (resetBtn) {
+    resetBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const hadActiveRange = Boolean(
+        document.getElementById('filter-start')?.value ||
+        document.getElementById('filter-end')?.value
+      );
+      recSelectedStart = null;
+      recSelectedEnd = null;
+      recActiveEndpoint = 'start';
+
+      const now = new Date();
+      recCalViewYear = now.getFullYear();
+      recCalViewMonth = now.getMonth();
+
+      syncRecDateFilterInputs('', '');
+      renderRecCalendar();
+      if (hadActiveRange) {
+        loadRecords(1);
+      }
+    });
+  }
 }
 
 function isSameDay(d1, d2) {
@@ -777,95 +899,149 @@ function isSameDay(d1, d2) {
          d1.getDate() === d2.getDate();
 }
 
-function renderBothCalendars() {
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  
-  // Left calendar (Start)
-  document.getElementById('cal-start-month-year').textContent = `${months[calStartMonth]} ${calStartYear}`;
-  renderCalendar('cal-start-grid', calStartYear, calStartMonth, 'start');
-  
-  // Right calendar (End)
-  document.getElementById('cal-end-month-year').textContent = `${months[calEndMonth]} ${calEndYear}`;
-  renderCalendar('cal-end-grid', calEndYear, calEndMonth, 'end');
+function renderRecCalendar() {
+  const monthYearDisplay = document.getElementById('rec-cal-month-year');
+  const startBtn = document.getElementById('rec-cal-start-btn');
+  const endBtn = document.getElementById('rec-cal-end-btn');
+  const gridEl = document.getElementById('rec-cal-grid');
+  if (!gridEl) return;
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  if (monthYearDisplay) {
+    monthYearDisplay.textContent = `${months[recCalViewMonth]} ${recCalViewYear}`;
+  }
+  if (startBtn) startBtn.classList.toggle('active', recActiveEndpoint === 'start');
+  if (endBtn) endBtn.classList.toggle('active', recActiveEndpoint === 'end');
+
+  gridEl.innerHTML = '';
+
+  const firstDayIndex = new Date(recCalViewYear, recCalViewMonth, 1).getDay();
+  const daysInMonth = new Date(recCalViewYear, recCalViewMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(recCalViewYear, recCalViewMonth, 0).getDate();
+  const todayStr = getTodayYMD();
+
+  // Leading days from previous month
+  const prevMonthIdx = recCalViewMonth === 0 ? 11 : recCalViewMonth - 1;
+  const prevYear = recCalViewMonth === 0 ? recCalViewYear - 1 : recCalViewYear;
+  for (let i = firstDayIndex - 1; i >= 0; i--) {
+    const dayNum = daysInPrevMonth - i;
+    const dateStr = `${prevYear}-${String(prevMonthIdx + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    gridEl.appendChild(createRecCalendarDayCell(dayNum, dateStr, true, todayStr));
+  }
+
+  // Days in current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${recCalViewYear}-${String(recCalViewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    gridEl.appendChild(createRecCalendarDayCell(d, dateStr, false, todayStr));
+  }
+
+  // Trailing days from next month to fill row
+  const totalRendered = firstDayIndex + daysInMonth;
+  const remaining = (7 - (totalRendered % 7)) % 7;
+  const nextMonthIdx = recCalViewMonth === 11 ? 0 : recCalViewMonth + 1;
+  const nextYear = recCalViewMonth === 11 ? recCalViewYear + 1 : recCalViewYear;
+  for (let d = 1; d <= remaining; d++) {
+    const dateStr = `${nextYear}-${String(nextMonthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    gridEl.appendChild(createRecCalendarDayCell(d, dateStr, true, todayStr));
+  }
 }
 
-function renderCalendar(gridId, year, month, type) {
-  const grid = document.getElementById(gridId);
-  if (!grid) return;
-  
-  const daysOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-  let html = daysOfWeek.map(d => `<div class="calendar-header-day">${d}</div>`).join('');
-  
-  const firstDayIndex = new Date(year, month, 1).getDay();
-  const numDays = new Date(year, month + 1, 0).getDate();
-  
-  // Empty slots before month start
-  for (let i = 0; i < firstDayIndex; i++) {
-    html += `<div class="calendar-day-btn empty"></div>`;
-  }
-  
-  // Render day buttons
-  for (let d = 1; d <= numDays; d++) {
-    const curDate = new Date(year, month, d);
-    let classes = 'calendar-day-btn';
-    
-    // Check range highlight
-    if (tempStartDate && isSameDay(curDate, tempStartDate)) {
-      classes += ' selected';
-    } else if (tempEndDate && isSameDay(curDate, tempEndDate)) {
-      classes += ' selected';
-    } else if (tempStartDate && tempEndDate && curDate > tempStartDate && curDate < tempEndDate) {
-      classes += ' in-range';
+function createRecCalendarDayCell(dayNum, dateStr, isOtherMonth, todayStr) {
+  const cell = document.createElement('div');
+  cell.className = 'fin-cal-day-cell';
+  cell.dataset.date = dateStr;
+
+  if (isOtherMonth) cell.classList.add('other-month');
+  if (dateStr === todayStr) cell.classList.add('today');
+
+  if (recSelectedStart && recSelectedEnd) {
+    if (recSelectedStart === recSelectedEnd && dateStr === recSelectedStart) {
+      cell.classList.add('selected-single', 'endpoint-active');
+    } else if (dateStr === recSelectedStart) {
+      cell.classList.add('selected-start');
+      if (recActiveEndpoint === 'start') cell.classList.add('endpoint-active');
+    } else if (dateStr === recSelectedEnd) {
+      cell.classList.add('selected-end');
+      if (recActiveEndpoint === 'end') cell.classList.add('endpoint-active');
+    } else if (dateStr > recSelectedStart && dateStr < recSelectedEnd) {
+      cell.classList.add('in-range');
     }
-    
-    html += `<button type="button" class="${classes}" onclick="handleCalDayClick('${type}', ${year}, ${month}, ${d})">${d}</button>`;
   }
-  
-  grid.innerHTML = html;
+
+  const numSpan = document.createElement('span');
+  numSpan.className = 'fin-cal-day-num';
+  numSpan.textContent = String(dayNum);
+  cell.appendChild(numSpan);
+
+  // Reuse Financial Date Filter activity dots when available
+  const act = typeof calendarActivityMap !== 'undefined' ? calendarActivityMap.get(dateStr) : null;
+  const dotsWrap = document.createElement('div');
+  dotsWrap.className = 'fin-cal-dots-wrap';
+  if (act && act.incomeCount > 0) {
+    const dotInc = document.createElement('span');
+    dotInc.className = 'fin-cal-dot fin-cal-dot-income';
+    dotsWrap.appendChild(dotInc);
+  }
+  if (act && act.expenseCount > 0) {
+    const dotExp = document.createElement('span');
+    dotExp.className = 'fin-cal-dot fin-cal-dot-expense';
+    dotsWrap.appendChild(dotExp);
+  }
+  cell.appendChild(dotsWrap);
+
+  cell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleRecCalendarDateClick(dateStr);
+  });
+
+  if (typeof showCalendarTooltip === 'function') {
+    cell.addEventListener('mouseenter', (e) => showCalendarTooltip(e, dateStr));
+    cell.addEventListener('mousemove', (e) => positionCalendarTooltip(e));
+    cell.addEventListener('mouseleave', () => hideCalendarTooltip());
+  }
+
+  return cell;
 }
 
-function handleCalDayClick(type, year, month, day) {
-  const clickedDate = new Date(year, month, day);
-  
-  if (type === 'start') {
-    tempStartDate = clickedDate;
-    // If start date is now more advanced than end date, reset/swap them
-    if (tempEndDate && tempStartDate > tempEndDate) {
-      tempEndDate = new Date(tempStartDate);
+function handleRecCalendarDateClick(clickedDateStr) {
+  const parts = clickedDateStr.split('-');
+  const clickedY = parseInt(parts[0], 10);
+  const clickedM = parseInt(parts[1], 10);
+  if (clickedY !== recCalViewYear || clickedM - 1 !== recCalViewMonth) {
+    recCalViewYear = clickedY;
+    recCalViewMonth = clickedM - 1;
+  }
+
+  if (!recSelectedStart || !recSelectedEnd) {
+    recSelectedStart = clickedDateStr;
+    recSelectedEnd = clickedDateStr;
+    if (recActiveEndpoint === 'start') {
+      recActiveEndpoint = 'end';
+    }
+  } else if (recActiveEndpoint === 'start') {
+    if (clickedDateStr <= recSelectedEnd) {
+      recSelectedStart = clickedDateStr;
+    } else {
+      recSelectedStart = recSelectedEnd;
+      recSelectedEnd = clickedDateStr;
     }
   } else {
-    tempEndDate = clickedDate;
-    // If end date is earlier than start date, make start date equal to end date
-    if (tempStartDate && tempEndDate < tempStartDate) {
-      tempStartDate = new Date(tempEndDate);
+    if (clickedDateStr >= recSelectedStart) {
+      recSelectedEnd = clickedDateStr;
+    } else {
+      recSelectedEnd = recSelectedStart;
+      recSelectedStart = clickedDateStr;
     }
   }
-  
-  renderBothCalendars();
-  updateCalFooter();
-}
 
-function updateCalFooter() {
-  const countSpan = document.getElementById('date-range-days-count');
-  const detailsSpan = document.getElementById('date-range-details');
-  
-  if (tempStartDate && tempEndDate) {
-    const diffTime = Math.abs(tempEndDate - tempStartDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
-    
-    countSpan.textContent = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} selected`;
-    detailsSpan.textContent = `${formatDateDMY(tempStartDate)} - ${formatDateDMY(tempEndDate)}`;
-  } else if (tempStartDate) {
-    countSpan.textContent = 'Selecting end date...';
-    detailsSpan.textContent = `Start: ${formatDateDMY(tempStartDate)}`;
-  } else {
-    countSpan.textContent = 'No range selected';
-    detailsSpan.textContent = 'Click dates on calendars above';
-  }
+  syncRecDateFilterInputs(recSelectedStart, recSelectedEnd);
+  renderRecCalendar();
+  loadRecords(1);
 }
-
-// Attach event handler to global window scope so it can be called via inline onclick
-window.handleCalDayClick = handleCalDayClick;
 
 // --- SINGLE DATE PICKER FOR TRANSACTION FORM ---
 let txCalYear = new Date().getFullYear();

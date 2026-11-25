@@ -12,75 +12,93 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initApp();
 });
 
-async function initApp() {
-  let user = getCurrentUser();
-  
-  // Refresh user data from server to ensure flags like must_change_password are up to date
-  try {
-    const res = await apiGet('/auth/me');
-    if (res && res.success) {
-      user = res.user;
-      localStorage.setItem('bb_user', JSON.stringify(user));
-    }
-  } catch (err) {
-    console.error('Failed to refresh user profile:', err);
-  }
-
-  if (user) {
+/**
+ * Apply user profile details, role visibility, and forced password prompt to the UI.
+ * @param {object|null} currentUser
+ * @param {boolean} isInitial
+ */
+function applyUserToUI(currentUser, isInitial = false) {
+  if (currentUser) {
     const nameEl = document.getElementById('user-name');
     const roleEl = document.getElementById('user-role');
     const avatarEl = document.getElementById('user-avatar');
-    
-    // Hide skeletons and reveal content
-    const nameSkel = document.getElementById('user-name-skeleton');
-    const roleSkel = document.getElementById('user-role-skeleton');
-    if (nameSkel) nameSkel.remove();
-    if (roleSkel) roleSkel.remove();
 
-    // Remove loading states from global containers
-    const topbarUser = document.getElementById('topbar-user-container');
-    if (topbarUser) topbarUser.classList.remove('loading-state');
-    
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-      setTimeout(() => sidebar.classList.remove('loading-state'), 500);
+    if (isInitial) {
+      const nameSkel = document.getElementById('user-name-skeleton');
+      const roleSkel = document.getElementById('user-role-skeleton');
+      if (nameSkel) nameSkel.remove();
+      if (roleSkel) roleSkel.remove();
+
+      const topbarUser = document.getElementById('topbar-user-container');
+      if (topbarUser) topbarUser.classList.remove('loading-state');
+
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) {
+        setTimeout(() => sidebar.classList.remove('loading-state'), 500);
+      }
     }
 
     if (nameEl) {
-      nameEl.textContent = user.name || 'User';
+      nameEl.textContent = currentUser.name || 'User';
       nameEl.style.display = '';
-      nameEl.classList.add('content-fade-in');
+      if (isInitial) nameEl.classList.add('content-fade-in');
     }
     if (roleEl) {
-      roleEl.textContent = user.role || 'Member';
+      roleEl.textContent = currentUser.role || 'Member';
       roleEl.style.display = '';
-      roleEl.classList.add('content-fade-in');
+      if (isInitial) roleEl.classList.add('content-fade-in');
     }
-    if (avatarEl && user.id) {
-      avatarEl.innerHTML = `<img src="${API_BASE}/auth/avatar/${user.id}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" class="content-fade-in">`;
+    if (avatarEl && currentUser.id) {
+      const expectedSrc = `${API_BASE}/auth/avatar/${currentUser.id}`;
+      const existingImg = avatarEl.querySelector('img');
+      if (!existingImg || !existingImg.getAttribute('src')?.includes(`/auth/avatar/${currentUser.id}`)) {
+        avatarEl.innerHTML = `<img src="${expectedSrc}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" class="content-fade-in">`;
+      }
     }
   }
 
-  // Check if force password change is required
-  if (user && user.must_change_password) {
-    document.getElementById('force-password-modal').classList.add('active');
-    initForcePassword();
+  const modal = document.getElementById('force-password-modal');
+  if (modal) {
+    if (currentUser && currentUser.must_change_password) {
+      if (!modal.classList.contains('active')) {
+        modal.classList.add('active');
+        initForcePassword();
+      }
+    } else if (modal.classList.contains('active')) {
+      modal.classList.remove('active');
+    }
   }
 
-  // Handle admin-only elements visibility
   const adminElements = document.querySelectorAll('.admin-only');
   adminElements.forEach(el => {
     el.style.display = isAdmin() ? 'flex' : 'none';
   });
+}
+
+async function initApp() {
+  const cachedUser = getCurrentUser();
+
+  // Render cached user and start all dashboard modules immediately; refresh /auth/me concurrently in background
+  applyUserToUI(cachedUser, true);
+
+  const profileRefreshPromise = apiGet('/auth/me')
+    .then(res => {
+      if (res && res.success && res.user) {
+        localStorage.setItem('bb_user', JSON.stringify(res.user));
+        applyUserToUI(res.user, false);
+      }
+    })
+    .catch(err => {
+      console.error('Failed to refresh user profile:', err);
+    });
+  void profileRefreshPromise;
 
   // Initialize modules
   initNavigation();
   initMobileSidebar();
   initTopbarScroll();
-  initNotifications();
   initAvatarProfile();
   initLogout();
-  initGlobalSearch();
   initDashboard();
   initTransactionForm();
   initRecords();
@@ -392,157 +410,6 @@ function initAvatarProfile() {
 }
 
 // =============================================
-// NOTIFICATION SYSTEM
-// =============================================
-function initNotifications() {
-  const btn = document.getElementById('notification-btn');
-  const panel = document.getElementById('notification-panel');
-  const badge = document.getElementById('notification-badge');
-  const clearBtn = document.getElementById('notification-clear-btn');
-  const listEl = document.getElementById('notification-list');
-
-  if (!btn || !panel || !listEl) return;
-
-  // Simulated notifications
-  let notifications = [
-    {
-      id: 1,
-      type: 'tx',
-      icon: 'trending-up',
-      title: 'New Income Recorded',
-      desc: 'Membership fee of ₱150.00 was added by Admin.',
-      time: '2 minutes ago',
-      unread: true
-    },
-    {
-      id: 2,
-      type: 'member',
-      icon: 'user-plus',
-      title: 'New Member Registered',
-      desc: 'Juan Dela Cruz joined the organization.',
-      time: '15 minutes ago',
-      unread: true
-    },
-    {
-      id: 3,
-      type: 'system',
-      icon: 'shield-check',
-      title: 'System Update',
-      desc: 'PondoSync v1.2 is now live with enhanced security.',
-      time: '1 hour ago',
-      unread: true
-    },
-    {
-      id: 4,
-      type: 'announce',
-      icon: 'megaphone',
-      title: 'Announcement',
-      desc: 'General Assembly scheduled for May 5, 2026.',
-      time: '3 hours ago',
-      unread: false
-    },
-    {
-      id: 5,
-      type: 'tx',
-      icon: 'trending-down',
-      title: 'Expense Logged',
-      desc: 'Printing costs ₱850.00 were recorded for the event.',
-      time: '5 hours ago',
-      unread: false
-    }
-  ];
-
-  function renderNotifications() {
-    const unreadCount = notifications.filter(n => n.unread).length;
-
-    // Update badge
-    if (badge) {
-      if (unreadCount > 0) {
-        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-        badge.classList.remove('hidden');
-      } else {
-        badge.classList.add('hidden');
-      }
-    }
-
-    // Render list
-    if (notifications.length === 0) {
-      listEl.innerHTML = `
-        <div class="notification-empty">
-          <i data-lucide="bell-off"></i>
-          <p>No notifications</p>
-          <span>You're all caught up!</span>
-        </div>
-      `;
-    } else {
-      listEl.innerHTML = notifications.map(n => `
-        <div class="notification-item" data-id="${n.id}">
-          <div class="notification-item-icon ${n.type}">
-            <i data-lucide="${n.icon}"></i>
-          </div>
-          <div class="notification-item-content">
-            <div class="notification-item-title">${n.title}</div>
-            <div class="notification-item-desc">${n.desc}</div>
-            <div class="notification-item-time">${n.time}</div>
-          </div>
-          ${n.unread ? '<div class="notification-unread-dot"></div>' : ''}
-        </div>
-      `).join('');
-    }
-
-    // Refresh icons inside panel
-    if (typeof lucide !== 'undefined') {
-      setTimeout(() => lucide.createIcons(), 50);
-    }
-  }
-
-  // Toggle panel
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    
-    // Add bounce effect to the notification button
-    btn.classList.add('btn-clicked');
-    setTimeout(() => btn.classList.remove('btn-clicked'), 150);
-
-    const isHidden = panel.classList.contains('panel-hidden');
-
-    if (isHidden) {
-      panel.classList.remove('panel-hidden');
-      // Mark all as read when opening
-      notifications.forEach(n => n.unread = false);
-      renderNotifications();
-      // Bell ring
-      btn.classList.add('ring');
-      setTimeout(() => btn.classList.remove('ring'), 600);
-    } else {
-      panel.classList.add('panel-hidden');
-    }
-  });
-
-  // Close panel when clicking outside
-  const wrapper = document.getElementById('notification-wrapper');
-  document.addEventListener('click', (e) => {
-    if (wrapper && !wrapper.contains(e.target) && !panel.classList.contains('panel-hidden')) {
-      // Add bounce effect on close
-      btn.classList.add('btn-clicked');
-      setTimeout(() => btn.classList.remove('btn-clicked'), 150);
-      panel.classList.add('panel-hidden');
-    }
-  });
-
-  // Clear all
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      notifications = [];
-      renderNotifications();
-    });
-  }
-
-  // Initial render
-  renderNotifications();
-}
-
-// =============================================
 // LOGOUT
 // =============================================
 function initLogout() {
@@ -554,30 +421,6 @@ function initLogout() {
       window.location.href = '/';
     });
   }
-}
-
-// =============================================
-// GLOBAL SEARCH
-// =============================================
-function initGlobalSearch() {
-  const input = document.getElementById('global-search');
-  if (!input) return;
-
-  let debounce;
-  input.addEventListener('input', () => {
-    clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      const query = input.value.trim();
-      if (query) {
-        navigateTo('records');
-        const filterSearch = document.getElementById('filter-search');
-        if (filterSearch) {
-          filterSearch.value = query;
-          loadRecords();
-        }
-      }
-    }, 500);
-  });
 }
 
 // =============================================

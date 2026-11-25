@@ -2,9 +2,41 @@
 // User Controller (Admin Only)
 // Handles CRUD operations for users by admins
 // ============================================
-const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
+const { hashPassword } = require('../utils/password');
+
+// Ensure transactions.user_id allows NULL and uses ON DELETE SET NULL so users can be hard-deleted safely
+async function ensureHardUserDeleteSchema() {
+  try {
+    const [colRows] = await pool.query(`
+      SELECT is_nullable
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'transactions' AND column_name = 'user_id'
+    `);
+    const [fkRows] = await pool.query(`
+      SELECT confdeltype
+      FROM pg_constraint
+      WHERE conrelid = 'transactions'::regclass AND conname = 'transactions_user_id_fkey'
+    `);
+
+    if (colRows[0] && colRows[0].is_nullable === 'NO') {
+      await pool.query('ALTER TABLE transactions ALTER COLUMN user_id DROP NOT NULL');
+    }
+    if (fkRows[0] && fkRows[0].confdeltype !== 'n') {
+      await pool.query('ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_user_id_fkey');
+      await pool.query(`
+        ALTER TABLE transactions
+        ADD CONSTRAINT transactions_user_id_fkey
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      `);
+    }
+    await pool.query("DELETE FROM users WHERE email LIKE '%_deleted_%'");
+  } catch (e) {
+    console.warn('User deletion FK migration note:', e.message);
+  }
+}
+const userDeleteSchemaReady = ensureHardUserDeleteSchema();
 
 // Validation rules
 const userValidation = [
@@ -33,17 +65,18 @@ async function createUser(req, res) {
     }
 
     let { name, email, role, position } = req.body;
+    email = email.trim().toLowerCase();
     role = role === 'user' ? 'viewer' : role;
 
-    // Check if email already exists
-    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    // Check if email already exists (case-insensitive)
+    const [existing] = await pool.query('SELECT id FROM users WHERE LOWER(email) = LOWER(?)', [email]);
     if (existing.length > 0) {
       return res.status(409).json({ success: false, message: 'Email already registered.' });
     }
 
     // Generate random password
     const rawPassword = generateRandomPassword(12);
-    const hashedPassword = await bcrypt.hash(rawPassword, 12);
+    const hashedPassword = await hashPassword(rawPassword);
 
     // Insert user
     const [result] = await pool.query(
@@ -73,12 +106,19 @@ async function updateUser(req, res) {
 
     const userId = req.params.id;
     let { name, email, role, position } = req.body;
+    email = email.trim().toLowerCase();
     role = role === 'user' ? 'viewer' : role;
 
     // Check if user exists
     const [existing] = await pool.query('SELECT id FROM users WHERE id = ?', [userId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // Prevent colliding with another user's email
+    const [emailConflict] = await pool.query('SELECT id FROM users WHERE LOWER(email) = LOWER(?) AND id != ?', [email, userId]);
+    if (emailConflict.length > 0) {
+      return res.status(409).json({ success: false, message: 'Email already registered.' });
     }
 
     // Update user
@@ -107,7 +147,7 @@ async function resetPassword(req, res) {
 
     // Generate new random password
     const rawPassword = generateRandomPassword(12);
-    const hashedPassword = await bcrypt.hash(rawPassword, 12);
+    const hashedPassword = await hashPassword(rawPassword);
 
     // Update password and force change
     await pool.query(
@@ -156,9 +196,10 @@ async function toggleUserStatus(req, res) {
   }
 }
 
-// Delete user (Soft delete + Free up email)
+// Delete user (Permanently delete row from database)
 async function deleteUser(req, res) {
   try {
+    await userDeleteSchemaReady;
     const userId = req.params.id;
 
     // Check if user exists
@@ -167,19 +208,20 @@ async function deleteUser(req, res) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
+    // Prevent deleting oneself
+    if (parseInt(userId, 10) === req.user.id) {
+      return res.status(403).json({ success: false, message: 'Cannot delete your own account.' });
+    }
+
     // Prevent deleting the main admin
     if (existing[0].role === 'admin' && existing[0].id === 1) {
       return res.status(403).json({ success: false, message: 'Cannot delete the primary administrator.' });
     }
 
-    // Soft delete + modify email to free it up for re-registration
-    // Using string concatenation to make the email unique
-    await pool.query(
-      "UPDATE users SET email = email || '_deleted_' || id, is_active = FALSE WHERE id = ?",
-      [userId]
-    );
+    // Permanently delete user from the database (transactions.user_id becomes NULL via ON DELETE SET NULL)
+    await pool.query('DELETE FROM users WHERE id = ?', [userId]);
 
-    res.json({ success: true, message: 'User permanently removed. Email has been freed.' });
+    res.json({ success: true, message: 'User permanently deleted from the database.' });
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ success: false, message: 'Server error during user deletion.' });
